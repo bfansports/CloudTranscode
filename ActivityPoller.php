@@ -1,9 +1,9 @@
 <?php
 
-require 'gridXUtils.php';
-require './activities/gridXBasicActivity.php';
+require 'Utils.php';
+require './activities/BasicActivity.php';
 
-Class GridXWorkflowActivityPoller
+Class WorkflowActivityPoller
 {
 	private $domainName;
 	private $taskList;
@@ -104,16 +104,16 @@ Class GridXWorkflowActivityPoller
  */
 
 $domainName = "SA_TEST2";
-$taskList = array("name" => "GridXTranscodingTaskList");
+$taskList = array("name" => "TranscodingTaskList");
 
 echo "[INFO] Domain: '$domainName'\n";
 echo "[INFO] TaskList:\n";
 print_r($taskList);
 
 try {
-	$wfActivityPoller = new GridXWorkflowActivityPoller($domainName, $taskList);
+	$wfActivityPoller = new WorkflowActivityPoller($domainName, $taskList);
 } catch (Exception $e) {
-	echo "Unable to create GridXWorkflowActivityPoller ! " . $e->getMessage() . "\n";
+	echo "Unable to create WorkflowActivityPoller ! " . $e->getMessage() . "\n";
 	exit (1);
 }
 

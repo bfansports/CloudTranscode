@@ -1,7 +1,7 @@
 <?php
 
 // This class serves as a skeletton for classes impleting actual activity
-class GridXTranscodeAssetActivity extends GridXBasicActivity
+class TranscodeAssetActivity extends BasicActivity
 {
 	private $ffmpegValidationOutput;
 	private $inputFileDuration;

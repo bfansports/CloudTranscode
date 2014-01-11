@@ -1,9 +1,9 @@
 <?php
 
-require 'gridXUtils.php';
-require 'gridXWorkflowTracker.php';
+require 'Utils.php';
+require 'WorkflowTracker.php';
 
-Class GridXWorkflowDecider
+Class WorkflowDecider
 {
 	private $domain;
 	private $taskList;
@@ -20,7 +20,7 @@ Class GridXWorkflowDecider
 			throw new Exception("[ERROR] Unable to init the domain !\n");
 
 		// Instantiate tracker. USed to track workflow execution and return next activity to execute
-		$this->workflowTracker = new GridXWorkflowTracker($domainName);
+		$this->workflowTracker = new WorkflowTracker($domainName);
 	}	
 
 	// Poll for decision tasks
@@ -365,7 +365,7 @@ Class GridXWorkflowDecider
  */
 
 $domainName = "SA_TEST2";
-$taskList = array("name" => "GridXTranscodingTaskList");
+$taskList = array("name" => "TranscodingTaskList");
 
 log_out("INFO", basename(__FILE__), "Domain: '$domainName'");
 log_out("INFO", basename(__FILE__), "TaskList:");
@@ -373,9 +373,9 @@ print_r($taskList);
 
 // Start decider
 try {
-	$wfDecider = new GridXWorkflowDecider($domainName, $taskList);
+	$wfDecider = new WorkflowDecider($domainName, $taskList);
 } catch (Exception $e) {
-	log_out("ERROR", basename(__FILE__), "Unable to create GridXWorkflowDecider ! " . $e->getMessage());
+	log_out("ERROR", basename(__FILE__), "Unable to create WorkflowDecider ! " . $e->getMessage());
 	exit (1);
 }
 

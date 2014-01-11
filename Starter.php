@@ -1,8 +1,8 @@
 <?php
 
-require 'gridXUtils.php';
+require 'Utils.php';
 
-class GridXWorkflowStarter
+class WorkflowStarter
 {
 	private $domain;
 	private $taskList;
@@ -98,25 +98,25 @@ class GridXWorkflowStarter
  */
 
 $domainName = "SA_TEST2";
-$taskList = array("name" => "GridXTranscodingTaskList");
+$taskList = array("name" => "TranscodingTaskList");
 
 try {
 
 	// Create workflow object. 
 	// Will register the workflow if not existing
-	$workflowStarter = new GridXWorkflowStarter($domainName, $taskList, 
+	$workflowStarter = new WorkflowStarter($domainName, $taskList, 
 		array(
 			"domain"      => $domainName,
-			"name"        => "gridx_basic_workflow",
+			"name"        => "cloud_transcode_basic_workflow",
 			"version"     => "v1",
-			"description" => "GridX Basic transcoding workflow",
+			"description" => "Basic Cloud Transcode Workflow",
 			"defaultTaskStartToCloseTimeout"      => 3600, # Tasks timeout
 			"defaultExecutionStartToCloseTimeout" => 24 * 3600, # WF timeout
 			"defaultChildPolicy" => "TERMINATE"
 			));
 
 } catch (Exception $e) {
-	echo "Unable to create GridXWorkflowStarter ! " . $e->getMessage() . "\n";
+	echo "Unable to create WorkflowStarter ! " . $e->getMessage() . "\n";
 	exit (1);
 }
 

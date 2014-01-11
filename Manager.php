@@ -1,11 +1,11 @@
 <?php
 
-require 'gridXUtils.php';
+require 'Utils.php';
 
 /**
- * GridX workflow manager helps you manipulate 
+ * workflow manager helps you manipulate 
  */
-class GridXManager
+class Manager
 {
 	function __construct()
 	{
@@ -13,7 +13,7 @@ class GridXManager
 	}	
 
 	/**
-	 * Start a GridX Transcoding workflow. 
+	 * Start a Transcoding workflow. 
 	 * @param  [String] $input  [JSON string containing input and output information]
 	 * @param  [Array] $params [Can override default workflow parameters below.]
 	 * @return [Boolean][true:false - failure returns 'false']
@@ -30,7 +30,7 @@ class GridXManager
 
 			// Create workflow object. 
 			// Will register the workflow if not existing
-			$workflowStarter = new GridXWorkflowStarter(DOMAIN, TASK_LIST, 
+			$workflowStarter = new WorkflowStarter(DOMAIN, TASK_LIST, 
 				array(
 					"domain"      => DOMAIN,
 					"name"        => TRANSCODE_WORKFLOW,
@@ -50,7 +50,7 @@ class GridXManager
 			$workflowStarter->start_execution($input);
 
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to create GridXWorkflowStarter ! " . $e->getMessage() . "\n");
+			log_out("ERROR", basename(__FILE__), "Unable to create WorkflowStarter ! " . $e->getMessage() . "\n");
 			return false;
 		}
 

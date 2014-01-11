@@ -1,7 +1,7 @@
 <?php
 
 // This class serves as a skeletton for classes impleting actual activity
-class GridXBasicActivity
+class BasicActivity
 {
 	private $activityType;
 	private $activityResult; // Will contain activity result output
@@ -9,10 +9,10 @@ class GridXBasicActivity
 	function __construct($params)
 	{
 		if (!isset($params["name"]) || !$params["name"])
-			throw new Exception("Can't instantiate GridXBasicActivity: 'name' is not provided or empty !\n");
+			throw new Exception("Can't instantiate asicActivity: 'name' is not provided or empty !\n");
 
 		if (!isset($params["version"]) || !$params["version"])
-			throw new Exception("Can't instantiate GridXBasicActivity: 'version' is not provided or empty !\n");
+			throw new Exception("Can't instantiate BasicActivity: 'version' is not provided or empty !\n");
 
 		if (!$this->init_activity($params))
 			throw new Exception("Unable to init the activity !\n");

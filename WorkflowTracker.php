@@ -1,8 +1,8 @@
 <?php
 
-// Depends on gridXUtils.php. Should be included in caller.
+// Depends on Utils.php. Should be included in caller.
 
-class GridXWorkflowTracker
+class WorkflowTracker
 {
 	private	$domainName;
 	private	$workflowExecution;
@@ -66,7 +66,7 @@ class GridXWorkflowTracker
 
 	// Register a workflow in the tracker for further use
 	// We register the workflow execution and its activity list
-	// See gridXUtils.php for activity list
+	// See Utils.php for activity list
 	public function register_workflow_in_tracker($workflowExecution, $activities) 
 	{
 		if (!$workflowExecution) {

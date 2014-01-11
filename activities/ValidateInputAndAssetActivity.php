@@ -1,10 +1,10 @@
 <?php
 
-require_once dirname(__FILE__).'/../gridXUtils.php';
-require_once 'gridXBasicActivity.php';
+require_once dirname(__FILE__).'/../Utils.php';
+require_once 'BasicActivity.php';
 
 // This class serves as a skeletton for classes impleting actual activity
-class GridXValidateInputAndAssetActivity extends GridXBasicActivity
+class ValidateInputAndAssetActivity extends BasicActivity
 {
 	const NO_INPUT = "NO_INPUT";
 	const INPUT_INVALID = "INPUT_INVALID";
@@ -132,7 +132,7 @@ class GridXValidateInputAndAssetActivity extends GridXBasicActivity
 // $domainName = "SA_TEST2";
 // $jsonInput = file_get_contents(dirname(__FILE__) . "/../config/input.json");
 
-// $inputValidator = new GridXValidateInputAndAssetActivity(array(
+// $inputValidator = new ValidateInputAndAssetActivity(array(
 // 	"domain"  => $domainName,
 // 	"name"    => "TestActivity",
 // 	"version" => "v1"

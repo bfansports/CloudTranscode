@@ -1,0 +1,13 @@
+{
+    "includes": ["_aws"],
+    "services": {
+        "default_settings": {
+            "params": {
+                "key": "AKIAI3BPXQNX4M2HKFJA",
+                "secret": "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",
+                "region": "us-east-1"
+            }
+        }
+    }
+}
+

@@ -1,8 +1,7 @@
 <?php
 
-$path = realpath(dirname(__FILE__));
 // Composer for loading dependices: http://getcomposer.org/
-require "$path/vendor/autoload.php";
+require "./vendor/autoload.php";
 
 // Amazon library
 use Aws\Common\Aws;

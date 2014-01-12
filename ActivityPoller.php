@@ -1,7 +1,8 @@
 <?php
 
-require 'Utils.php';
-require './activities/BasicActivity.php';
+$path = realpath(dirname(__FILE__));
+require "$path/Utils.php";
+require "$path/activities/BasicActivity.php";
 
 Class WorkflowActivityPoller
 {

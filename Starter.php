@@ -2,124 +2,71 @@
 
 require 'Utils.php';
 
-class WorkflowStarter
+// SWF client
+global $swf;
+// SQS client
+global $sqs;
+
+// Get config file
+$config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
+log_out("INFO", basename(__FILE__), "Domain: '" . $config['SWF']['domain'] . "'");
+log_out("INFO", basename(__FILE__), "TaskList: '" . $config['taskList'] . "'");
+
+// Workflow info
+$workflowType = array(
+	"name"    => $config['SWF']["name"],
+	"version" => $config['SWF']["version"]);
+
+if (!init_domain($config['SWF']['domain']))
+	throw new Exception("[ERROR] Unable to init the domain !\n");
+
+if (!init_workflow($config['SWF']))
+	throw new Exception("[ERROR] Unable to init the workflow !\n");
+
+// Get SQS queue URL
+$queueURL = $sqs->getQueueUrl(array('QueueName' => $config['SQSQueue']));
+
+// Start polling loop
+log_out("INFO", basename(__FILE__), "Starting SQS message polling");
+while (1)
 {
-	private $domain;
-	private $taskList;
+	log_out("INFO", basename(__FILE__), "Polling ...");
 
-	private $workflowType;
-	private $workflowRunId;
+	// Check for new msg, poll for 10sec
+	$result = $sqs->receiveMessage(array(
+		'QueueUrl'        => $queueURL['QueueUrl'],
+		'WaitTimeSeconds' => 2,
+		));
 
-	function __construct($domainName, $taskList, $params)
-	{
-		$this->domain   = $domainName;
-		$this->taskList = $taskList;
+	$messages = $result->get('Messages');
+	if ($messages) {
 
-		if (!isset($params["name"]) || !$params["name"]) {
-			echo "[ERROR] Can't register workflow: 'name' is not provided or empty !\n";
-			return false;
-		}
+		// Check incoming message
+		foreach ($messages as $msg) {
+    		// Msg body
+			log_out("INFO", basename(__FILE__), "New Input: ");
+			print($msg['Body'] . "\n");
 
-		if (!isset($params["version"]) || !$params["version"]) {
-			echo "[ERROR] Can't register workflow: 'version' is not provided or empty !\n";
-			return false;
-		}
+			try {
+				log_out("INFO", basename(__FILE__), "Requesting new workflow to process input ...");
 
-		// Init domain
-		if (!init_domain($domainName))
-			throw new Exception("Unable to init the domain !\n");
-
-		// Init workflow
-		if (!$this->init_workflow($params))
-			throw new Exception("Unable to init the worklow !\n");
-	}
-
-	private function init_workflow($params)
-	{
-		global $swf;
-
-		
-
-		// Save WF info
-		$this->workflowType = array(
-			"name"    => $params["name"],
-			"version" => $params["version"]);
-
-		// Get existing workflows
-		try {
-			$swf->describeWorkflowType(array(
-				"domain"       => $this->domain,
-				"workflowType" => $this->workflowType
-				));
-			return true;
-		} catch (Aws\Swf\Exception\UnknownResourceException $e) {
-			echo "Workflow doesn't exists. Creating it ...\n";
-		} catch (Exception $e) {
-			echo "Unable to describe the workflow ! " . $e->getMessage() . "\n";
-			return false;
-		}
-
-		// If not registered, we register the WF
-		try {
-			print_r($params);
-			$swf->registerWorkflowType($params);
-			return true;
-		} catch (Exception $e) {
-			echo "Unable to register new workflow ! " . $e->getMessage() . "\n";
-			return false;
+				// Start a WF with input
+				$workflowRunId = $swf->startWorkflowExecution(array(
+					"domain"       => $config['SWF']['domain'],
+					"workflowId"   => uniqid(),
+					"workflowType" => $workflowType,
+					"taskList"     => array("name" => $config['taskList']),
+					"input"        => $msg['Body']
+					));
+			} catch (Exception $e) {
+				log_out("FATAL", basename(__FILE__), "Unable to start workflow execution  ! " . $e->getMessage());
+			}
+			
+			// Delete msg from queue
+			$sqs->deleteMessage(array(
+				'QueueUrl'        => $queueURL['QueueUrl'],
+				'ReceiptHandle'   => $msg['ReceiptHandle']));
 		}
 	}
+} 
 
-	// Launch workflow execution
-	public function start_execution($input)
-	{
-		global $swf;
-
-		try {
-			$this->workflowRunId = $swf->startWorkflowExecution(array(
-				"domain"       => $this->domain,
-				"workflowId"   => uniqid(),
-				"workflowType" => $this->workflowType,
-				"taskList"     => $this->taskList,
-				"input"        => $input
-				));
-			return true;
-		} catch (Exception $e) {
-			echo "Unable to start workflow execution  ! " . $e->getMessage() . "\n";
-			return false;
-		}
-	}
-}
-
-
-
-/**
- * TEST PROGRAM
- */
-
-$domainName = "SA_TEST2";
-$taskList = array("name" => "TranscodingTaskList");
-
-try {
-
-	// Create workflow object. 
-	// Will register the workflow if not existing
-	$workflowStarter = new WorkflowStarter($domainName, $taskList, 
-		array(
-			"domain"      => $domainName,
-			"name"        => "cloud_transcode_basic_workflow",
-			"version"     => "v1",
-			"description" => "Basic Cloud Transcode Workflow",
-			"defaultTaskStartToCloseTimeout"      => 3600, # Tasks timeout
-			"defaultExecutionStartToCloseTimeout" => 24 * 3600, # WF timeout
-			"defaultChildPolicy" => "TERMINATE"
-			));
-
-} catch (Exception $e) {
-	echo "Unable to create WorkflowStarter ! " . $e->getMessage() . "\n";
-	exit (1);
-}
-
-// Start the workflow with input.json input data for transcoding
-// https://app.zencoder.com/docs/api/encoding
-$workflowStarter->start_execution(file_get_contents(dirname(__FILE__) . "/config/input.json"));

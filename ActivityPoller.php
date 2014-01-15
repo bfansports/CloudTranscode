@@ -5,35 +5,35 @@ require "./activities/BasicActivity.php";
 
 Class WorkflowActivityPoller
 {
-	private $domainName;
+	private $domain;
 	private $taskList;
 
-	function __construct($domainName, $taskList)
+	function __construct($config)
 	{
 		global $activities;
 
-		$this->domainName = $domainName;
-		$this->taskList   = $taskList;
+		$this->domain   = $config['SWF']['domain'];
+		$this->taskList = array("name" => $config['taskList']);
 
-		if (!init_domain($domainName))
+		if (!init_domain($this->domain))
 			throw new Exception("Unable to init the domain !\n");
 		
 		// Dynamically load classes responsible for handling each activity.
 		// See utils.php for the list
 		foreach ($activities as &$activity)
 		{
-			// Load the file
+			// Load the file representing the activity
 			$file = dirname(__FILE__) . $activity["file"];
 			require_once $file;
 
 			// Instantiate the class
 			$activity["object"] = new $activity["class"](array(
-				"domain"  => $domainName,
+				"domain"  => $this->domain,
 				"name"    => $activity["name"],
 				"version" => $activity["version"]
 				));
 
-			echo "[INFO] Activity handler registered: " . $activity["name"] . "\n";
+			log_out("INFO", basename(__FILE__), "Activity handler registered: " . $activity["name"]);
 		}
 	}	
 
@@ -43,9 +43,9 @@ Class WorkflowActivityPoller
 
 		// Initiate polling
 		try {
-			echo "[INFO] Polling ... \n";
+			log_out("INFO", basename(__FILE__), "Polling ... ");
 			$activityTask = $swf->pollForActivityTask(array(
-				"domain"   => $this->domainName,
+				"domain"   => $this->domain,
 				"taskList" => $this->taskList
 				));
 
@@ -56,21 +56,21 @@ Class WorkflowActivityPoller
 			//print_r($activityTask);
 
 		} catch (Exception $e) {
-			echo "Unable to poll activity tasks ! " . $e->getMessage() . "\n";
+			log_out("ERROR", basename(__FILE__), "Unable to poll activity tasks ! " . $e->getMessage());
 			return true;
 		}
 
 		// Can activity be handled by this poller ?
 		if (!($activity = $this->get_activity($activityType["name"]))) 
 		{
-			echo "[ERROR] This activity type is unknown ! Skipping ...\n";
-			echo "[ERROR] Detail: \n";
+			log_out("ERROR", basename(__FILE__), "This activity type is unknown ! Skipping ...");
+			log_out("ERROR", basename(__FILE__), "Detail: ");
 			print_r($activity);
 			return true;
 		}
 		
 		if (!isset($activity["object"])) {
-			echo "[ERROR] The activity handler for this activity is not instantiated !\n";
+			log_out("ERROR", basename(__FILE__),"The activity handler for this activity is not instantiated !");
 			return true;
 		}
 
@@ -100,30 +100,28 @@ Class WorkflowActivityPoller
 
 
 /**
- * TEST PROGRAM
+ * POLLER
  */
 
-$domainName = "SA_TEST2";
-$taskList = array("name" => "TranscodingTaskList");
-
-echo "[INFO] Domain: '$domainName'\n";
-echo "[INFO] TaskList:\n";
-print_r($taskList);
+// Get config file
+$config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
+log_out("INFO", basename(__FILE__), "Domain: '" . $config['SWF']['domain'] . "'");
+log_out("INFO", basename(__FILE__), "TaskList: '" . $config['taskList'] . "'");
 
 try {
-	$wfActivityPoller = new WorkflowActivityPoller($domainName, $taskList);
+	$wfActivityPoller = new WorkflowActivityPoller($config);
 } catch (Exception $e) {
-	echo "Unable to create WorkflowActivityPoller ! " . $e->getMessage() . "\n";
+	log_out("ERROR", basename(__FILE__), "Unable to create WorkflowActivityPoller ! " . $e->getMessage());
 	exit (1);
 }
 
 // Start polling loop
-echo "\n[INFO] Starting activity tasks polling \n";
+log_out("INFO", basename(__FILE__), "Starting activity tasks polling");
 while (1)
 {
 	if (!$wfActivityPoller->poll_for_activities())
 	{
-		echo "[INFO] Polling for activities finished !\n";
+		log_out("INFO", basename(__FILE__), "Polling for activities finished !");
 		exit (1);
 	}
 

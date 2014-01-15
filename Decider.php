@@ -11,16 +11,19 @@ Class WorkflowDecider
 	// Custom object used to inspect workflow history
 	private $workflowTracker;
 
-	function __construct($domainName, $taskList)
+	function __construct($config)
 	{
-		$this->domain   = $domainName;
-		$this->taskList = $taskList;
+		$this->domain   = $config['SWF']['domain'];
+		$this->taskList = array("name" => $config['taskList']);
 
-		if (!init_domain($domainName))
+		if (!init_domain($this->domain))
 			throw new Exception("[ERROR] Unable to init the domain !\n");
 
+		if (!init_workflow($config['SWF']))
+			throw new Exception("[ERROR] Unable to init the workflow !\n");
+
 		// Instantiate tracker. USed to track workflow execution and return next activity to execute
-		$this->workflowTracker = new WorkflowTracker($domainName);
+		$this->workflowTracker = new WorkflowTracker($this->domain);
 	}	
 
 	// Poll for decision tasks
@@ -302,7 +305,7 @@ Class WorkflowDecider
 				"taskToken" => $decisionTask["taskToken"],
 				"decisions" => $decisions
 				));
-		} catch (Aws\Swf\Exception\UnknownResourceException $e) {
+		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			log_out("ERROR", basename(__FILE__), "Resource Unknown ! " . $e->getMessage());
 			return false;
 		} catch (Exception $e) {
@@ -328,7 +331,7 @@ Class WorkflowDecider
 					"completeWorkflowExecutionDecisionAttributes" => array(
 						"result" => "SUCCESS")
 					)]));
-		} catch (Aws\Swf\Exception\UnknownResourceException $e) {
+		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			log_out("ERROR", basename(__FILE__), "Resource Unknown ! " . $e->getMessage());
 			return false;
 		} catch (Exception $e) {
@@ -361,19 +364,17 @@ Class WorkflowDecider
 
 
 /**
- * TEST PROGRAM
+ * DECIDER
  */
 
-$domainName = "SA_TEST2";
-$taskList = array("name" => "TranscodingTaskList");
-
-log_out("INFO", basename(__FILE__), "Domain: '$domainName'");
-log_out("INFO", basename(__FILE__), "TaskList:");
-print_r($taskList);
+// Get config file
+$config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
+log_out("INFO", basename(__FILE__), "Domain: '" . $config['SWF']['domain'] . "'");
+log_out("INFO", basename(__FILE__), "TaskList: '" . $config['taskList'] . "'");
 
 // Start decider
 try {
-	$wfDecider = new WorkflowDecider($domainName, $taskList);
+	$wfDecider = new WorkflowDecider($config);
 } catch (Exception $e) {
 	log_out("ERROR", basename(__FILE__), "Unable to create WorkflowDecider ! " . $e->getMessage());
 	exit (1);

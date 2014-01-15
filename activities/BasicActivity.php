@@ -34,14 +34,15 @@ class BasicActivity
 				"activityType" => $this->activityType
 				));
 			return true;
-		} catch (Aws\Swf\Exception\UnknownResourceException $e) {
-			echo "Activity doesn't exists. Creating it ...\n";
+		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
+			echo "Activity '" . $params["name"] . "' doesn't exists. Creating it ...\n";
 		} catch (Exception $e) {
 			echo "Unable describe activity ! " . $e->getMessage() . "\n";
 			return false;
 		}
 
 		// Register if doesn't exists
+		print_r($params);
 		try {
 			$swf->registerActivityType($params);
 		} catch (Exception $e) {

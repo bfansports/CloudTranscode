@@ -1,0 +1,13 @@
+{
+    "SWF": {
+        "domain": "Cloud Transcode",
+        "name": "cloud_transcode_basic_workflow",
+        "version": "Basic Cloud Transcode Workflow",
+        "description": "Basic Cloud Transcode Workflow",
+        "defaultTaskStartToCloseTimeout": 3600,
+        "defaultExecutionStartToCloseTimeout": 86400,
+        "defaultChildPolicy": "TERMINATE"
+    },
+    "taskList": "TranscodingTaskList",
+    "SQSQueue": "CloudTranscodeQueue"
+}

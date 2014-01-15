@@ -53,7 +53,7 @@ class WorkflowTracker
 				"domain"    => $this->domainName,
 				"execution" => $workflowExecution
 				));
-		} catch (Aws\Swf\Exception\UnknownResourceException $e) {
+		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			echo "[ERROR] Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage() . "\n";
 			return false;
 		} catch (Exception $e) {

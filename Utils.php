@@ -9,9 +9,10 @@ use Aws\Swf\Exception;
 
 $root = realpath(dirname(__FILE__));
 // Create AWS SDK instance
-$aws = Aws::factory("$root/config/config.json");
+$aws = Aws::factory("$root/config/awsConfig.json");
 // SWF client
 $swf = $aws->get('Swf');
+$sqs = $aws->get('Sqs');
 
 // Defines
 define('DOMAIN', 'CloudTranscode');
@@ -46,6 +47,12 @@ $activities = array(
 	"class"   	  => "ValidateTranscodedAssetActivity"
 	]);
 
+// Log to STDOUT
+function log_out($type, $source, $message)
+{
+	echo "[$type] [$source] $message\n";
+}
+
 // Initialize the domain. Create it if needed
 function init_domain($domainName)
 {
@@ -56,7 +63,7 @@ function init_domain($domainName)
 	{
 		$swf->describeDomain(array("name" => $domainName));
 		return true;
-	} catch (Aws\Swf\Exception\UnknownResourceException $e) {
+	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 		echo "Domain doesn't exists. Creating it ...\n";
 	} catch (Exception $e) {
 		echo "Unable to get domain list ! " . $e->getMessage() . "\n";
@@ -78,8 +85,35 @@ function init_domain($domainName)
 	}
 }
 
-// Log to STDOUT
-function log_out($type, $source, $message)
+function init_workflow($params)
 {
-	echo "[$type] [$source] $message\n";
+	global $swf;
+
+	// Save WF info
+	$workflowType = array(
+		"name"    => $params["name"],
+		"version" => $params["version"]);
+
+		// Get existing workflows
+	try {
+		$swf->describeWorkflowType(array(
+			"domain"       => $params["domain"],
+			"workflowType" => $workflowType
+			));
+		return true;
+	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
+		echo "Workflow doesn't exists. Creating it ...\n";
+	} catch (Exception $e) {
+		echo "Unable to describe the workflow ! " . $e->getMessage() . "\n";
+		return false;
+	}
+
+		// If not registered, we register the WF
+	try {
+		$swf->registerWorkflowType($params);
+		return true;
+	} catch (Exception $e) {
+		echo "Unable to register new workflow ! " . $e->getMessage() . "\n";
+		return false;
+	}
 }

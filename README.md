@@ -1,5 +1,10 @@
-cloudTranscode
-==============
+---
+title: Cloud Transcode
+layout: default
+---
+
+Introduction
+============
 
 Custom transcoding stack using FFMPEG and Amazon AWS.
 

@@ -50,7 +50,7 @@ $activities = array(
 // Log to STDOUT
 function log_out($type, $source, $message)
 {
-	echo "[$type] [$source] $message\n";
+	echo time() . " [$type] [$source] $message\n";
 }
 
 // Initialize the domain. Create it if needed
@@ -116,4 +116,17 @@ function init_workflow($params)
 		echo "Unable to register new workflow ! " . $e->getMessage() . "\n";
 		return false;
 	}
+}
+
+function get_activity($activityName)
+{
+	global $activities;
+
+	foreach ($activities as $activity)
+	{
+		if ($activity["name"] == $activityName)
+			return ($activity);
+	}
+
+	return false;
 }

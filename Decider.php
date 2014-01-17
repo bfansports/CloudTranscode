@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * The Decider listen to the workflow and make decisions automaticaly.
+ * "decision tasks" != "activity tasks".
+ * Decision tasks are "command tasks", resulting from an event in the workfow
+ * workflow start, workflow exec complete, workflow failed, etc ...
+ * Using the workflow history, it makes decisions
+ */
+
 require 'Utils.php';
 require 'WorkflowTracker.php';
 
@@ -364,7 +372,7 @@ Class WorkflowDecider
 
 
 /**
- * DECIDER
+ * DECIDER START
  */
 
 // Get config file

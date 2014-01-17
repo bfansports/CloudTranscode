@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * The activity poller listen for "activity tasks" 
+ * Stuff to do, compute, process, whatever.
+ * We do transcoding
+ */
+
 require "Utils.php";
 require "./activities/BasicActivity.php";
 
@@ -61,7 +67,8 @@ Class WorkflowActivityPoller
 		}
 
 		// Can activity be handled by this poller ?
-		if (!($activity = $this->get_activity($activityType["name"]))) 
+		// /** Utils.php **/
+		if (!($activity = get_activity($activityType["name"]))) 
 		{
 			log_out("ERROR", basename(__FILE__), "This activity type is unknown ! Skipping ...");
 			log_out("ERROR", basename(__FILE__), "Detail: ");
@@ -85,25 +92,12 @@ Class WorkflowActivityPoller
 		$activity["object"]->activity_completed($activityTask, $result);
 		return true;
 	}
-
-	private function get_activity($activityName)
-	{
-		global $activities;
-
-		foreach ($activities as $activity)
-		{
-			if ($activity["name"] == $activityName)
-				return ($activity);
-		}
-
-		return false;
-	}
 }
 
 
 
 /**
- * POLLER
+ * POLLER START
  */
 
 // Get config file

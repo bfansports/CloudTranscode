@@ -19,9 +19,9 @@ class TranscodeAssetActivity extends BasicActivity
 		// Array returned by this function back to the decider
 		// We also send it as hearbeat data "json encoded"
 		$this->details = array(
-			"workflowId"   => $task->get("workflowExecution");
-			"activityType" => $task->get("activityType");
-			"activityId"   => $task->get("activityId");
+			"workflowId"   => $task->get("workflowExecution"),
+			"activityType" => $task->get("activityType"),
+			"activityId"   => $task->get("activityId"),
 			"status"       => "STARTING",
 			"started"      => $this->started,
 			"duration"     => 0,

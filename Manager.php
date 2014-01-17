@@ -3,7 +3,8 @@
 require 'Utils.php';
 
 /**
- * workflow manager helps you manipulate 
+ * workflow manager helps you manipulate Worflows.
+ * Start, Stop, Cancel, etc ...
  */
 class Manager
 {

@@ -44,7 +44,6 @@ TODO
 - Communicate status, progression and errors back through SQS
 - Use AWS OpsWork to handle auto deployment. Chef recipe for OpsWork can be found in this repo: https://github.com/sportarchive/cloudTranscodeChef
 - Improve Decider to enable worker auto scaling based on load
-- 
 
 
 

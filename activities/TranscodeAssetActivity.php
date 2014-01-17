@@ -5,21 +5,49 @@ class TranscodeAssetActivity extends BasicActivity
 {
 	private $ffmpegValidationOutput;
 	private $inputFileDuration;
+	private $started;
+	private $details;
+
+	function __construct($config)
+	{
+		$this->started = time();
+
+		// Array returned by this function back to the decider
+		// We also send it as hearbeat data "json encoded"
+		$this->details = array(
+			"status"       => "STARTING",
+			"started"      => $this->started,
+			"duration"     => 0,
+			"progress"     => 0,
+			"msg"          => "Transcoding process starting ...");
+	}
 
 	// Perform the activity
 	public function do_activity($task)
 	{
 		global $swf;
 
+		// Init task info in details array for when return
+		$this->details["workflowId"]   = $task->get("workflowExecution");
+		$this->details["activityType"] = $task->get("activityType");
+		$this->details["activityId"]   = $task->get("activityId");
+
 		log_out("INFO", basename(__FILE__), "Starting Transcoding Asset ...");
-		
+
+		// Send first heartbeat to initiate status
+		if (!$this->sendHeartbeat($task, $this->details)) {
+			$this->details["status"]   = "ERROR";
+			$this->details["msg"]      = "Unable to send to send heartbeat !";
+			return $this->details;
+		}
+
 		// Processing input variables
-		$input = json_decode($task->get("input"));
-		$inputFile = $input->{"input_file"};
+		$input       = json_decode($task->get("input"));
+		$inputFile   = $input->{"input_file"};
 		$inputConfig = $input->{"input_config"};
+		$output      = $input->{"output"};
 		$this->ffmpegValidationOutput = $input->{"ffmpeg_validation_output"};
 		$this->inputFileDuration = $input->{"input_file_duration"};
-		$output = $input->{"output"};
 
 		log_out("INFO", basename(__FILE__), "Start transcoding input file: $inputFile");
 
@@ -27,45 +55,83 @@ class TranscodeAssetActivity extends BasicActivity
 		$outputPath = "/tmp/";
 		$outputFile = $output->{"file"};
 		$ffmpegArgs = "-i $inputFile -y -s " . $output->{'size'} . " -vcodec " . $output->{'video_codec'} . " -acodec " . $output->{'audio_codec'} . " -b " . $output->{'video_bitrate'} . " -bufsize " . $output->{'buffer_size'} . " -ab " . $output->{'audio_bitrate'} . " ${outputPath}${outputFile}";
-		$ffmpegCmd = "ffmpeg $ffmpegArgs 2>&1";
+		$ffmpegCmd  = "ffmpeg $ffmpegArgs";
 		log_out("INFO", basename(__FILE__), "FFMPEG CMD: $ffmpegCmd\n");
 
 		// Exec command and capture output
-		$handle = popen($ffmpegCmd, 'r');
+		$descriptorSpecs = array(
+			0 => array("pipe", "r"),  
+			1 => array("pipe", "w"),  
+			2 => array("file", "/tmp/cloudtranscode/${inputFile}.err") 
+			);
+
+		$handle = proc_open($ffmpegCmd, $descriptorSpecs, $pipes);
 		$content = "";
 		$i = 0;
-		while (1) {
-			// If program is over
-			if (feof($handle)) {
-				$progress = $this->captureProgression($content);
-				$this->reportProgress($progress);
-				if (!$this->sendHeartbeat($task, $progress))
-					return false;
-				break;
-			}
-			// REad prog output
-			$out = fread($handle, 8192);
-			$content .= $out;
+		if (is_resource($handle))
+		{
+			$procStatus = proc_get_status($handle);
 
-			// Get progression and notify SWF with heartbeat
-			if ($i == 10) {
-				$progress = $this->captureProgression($content);
-				$this->reportProgress($progress);
-				if (!$this->sendHeartbeat($task, $progress))
-					return false;
-				$i = 0;
+			// While process running, we read output
+			while ($procStatus['running']) {
+				// REad prog output
+				$out = fread($handle, 8192);
+				$content .= $out;
+
+				// Get progression and notify SWF with heartbeat
+				if ($i == 10) {
+					$progress = $this->captureProgression($content);
+					$this->details["status"]   = "PROCESSING";
+					$this->details["duration"] = time() - $this->started;
+					$this->details["progress"] = $progress;
+					$this->details["msg"]      = "Video '${inputFile}' is being transocoded ...";
+
+					if (!$this->sendHeartbeat($task, $this->details)) {
+						$this->details["status"]  = "ERROR";
+						$this->details["msg"]     = "Unable to send to send heartbeat !";
+						return $this->details;
+					}
+					$i = 0;
+				}
+
+				sleep(1);
+				$i++;
+
+				// Get latest status
+				$procStatus = proc_get_status( $process );
 			}
 
-			sleep(1);
-			$i++;
+			// FFMPEG process is over
+			$return_value = proc_close($process);
+			// Error in processing
+			if ($return_value)
+			{
+				$error = file_get_contents("/tmp/cloudtranscode/${inputFile}.err");
+				$this->details["status"]   = "ERROR";
+				$this->details["duration"] = time() - $this->started;
+				$this->details["progress"] = 0;
+				$this->details["msg"]      = "Error transcoding '$inputFile': $error";
+
+				return $this->details;
+			}
+
+			// No error. Transcode successful
+			log_out("INFO", basename(__FILE__), "Transcoding asset '$inputFile' is DONE !");
+			$this->details["status"]   = "SUCCESS";
+			$this->details["duration"] = time() - $this->started;
+			$this->details["progress"] = 100;
+			$this->details["msg"]      = "Transcoding successful for '$inputFile'";
 		}
-		fclose($handle);
+		else
+		{
+			$this->details["status"]  = "ERROR";
+			$this->details["msg"]     = "Unable to execute ffmpeg command to transcode '$inputFile' !";
+		}
 
-		log_out("INFO", basename(__FILE__), "Transcoding asset '$inputFile' is DONE !");
-
-		return ($task->get("input"));
+		return $this->details;
 	}
 
+	// REad ffmpeg output and calculate % progress
 	private function captureProgression($out)
 	{
 		// # get the current time
@@ -91,13 +157,8 @@ class TranscodeAssetActivity extends BasicActivity
 		return ($progress);
 	}
 
-	private function reportProgress($progress)
-	{
-		// NEED TO REPORT PROGRESS TO DB
-		// Prog starting the WF will pull progress information from DB
-	}
-
-	private function sendHeartbeat($task, $progress)
+	// Send hearbeat back to workflow
+	private function sendHeartbeat($task, $details)
 	{
 		global $swf;
 
@@ -105,7 +166,7 @@ class TranscodeAssetActivity extends BasicActivity
 			$taskToken = $task->get("taskToken");
 			log_out("INFO", basename(__FILE__), "Sending heartbeat to SWF ...");
 			$info = $swf->recordActivityTaskHeartbeat(array(
-				"details"   => "$progress",
+				"details"   => json_encode($details),
 				"taskToken" => $taskToken));
 
 			// Workflow returns if this task should be canceled
@@ -119,6 +180,7 @@ class TranscodeAssetActivity extends BasicActivity
 			return false;
 		}
 	}
+
 }
 
 

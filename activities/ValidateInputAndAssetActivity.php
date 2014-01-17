@@ -53,9 +53,9 @@ class ValidateInputAndAssetActivity extends BasicActivity
 			$localCopy = $localPath . $input->{'input_file'};
 			$localCopyInfoLogs = $localPath . $input->{'input_file'} . ".log";
 			
-			if (!file_exists($localCopy))
+			if (!file_exists($localCopy) || !filesize($localCopy))
 			{
-				log_out("INFO", basename(__FILE__), "Downloading input file from S3. Bucket: '" . $input->{'input_bucket'} . "' Key: '" . $input->{'input_file'} . "'");
+				log_out("INFO", basename(__FILE__), "Downloading input file from S3. Bucket: '" . $input->{'input_bucket'} . "' File: '" . $input->{'input_file'} . "'");
 				
 				// S3 client
 				$s3 = $aws->get('S3');
@@ -70,8 +70,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
 				log_out("INFO", basename(__FILE__), "Using local copy of input file: '" . $localCopy . "'");
 			
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "No input file specified !");
-			$this->activity_failed($task, "GET_OBJECT_FAILED", "No input file specified !");
+			log_out("ERROR", basename(__FILE__), "Unable to get input file from S3 ! " . $e->getMessage());
+			$this->activity_failed($task, "GET_OBJECT_FAILED", "Unable to get input file from S3 ! " . $e->getMessage());
 			return false;
 		}
 
@@ -112,8 +112,15 @@ class ValidateInputAndAssetActivity extends BasicActivity
 
 	private function getFileDuration($ffmpegValidationOutput)
 	{
+		log_out("DEBUG", basename(__FILE__), "FFMpeg validation output: $ffmpegValidationOutput");
+
 		preg_match("/Duration: (.*?), start:/", $ffmpegValidationOutput, $matches);
-		$rawDuration = $matches[1];
+		if ($matches)
+			$rawDuration = $matches[1];
+		else
+		{
+
+		}
 		$ar = array_reverse(explode(":", $rawDuration));
 		$duration = floatval($ar[0]);
 		if (!empty($ar[1])) $duration += intval($ar[1]) * 60;

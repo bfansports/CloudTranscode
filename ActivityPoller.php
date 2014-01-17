@@ -75,11 +75,14 @@ Class WorkflowActivityPoller
 		}
 
 		// Run activity task
-		if (($result = $activity["object"]->do_activity($activityTask))) {
-			$activity["object"]->activity_completed($activityTask, $result);
-			return true;
+		$result = $activity["object"]->do_activity($activityTask);
+		if ($result["STATUS"] != "SUCCESS")
+		{
+			$activity["object"]->activity_failed($activityTask, $result);
+			return false;
 		}
 
+		$activity["object"]->activity_completed($activityTask, $result);
 		return true;
 	}
 

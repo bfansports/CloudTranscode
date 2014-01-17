@@ -24,7 +24,7 @@ if (!init_workflow($config['SWF']))
 	throw new Exception("[ERROR] Unable to init the workflow !\n");
 
 // Get SQS queue URL
-$queueURL = $sqs->getQueueUrl(array('QueueName' => $config['SQSQueue']));
+$inputQueue = $sqs->getQueueUrl(array('QueueName' => $config['SQS']['input']));
 
 // Start polling loop
 log_out("INFO", basename(__FILE__), "Starting SQS message polling");
@@ -34,7 +34,7 @@ while (1)
 
 	// Check for new msg, poll for 10sec
 	$result = $sqs->receiveMessage(array(
-		'QueueUrl'        => $queueURL['QueueUrl'],
+		'QueueUrl'        => $inputQueue['QueueUrl'],
 		'WaitTimeSeconds' => 2,
 		));
 
@@ -64,7 +64,7 @@ while (1)
 			
 			// Delete msg from queue
 			$sqs->deleteMessage(array(
-				'QueueUrl'        => $queueURL['QueueUrl'],
+				'QueueUrl'        => $inputQueue['QueueUrl'],
 				'ReceiptHandle'   => $msg['ReceiptHandle']));
 		}
 	}

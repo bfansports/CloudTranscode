@@ -1,0 +1,71 @@
+{
+	"input_bucket": "sport-archive/upload/to-transcode",
+	"input_file": "test1.mp4",
+	"test": true,
+	"data": "Custom data for the job",
+	"mock": true,
+	"group": "league1",
+	"checksum": "2342fdf2342ff23r2f",
+	"outputs": [
+		{
+			"label": "Low Res IPOD 320p",
+			"output_bucket": "sport-archive/transcoded/videos/",
+			"rrs": true, 
+			"file": "test1_low1.mp4",
+			"preset": "ipod320",
+			"skip_video": false,
+			"skip_audio": false,
+			"format": "mp4",
+			"video_codec": "libx264",
+			"audio_codec": "libfdk_aac",
+			"size": "480x320",
+			"video_quality": 3,
+			"video_bitrate": "364k",
+			"audio_quality": 3,
+			"audio_bitrate": "96k",
+			"buffer_size": "1600k",
+			"speed": 3,
+			"frame_Rate": 25,
+			"thumbnails": true,
+			"watermarks": [
+				{
+					"file_path_s3": "sport-archive/watermark/logo.png",
+					"height": 30,
+					"width": 79,
+					"x": "20",
+					"y": "20"
+				}
+			]
+		},
+		{
+			"label": "High RES 720p",
+			"output_bucket": "sport-archive/transcoded/videos/",
+			"rrs": true, 
+			"file": "test1_high1.mp4",
+			"preset": "720p",
+			"skip_video": false,
+			"skip_audio": false,
+			"format": "mp4",
+			"video_codec": "libx264",
+			"audio_codec": "libfdk_aac",
+			"size": "1280x720",
+			"video_quality": 3, 
+			"video_bitrate": "1500k",
+			"audio_quality": 3,
+			"audio_bitrate": "128k", 
+			"buffer_size": "8000k",
+			"speed": 3,
+			"frame_Rate": 25,
+			"thumbnails": true,
+			"watermarks": [
+				{
+					"file_path_s3": "sport-archive/watermark/logo.png",
+					"height": 30,
+					"width": 79,
+					"x": "20",
+					"y": "20"
+				}
+			]
+		}
+	]
+}

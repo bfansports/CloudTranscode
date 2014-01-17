@@ -1,10 +1,13 @@
+// Rename this file to awsConfig.json
+// Put your credentials in
+
 {
     "includes": ["_aws"],
     "services": {
         "default_settings": {
             "params": {
-                "key": "AKIAI3BPXQNX4M2HKFJA",
-                "secret": "dwX5cQdUK7iCX2Kwn2tR/nclKbo4C2IV8oEPsEOA",
+                "key": "YOUR_KEY",
+                "secret": "YOUR_SECRET",
                 "region": "us-east-1"
             }
         }

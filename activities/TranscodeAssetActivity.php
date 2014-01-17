@@ -1,6 +1,9 @@
 <?php
 
-// This class serves as a skeletton for classes impleting actual activity
+/**
+ * This class performs transcoding
+ * FFMpeg only for now
+ */
 class TranscodeAssetActivity extends BasicActivity
 {
 	private $ffmpegValidationOutput;
@@ -8,33 +11,29 @@ class TranscodeAssetActivity extends BasicActivity
 	private $started;
 	private $details;
 
-	function __construct($config)
+	// Perform the activity
+	public function do_activity($task)
 	{
+		global $swf;
 		$this->started = time();
-
 		// Array returned by this function back to the decider
 		// We also send it as hearbeat data "json encoded"
 		$this->details = array(
+			"workflowId"   => $task->get("workflowExecution");
+			"activityType" => $task->get("activityType");
+			"activityId"   => $task->get("activityId");
 			"status"       => "STARTING",
 			"started"      => $this->started,
 			"duration"     => 0,
 			"progress"     => 0,
 			"msg"          => "Transcoding process starting ...");
-	}
 
-	// Perform the activity
-	public function do_activity($task)
-	{
-		global $swf;
-
-		// Init task info in details array for when return
-		$this->details["workflowId"]   = $task->get("workflowExecution");
-		$this->details["activityType"] = $task->get("activityType");
-		$this->details["activityId"]   = $task->get("activityId");
 
 		log_out("INFO", basename(__FILE__), "Starting Transcoding Asset ...");
-
-		// Send first heartbeat to initiate status
+		
+		/**
+		 * Send first heartbeat to initiate status
+		 */
 		if (!$this->sendHeartbeat($task, $this->details)) {
 			$this->details["status"]   = "ERROR";
 			$this->details["msg"]      = "Unable to send to send heartbeat !";
@@ -157,7 +156,10 @@ class TranscodeAssetActivity extends BasicActivity
 		return ($progress);
 	}
 
-	// Send hearbeat back to workflow
+	/**
+	 * Send heartbeat to SWF to keep the task alive.
+	 * Timeout is configurable at the Activity level
+	*/
 	private function sendHeartbeat($task, $details)
 	{
 		global $swf;
@@ -165,6 +167,16 @@ class TranscodeAssetActivity extends BasicActivity
 		try {
 			$taskToken = $task->get("taskToken");
 			log_out("INFO", basename(__FILE__), "Sending heartbeat to SWF ...");
+
+			/*
+			 * FEATURE REQUEST:
+			 * AWS doesn't give access to the heartbeata data sent here: "details"   => json_encode($details)
+			 * Data becomes available only if the task timeout.
+			 * We need to have access to the heartbeat data. Through the WF history or on demand using an activityID, which I is less overhead.
+			 * We could only access the last heatbeat data for example, keeping the resources necessary for this feature minimal.
+			 * Without this feature we can't capture the status/progress of the current task.
+			 * https://forums.aws.amazon.com/thread.jspa?messageID=516823&#516823
+			 */
 			$info = $swf->recordActivityTaskHeartbeat(array(
 				"details"   => json_encode($details),
 				"taskToken" => $taskToken));

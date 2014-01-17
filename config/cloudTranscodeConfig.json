@@ -9,5 +9,8 @@
         "defaultChildPolicy": "TERMINATE"
     },
     "taskList": "TranscodingTaskList",
-    "SQSQueue": "CloudTranscodeQueue"
+    "SQS": {
+        "input": "CloudTranscodeInputQueue",
+        "output": "CloudTranscodeOutputQueue"
+    }
 }

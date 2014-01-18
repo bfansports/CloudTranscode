@@ -1,19 +1,21 @@
 {
+    "cloudTranscode": {
+        "SWF": {
+            "domain": "Cloud Transcode",
+            "name": "cloud_transcode_basic_workflow",
+            "version": "v1",
+            "description": "Basic Cloud Transcode Workflow",
+            "defaultTaskStartToCloseTimeout": 3600,
+            "defaultExecutionStartToCloseTimeout": 86400,
+            "defaultChildPolicy": "TERMINATE"
+        },
+    },
     "clients": [
         "RSInTheCloud": {
-            "SWF": {
-                "domain": "Cloud Transcode",
-                "name": "cloud_transcode_basic_workflow",
-                "version": "Basic Cloud Transcode Workflow",
-                "description": "Basic Cloud Transcode Workflow",
-                "defaultTaskStartToCloseTimeout": 3600,
-                "defaultExecutionStartToCloseTimeout": 86400,
-                "defaultChildPolicy": "TERMINATE"
-            },
-            "taskList": "TranscodingTaskList",
+            "taskList": "CT-RSInTheCloud-TaskList",
             "SQS": {
-                "input": "CloudTranscodeInputQueue",
-                "output": "CloudTranscodeOutputQueue"
+                "input": "CT-RSInTheCloud-InputQueue",
+                "output": "CT-RSInTheCloud-OutputQueue"
             }
         }    
     ]

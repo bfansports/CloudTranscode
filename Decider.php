@@ -21,13 +21,14 @@ Class WorkflowDecider
 
 	function __construct($config)
 	{
-		$this->domain   = $config['SWF']['domain'];
-		$this->taskList = array("name" => $config['taskList']);
+		$this->domain   = $config['cloudTranscode']['SWF']['domain'];
+		$this->taskList = array("name" => $config['cloudTranscode']['SWF']['taskList']);
 
+		// Init domain
 		if (!init_domain($this->domain))
 			throw new Exception("[ERROR] Unable to init the domain !\n");
 
-		if (!init_workflow($config['SWF']))
+		if (!init_workflow($config['cloudTranscode']['SWF']))
 			throw new Exception("[ERROR] Unable to init the workflow !\n");
 
 		// Instantiate tracker. USed to track workflow execution and return next activity to execute
@@ -60,7 +61,7 @@ Class WorkflowDecider
 		// Register workflow in tracker. If already registered nothing happens
 		if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, $activities))
 		{
-			log_out("FATAL", basename(__FILE__), "Unable to register the workflow in tracker ! Can't process decision task !");
+			log_out("ERROR", basename(__FILE__), "Unable to register the workflow in tracker ! Can't process decision task !");
 			return false; 
 		}
 
@@ -377,8 +378,10 @@ Class WorkflowDecider
 
 // Get config file
 $config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
-log_out("INFO", basename(__FILE__), "Domain: '" . $config['SWF']['domain'] . "'");
-log_out("INFO", basename(__FILE__), "TaskList: '" . $config['taskList'] . "'");
+log_out("INFO", basename(__FILE__), "Domain: '" . $config['cloudTranscode']['SWF']['domain'] . "'");
+log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['SWF']['taskList'] . "'");
+log_out("INFO", basename(__FILE__), "Clients: ");
+print_r($config['clients']);
 
 // Start decider
 try {

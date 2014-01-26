@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This script listen to AWS SQS for incoming input commands (TODO: Input Sanity check)
+ * This script listen to AWS SQS for incoming input commands
  * It opens the JSON input and starts a new Workflow with it
  */
 
@@ -48,30 +48,31 @@ while (1)
 
 		// Check incoming message
 		foreach ($messages as $msg) {
-    		// Msg body
+    		// Msg body print
 			// log_out("INFO", basename(__FILE__), "New Input: ");
 			// print($msg['Body'] . "\n");
 
-			try {
-				log_out("INFO", basename(__FILE__), "Requesting new workflow to process input ...");
-
-				/**
-				 * We start a WF with user input
-				 * !! SECURITY ISSUE !!
-				 * NO INPUT sanity check !! 
-				 */
-				$workflowRunId = $swf->startWorkflowExecution(array(
-					"domain"       => $config['SWF']['domain'],
-					"workflowId"   => uniqid(),
-					"workflowType" => $workflowType,
-					"taskList"     => array("name" => $config['taskList']),
-					"input"        => $msg['Body']
-					));
+			try {	
+				log_out("INFO", basename(__FILE__), "New SQS input msg. Checking JSON format ...");		
+				if (!json_decode($msg['Body']))
+					log_out("ERROR", basename(__FILE__), "Input received from SQS queue has an invalid JSON format ! Discarding ...");
+				else 
+				{
+					log_out("INFO", basename(__FILE__), "Requesting new workflow to process input ...");
+					$workflowRunId = $swf->startWorkflowExecution(array(
+						"domain"       => $config['SWF']['domain'],
+						"workflowId"   => uniqid(),
+						"workflowType" => $workflowType,
+						"taskList"     => array("name" => $config['taskList']),
+						"input"        => $msg['Body']
+						));
+				}
 			} catch (Exception $e) {
-				log_out("FATAL", basename(__FILE__), "Unable to start workflow execution  ! " . $e->getMessage());
+				log_out("ERROR", basename(__FILE__), "Unable to start workflow execution  ! " . $e->getMessage());
 			}
 			
 			// Delete msg from SQS queue
+			log_out("INFO", basename(__FILE__), "Deleting msg from SQS queue ...");
 			$sqs->deleteMessage(array(
 				'QueueUrl'        => $inputQueue['QueueUrl'],
 				'ReceiptHandle'   => $msg['ReceiptHandle']));

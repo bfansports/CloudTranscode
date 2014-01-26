@@ -16,7 +16,6 @@ class WorkflowTracker
 			throw new Exception("Domain is null !\n");
 
 		$this->domainName = $domainName;
-
 		$this->excutionTracker = array();
 	}	
 
@@ -27,7 +26,7 @@ class WorkflowTracker
 		// If not, then we will query the history for you.
 		if (!$events) {
 			if (!($events = $this->get_workflow_history_events($workflowExecution))) {
-				echo "[ERROR] Unable to get workflow Input !\n";
+				log_out("ERROR", basename(__FILE__), "Unable to get workflow Input data !");
 				return false;
 			}
 		}
@@ -39,7 +38,7 @@ class WorkflowTracker
 				return ($event["workflowExecutionStartedEventAttributes"]["input"]);
 		}
 
-		echo "[ERROR] Input value cannot be retrived from workflow events history ! \n";
+		log_out("ERROR", basename(__FILE__), "Input value cannot be retrieved from workflow events history !");
 		return false;
 	}
 
@@ -54,10 +53,10 @@ class WorkflowTracker
 				"execution" => $workflowExecution
 				));
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-			echo "[ERROR] Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage() . "\n";
+			log_out("ERROR", basename(__FILE__), "Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage());
 			return false;
 		} catch (Exception $e) {
-			echo "[ERROR] Unable to get workflow history ! " . $e->getMessage() . "\n";
+			log_out("ERROR", basename(__FILE__), "Unable to get workflow history ! " . $e->getMessage());
 			return false;
 		}
 

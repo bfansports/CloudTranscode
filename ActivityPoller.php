@@ -18,12 +18,13 @@ Class WorkflowActivityPoller
 	{
 		global $activities;
 
-		$this->domain   = $config['SWF']['domain'];
-		$this->taskList = array("name" => $config['taskList']);
+		$this->domain   = $config['cloudTranscode']['SWF']['domain'];
+		$this->taskList = array("name" => $config['cloudTranscode']['SWF']['taskList']);
 
+		// Init domain
 		if (!init_domain($this->domain))
 			throw new Exception("Unable to init the domain !\n");
-		
+
 		// Dynamically load classes responsible for handling each activity.
 		// See utils.php for the list
 		foreach ($activities as &$activity)
@@ -102,8 +103,10 @@ Class WorkflowActivityPoller
 
 // Get config file
 $config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
-log_out("INFO", basename(__FILE__), "Domain: '" . $config['SWF']['domain'] . "'");
-log_out("INFO", basename(__FILE__), "TaskList: '" . $config['taskList'] . "'");
+log_out("INFO", basename(__FILE__), "Domain: '" . $config['cloudTranscode']['SWF']['domain'] . "'");
+log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['SWF']['taskList'] . "'");
+log_out("INFO", basename(__FILE__), "Clients: ");
+print_r($config['clients']);
 
 try {
 	$wfActivityPoller = new WorkflowActivityPoller($config);

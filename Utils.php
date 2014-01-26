@@ -64,9 +64,9 @@ function init_domain($domainName)
 		$swf->describeDomain(array("name" => $domainName));
 		return true;
 	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-		echo "Domain doesn't exists. Creating it ...\n";
+		log_out("INFO", basename(__FILE__), "Domain doesn't exists. Creating it ...");
 	} catch (Exception $e) {
-		echo "Unable to get domain list ! " . $e->getMessage() . "\n";
+		log_out("ERROR", basename(__FILE__), "Unable to get domain list ! " . $e->getMessage());
 		return false;
 	}
 
@@ -80,7 +80,7 @@ function init_domain($domainName)
 			));
 		return true;
 	} catch (Exception $e) {
-		echo 'Unable to create the domain !' . $e->getMessage() . "\n";
+		log_out("ERROR", basename(__FILE__), "Unable to create the domain !" . $e->getMessage());
 		return false;
 	}
 }
@@ -102,9 +102,9 @@ function init_workflow($params)
 			));
 		return true;
 	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-		echo "Workflow doesn't exists. Creating it ...\n";
+		log_out("ERROR", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
 	} catch (Exception $e) {
-		echo "Unable to describe the workflow ! " . $e->getMessage() . "\n";
+		log_out("ERROR", basename(__FILE__), "Unable to describe the workflow ! " . $e->getMessage());
 		return false;
 	}
 
@@ -113,7 +113,7 @@ function init_workflow($params)
 		$swf->registerWorkflowType($params);
 		return true;
 	} catch (Exception $e) {
-		echo "Unable to register new workflow ! " . $e->getMessage() . "\n";
+		log_out("ERROR", basename(__FILE__), "Unable to register new workflow ! " . $e->getMessage());
 		return false;
 	}
 }

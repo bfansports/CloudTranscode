@@ -53,7 +53,7 @@ class TranscodeAssetActivity extends BasicActivity
 		// Setup transcoding commands
 		$outputPath = "/tmp/";
 		$outputFile = $output->{"file"};
-		$ffmpegArgs = "-i $inputFile -y -s " . $output->{'size'} . " -vcodec " . $output->{'video_codec'} . " -acodec " . $output->{'audio_codec'} . " -b " . $output->{'video_bitrate'} . " -bufsize " . $output->{'buffer_size'} . " -ab " . $output->{'audio_bitrate'} . " ${outputPath}${outputFile}";
+		$ffmpegArgs = "-i $inputFile -y -s " . $output->{'size'} . " -vcodec " . $output->{'video_codec'} . " -acodec " . $output->{'audio_codec'} . " -b:v " . $output->{'video_bitrate'} . " -bufsize " . $output->{'buffer_size'} . " -b:a " . $output->{'audio_bitrate'} . " ${outputPath}${outputFile}";
 		$ffmpegCmd  = "ffmpeg $ffmpegArgs";
 		log_out("INFO", basename(__FILE__), "FFMPEG CMD: $ffmpegCmd\n");
 

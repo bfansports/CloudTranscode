@@ -75,26 +75,26 @@
 /*
  * Corrects block display not defined in IE6/7/8/9 & FF3
  */
-article,
-aside,
-details,
-figcaption,
-figure,
-footer,
-header,
-hgroup,
-nav,
-section,
-summary {
+ article,
+ aside,
+ details,
+ figcaption,
+ figure,
+ footer,
+ header,
+ hgroup,
+ nav,
+ section,
+ summary {
   display: block;
 }
 
 /*
  * Corrects inline-block display not defined in IE6/7/8/9 & FF3
  */
-audio,
-canvas,
-video {
+ audio,
+ canvas,
+ video {
   display: inline-block;
   *display: inline;
   *zoom: 1;
@@ -103,7 +103,7 @@ video {
 /*
  * Prevents modern browsers from displaying 'audio' without controls
  */
-audio:not([controls]) {
+ audio:not([controls]) {
   display: none;
 }
 
@@ -111,7 +111,7 @@ audio:not([controls]) {
  * Addresses styling for 'hidden' attribute not present in IE7/8/9, FF3, S4
  * Known issue: no IE6 support
  */
-[hidden] {
+ [hidden] {
   display: none;
 }
 
@@ -124,7 +124,7 @@ audio:not([controls]) {
  * 2. Prevents iOS text size adjust after orientation change, without disabling user zoom
  *    www.456bereastreet.com/archive/201012/controlling_text_size_in_safari_for_ios_without_disabling_user_zoom/
  */
-html {
+ html {
   font-size: 100%;
   /* 1 */
   -webkit-text-size-adjust: 100%;
@@ -136,18 +136,18 @@ html {
 /*
  * Addresses font-family inconsistency between 'textarea' and other form elements.
  */
-html,
-button,
-input,
-select,
-textarea {
+ html,
+ button,
+ input,
+ select,
+ textarea {
   font-family: sans-serif;
 }
 
 /*
  * Addresses margins handled incorrectly in IE6/7
  */
-body {
+ body {
   margin: 0;
 }
 
@@ -157,7 +157,7 @@ body {
 /*
  * Addresses outline displayed oddly in Chrome
  */
-a:focus {
+ a:focus {
   outline: thin dotted;
 }
 
@@ -165,8 +165,8 @@ a:focus {
  * Improves readability when focused and also mouse hovered in all browsers
  * people.opera.com/patrickl/experiments/keyboard/test
  */
-a:hover,
-a:active {
+ a:hover,
+ a:active {
   outline: 0;
 }
 
@@ -177,7 +177,7 @@ a:active {
  * Addresses font sizes and margins set differently in IE6/7
  * Addresses font sizes within 'section' and 'article' in FF4+, Chrome, S5
  */
-h1 {
+ h1 {
   font-size: 2em;
   margin: 0.67em 0;
 }
@@ -210,15 +210,15 @@ h6 {
 /*
  * Addresses styling not present in IE7/8/9, S5, Chrome
  */
-abbr[title] {
+ abbr[title] {
   border-bottom: 1px dotted;
 }
 
 /*
  * Addresses style set to 'bolder' in FF3+, S4/5, Chrome
-*/
-b,
-strong {
+ */
+ b,
+ strong {
   font-weight: bold;
 }
 
@@ -229,14 +229,14 @@ blockquote {
 /*
  * Addresses styling not present in S5, Chrome
  */
-dfn {
+ dfn {
   font-style: italic;
 }
 
 /*
  * Addresses styling not present in IE6/7/8/9
  */
-mark {
+ mark {
   background: #ff0;
   color: #000;
 }
@@ -244,8 +244,8 @@ mark {
 /*
  * Addresses margins set differently in IE6/7
  */
-p,
-pre {
+ p,
+ pre {
   margin: 1em 0;
 }
 
@@ -253,10 +253,10 @@ pre {
  * Corrects font family set oddly in IE6, S4/5, Chrome
  * en.wikipedia.org/wiki/User:Davidgothberg/Test59
  */
-pre,
-code,
-kbd,
-samp {
+ pre,
+ code,
+ kbd,
+ samp {
   font-family: monospace, serif;
   _font-family: 'courier new', monospace;
   font-size: 1em;
@@ -266,8 +266,8 @@ samp {
  * 1. Addresses CSS quotes not supported in IE6/7
  * 2. Addresses quote property not supported in S4
  */
-/* 1 */
-q {
+ /* 1 */
+ q {
   quotes: none;
 }
 
@@ -286,8 +286,8 @@ small {
  * Prevents sub and sup affecting line-height in all browsers
  * gist.github.com/413930
  */
-sub,
-sup {
+ sub,
+ sup {
   font-size: 75%;
   line-height: 0;
   position: relative;
@@ -308,10 +308,10 @@ sub {
 /*
  * Addresses margins set differently in IE6/7
  */
-dl,
-menu,
-ol,
-ul {
+ dl,
+ menu,
+ ol,
+ ul {
   margin: 1em 0;
 }
 
@@ -322,17 +322,17 @@ dd {
 /*
  * Addresses paddings set differently in IE6/7
  */
-menu,
-ol,
-ul {
+ menu,
+ ol,
+ ul {
   padding: 0 0 0 40px;
 }
 
 /*
  * Corrects list images handled incorrectly in IE7
  */
-nav ul,
-nav ol {
+ nav ul,
+ nav ol {
   list-style: none;
   list-style-image: none;
 }
@@ -345,7 +345,7 @@ nav ol {
  * 2. Improves image quality when scaled in IE7
  *    code.flickr.com/blog/2008/11/12/on-ui-quality-the-little-things-client-side-image-resizing/
  */
-img {
+ img {
   border: 0;
   /* 1 */
   -ms-interpolation-mode: bicubic;
@@ -355,7 +355,7 @@ img {
 /*
  * Corrects overflow displayed oddly in IE9
  */
-svg:not(:root) {
+ svg:not(:root) {
   overflow: hidden;
 }
 
@@ -365,7 +365,7 @@ svg:not(:root) {
 /*
  * Addresses margin not present in IE6/7/8/9, S5, O11
  */
-figure {
+ figure {
   margin: 0;
 }
 
@@ -375,14 +375,14 @@ figure {
 /*
  * Corrects margin displayed oddly in IE6/7
  */
-form {
+ form {
   margin: 0;
 }
 
 /*
  * Define consistent border, margin, and padding
  */
-fieldset {
+ fieldset {
   border: 1px solid #c0c0c0;
   margin: 0 2px;
   padding: 0.35em 0.625em 0.75em;
@@ -393,7 +393,7 @@ fieldset {
  * 2. Corrects text not wrapping in FF3 
  * 3. Corrects alignment displayed oddly in IE6/7
  */
-legend {
+ legend {
   border: 0;
   /* 1 */
   padding: 0;
@@ -408,10 +408,10 @@ legend {
  * 2. Addresses margins set differently in IE6/7, FF3+, S5, Chrome
  * 3. Improves appearance and consistency in all browsers
  */
-button,
-input,
-select,
-textarea {
+ button,
+ input,
+ select,
+ textarea {
   font-size: 100%;
   /* 1 */
   margin: 0;
@@ -425,8 +425,8 @@ textarea {
 /*
  * Addresses FF3/4 setting line-height on 'input' using !important in the UA stylesheet
  */
-button,
-input {
+ button,
+ input {
   line-height: normal;
   /* 1 */
 }
@@ -437,10 +437,10 @@ input {
  * 3. Removes inner spacing in IE7 without affecting normal text inputs
  *    Known issue: inner spacing remains in IE6
  */
-button,
-input[type="button"],
-input[type="reset"],
-input[type="submit"] {
+ button,
+ input[type="button"],
+ input[type="reset"],
+ input[type="submit"] {
   cursor: pointer;
   /* 1 */
   -webkit-appearance: button;
@@ -452,8 +452,8 @@ input[type="submit"] {
 /*
  * Re-set default cursor for disabled elements
  */
-button[disabled],
-input[disabled] {
+ button[disabled],
+ input[disabled] {
   cursor: default;
 }
 
@@ -462,24 +462,24 @@ input[disabled] {
  * 2. Removes excess padding in IE8/9
  * 3. Removes excess padding in IE7
       Known issue: excess padding remains in IE6
- */
-input[type="checkbox"],
-input[type="radio"] {
-  box-sizing: border-box;
-  /* 1 */
-  padding: 0;
-  /* 2 */
-  *height: 13px;
-  /* 3 */
-  *width: 13px;
-  /* 3 */
-}
+      */
+      input[type="checkbox"],
+      input[type="radio"] {
+        box-sizing: border-box;
+        /* 1 */
+        padding: 0;
+        /* 2 */
+        *height: 13px;
+        /* 3 */
+        *width: 13px;
+        /* 3 */
+      }
 
 /*
  * 1. Addresses appearance set to searchfield in S5, Chrome
  * 2. Addresses box-sizing set to border-box in S5, Chrome (include -moz to future-proof)
  */
-input[type="search"] {
+ input[type="search"] {
   -webkit-appearance: textfield;
   /* 1 */
   -moz-box-sizing: content-box;
@@ -491,8 +491,8 @@ input[type="search"] {
 /*
  * Removes inner padding and search cancel button in S5, Chrome on OS X
  */
-input[type="search"]::-webkit-search-decoration,
-input[type="search"]::-webkit-search-cancel-button {
+ input[type="search"]::-webkit-search-decoration,
+ input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
 }
 
@@ -500,8 +500,8 @@ input[type="search"]::-webkit-search-cancel-button {
  * Removes inner padding and border in FF3+
  * www.sitepen.com/blog/2008/05/14/the-devils-in-the-details-fixing-dojos-toolbar-buttons/
  */
-button::-moz-focus-inner,
-input::-moz-focus-inner {
+ button::-moz-focus-inner,
+ input::-moz-focus-inner {
   border: 0;
   padding: 0;
 }
@@ -510,7 +510,7 @@ input::-moz-focus-inner {
  * 1. Removes default vertical scrollbar in IE6/7/8/9
  * 2. Improves readability and alignment in all browsers
  */
-textarea {
+ textarea {
   overflow: auto;
   /* 1 */
   vertical-align: top;
@@ -523,7 +523,7 @@ textarea {
 /*
  * Remove most spacing between table cells
  */
-table {
+ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
@@ -580,7 +580,7 @@ h3 {
 }
 
 a {
-  color: #ffcc00;
+  color: #FF8F00;
   font-weight: 400;
   text-decoration: none;
 }
@@ -701,7 +701,7 @@ dt {
   height: 60px;
   width: 100%;
   position: fixed;
-  background: url(../images/nav-bg.gif) #353535;
+  background-color: #cacaca;
   border-bottom: 4px solid #434343;
   -moz-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
   -webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
@@ -720,20 +720,20 @@ dt {
   font-weight: normal;
   list-style: none;
   display: inline;
-  color: white;
+  color: black;
   line-height: 50px;
   text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.2);
   font-size: 14px;
 }
 #header nav li a {
   color: white;
-  border: 1px solid #5d910b;
-  background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #93bd20), color-stop(100%, #659e10));
-  background: -webkit-linear-gradient(#93bd20, #659e10);
-  background: -moz-linear-gradient(#93bd20, #659e10);
-  background: -o-linear-gradient(#93bd20, #659e10);
-  background: -ms-linear-gradient(#93bd20, #659e10);
-  background: linear-gradient(#93bd20, #659e10);
+  border: 1px solid #0B0B91;
+  background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #404CCF), color-stop(100%, #0D1F5A));
+  background: -webkit-linear-gradient(#404CCF, #0D1F5A);
+  background: -moz-linear-gradient(#404CCF, #0D1F5A);
+  background: -o-linear-gradient(#404CCF, #0D1F5A);
+  background: -ms-linear-gradient(#404CCF, #0D1F5A);
+  background: linear-gradient(#404CCF, #0D1F5A);
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
   -o-border-radius: 2px;
@@ -848,4 +848,24 @@ section #title .credits.right {
   nav {
     display: none;
   }
+}
+
+/* CUSTOM */
+
+.black_box {
+  padding: 8px 15px;
+  background: #191919;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -o-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -khtml-border-radius: 2px;
+  border-radius: 2px;
+  border: 1px solid #121212;
+  -moz-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  -o-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  overflow: auto;
+  overflow-y: hidden;
 }

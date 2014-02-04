@@ -6,7 +6,7 @@ The goal of this project is to create an open source, scalable and cheap video t
 With Cloud Transcode, you control your scale, transcoding speed and cost. You can even run everything locally if you want, no Cloud instance required! You only need an Amazon AWS account and an Internet connection. I personaly run everything locally while developing and testing. It means that you can have a local, hybrid or cloud setup, it's up to you.
 
 # Detailed info 
-https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J
+http://sportarchive.github.io/CloudTranscode/
 
 ## FFMpeg performance benchmark on Amazon EC2
 

@@ -3,8 +3,8 @@
 // This class serves as a skeletton for classes impleting actual activity
 class BasicActivity
 {
-	private $activityType;
-	private $activityResult; // Will contain activity result output
+	private $activityType; // Type of activity
+	private $activityResult; // Contain activity result output
 
 	function __construct($params)
 	{
@@ -64,6 +64,7 @@ class BasicActivity
 		global $swf;
 
 		try {
+			log_out("ERROR", basename(__FILE__), $details);
 			$swf->respondActivityTaskFailed(array(
 				"taskToken" => $task["taskToken"],
 				"reason"    => $reason,

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * The Decider listen to the workflow and make decisions automaticaly.
+ * The Decider listen to the workflow and make decisions based on previous events.
  * "decision tasks" != "activity tasks".
  * Decision tasks are "command tasks", resulting from an event in the workfow
  * workflow start, workflow exec complete, workflow failed, etc ...
@@ -47,7 +47,7 @@ Class WorkflowDecider
 			$decisionTask = $swf->pollForDecisionTask(array(
 				"domain"   => $this->domain,
 				"taskList" => $this->taskList,
-				));
+            ));
 
 			// Polling timeout, we return for another round ...
 			if (!($workflowExecution = $decisionTask->get("workflowExecution")))
@@ -60,10 +60,10 @@ Class WorkflowDecider
 
 		// Register workflow in tracker. If already registered nothing happens
 		if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, $activities))
-		{
-			log_out("ERROR", basename(__FILE__), "Unable to register the workflow in tracker ! Can't process decision task !");
-			return false; 
-		}
+            {
+                log_out("ERROR", basename(__FILE__), "Unable to register the workflow in tracker ! Can't process decision task !");
+                return false; 
+            }
 
 		// We give the new decision task to the event handler for processing
 		$this->decision_task_event_handler($decisionTask, $workflowExecution);
@@ -90,96 +90,96 @@ Class WorkflowDecider
 
 		// Check new incoming event
 		foreach ($newEvents as $event) 
-		{
-			if ($event["eventType"] == 'WorkflowExecutionStarted')
-			{
-				// Get the input passed to the workflow at startup
-				$workflowInput = $this->workflowTracker->get_workflow_input($workflowExecution, $events);
+            {
+                if ($event["eventType"] == 'WorkflowExecutionStarted')
+                    {
+                        // Get the input passed to the workflow at startup
+                        $workflowInput = $this->workflowTracker->get_workflow_input($workflowExecution, $events);
 
-				// Initate first activity as the workflow just started
-				if (!$this->workflow_started($decisionTask, $event, $workflowInput, $workflowExecution))
-				{
-					log_out("ERROR", basename(__FILE__), "Cannot initiate the first TASK after the workflow started ! Killing workflow ...");
-					$this->kill_workflow($workflowExecution);
-					return false;
-				}
+                        // Initate first activity as the workflow just started
+                        if (!$this->workflow_started($decisionTask, $event, $workflowInput, $workflowExecution))
+                            {
+                                log_out("ERROR", basename(__FILE__), "Cannot initiate the first TASK after the workflow started ! Killing workflow ...");
+                                $this->kill_workflow($workflowExecution);
+                                return false;
+                            }
 
-				return true;
-			}
-			elseif ($event["eventType"] == 'ActivityTaskCompleted')
-			{
-				// Get the previous activity output result
-				$eventAttributes = $event["activityTaskCompletedEventAttributes"]; 
-				$prevActivityResult = $eventAttributes["result"];
-				//log_out("DEBUG", basename(__FILE__), "Previous task results: " . $prevActivityResult);
+                        return true;
+                    }
+                elseif ($event["eventType"] == 'ActivityTaskCompleted')
+                    {
+                        // Get the previous activity output result
+                        $eventAttributes = $event["activityTaskCompletedEventAttributes"]; 
+                        $prevActivityResult = $eventAttributes["result"];
+                        //log_out("DEBUG", basename(__FILE__), "Previous task results: " . $prevActivityResult);
 
-				if ($this->workflowTracker->is_workflow_finished($workflowExecution)) 
-				{
-					log_out("INFO", basename(__FILE__), "The workflow is finished. Terminating ...");
-					$this->complete_workflow($decisionTask, $event);
-					return false;
-				}
+                        if ($this->workflowTracker->is_workflow_finished($workflowExecution)) 
+                            {
+                                log_out("INFO", basename(__FILE__), "The workflow is finished. Terminating ...");
+                                $this->complete_workflow($decisionTask, $event);
+                                return false;
+                            }
 
-				// Move to the next activity
-				if (!$this->workflowTracker->move_to_next_activity($workflowExecution))
-				{
-					log_out("ERROR", basename(__FILE__), "Cannot move to the next activity ! Killing workflow ...");
-					$this->kill_workflow($workflowExecution);
-					return false;
-				}
+                        // Move to the next activity
+                        if (!$this->workflowTracker->move_to_next_activity($workflowExecution))
+                            {
+                                log_out("ERROR", basename(__FILE__), "Cannot move to the next activity ! Killing workflow ...");
+                                $this->kill_workflow($workflowExecution);
+                                return false;
+                            }
 
-				// Initate next activity
-				if (!$this->activity_completed($decisionTask, $event, $prevActivityResult, $workflowExecution))
-				{
-					log_out("ERROR", basename(__FILE__), "Cannot start next activity ! Killing workflow ...");
-					$this->kill_workflow($workflowExecution);
-					return false;
-				}
+                        // Initate next activity
+                        if (!$this->activity_completed($decisionTask, $event, $prevActivityResult, $workflowExecution))
+                            {
+                                log_out("ERROR", basename(__FILE__), "Cannot start next activity ! Killing workflow ...");
+                                $this->kill_workflow($workflowExecution);
+                                return false;
+                            }
 
-				return true;
-			}
-			elseif ($event["eventType"] == 'ActivityTaskTimedOut')
-			{
-				log_out("INFO", basename(__FILE__), "Event -> ActivityTaskTimedOut");
-				if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
-				{
-					log_out("ERROR", basename(__FILE__), "Activity timed out but we can't get the current activity ! Something is messed up ...");
-					$this->kill_workflow($workflowExecution);
-					return false;
-				}
+                        return true;
+                    }
+                elseif ($event["eventType"] == 'ActivityTaskTimedOut')
+                    {
+                        log_out("INFO", basename(__FILE__), "Event -> ActivityTaskTimedOut");
+                        if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
+                            {
+                                log_out("ERROR", basename(__FILE__), "Activity timed out but we can't get the current activity ! Something is messed up ...");
+                                $this->kill_workflow($workflowExecution);
+                                return false;
+                            }
 
-				log_out("ERROR", basename(__FILE__), "Activity '" . $activity['name'] . "' timed out ! Killing workflow ...");
-				$this->kill_workflow($workflowExecution);
+                        log_out("ERROR", basename(__FILE__), "Activity '" . $activity['name'] . "' timed out ! Killing workflow ...");
+                        $this->kill_workflow($workflowExecution);
 
-				return true;
-			}
-			elseif ($event["eventType"] == 'ActivityTaskFailed')
-			{
-				log_out("INFO", basename(__FILE__), "Event -> ActivityTaskFailed");
-				if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
-				{
-					log_out("ERROR", basename(__FILE__), "Activity failed but we can't get the current activity ! Something is messed up ...");	
-					$this->kill_workflow($workflowExecution);
-					return false;
-				}
+                        return true;
+                    }
+                elseif ($event["eventType"] == 'ActivityTaskFailed')
+                    {
+                        log_out("INFO", basename(__FILE__), "Event -> ActivityTaskFailed");
+                        if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
+                            {
+                                log_out("ERROR", basename(__FILE__), "Activity failed but we can't get the current activity ! Something is messed up ...");	
+                                $this->kill_workflow($workflowExecution);
+                                return false;
+                            }
 
-				log_out("ERROR", basename(__FILE__), "Activity '" . $activity['name'] . "' failed :[ ! Killing workflow ...");
-				$this->kill_workflow($workflowExecution);
+                        log_out("ERROR", basename(__FILE__), "Activity '" . $activity['name'] . "' failed :[ ! Killing workflow ...");
+                        $this->kill_workflow($workflowExecution);
 
-				return true;
-			}
-			elseif ($event["eventType"] == 'WorkflowExecutionCompleted')
-			{
-				log_out("INFO", basename(__FILE__), "Event -> WorkflowExecutionCompleted");
-				log_out("ERROR", basename(__FILE__), "Workflow '" . $workflowExecution["workflowId"] . "' has completed !");
+                        return true;
+                    }
+                elseif ($event["eventType"] == 'WorkflowExecutionCompleted')
+                    {
+                        log_out("INFO", basename(__FILE__), "Event -> WorkflowExecutionCompleted");
+                        log_out("ERROR", basename(__FILE__), "Workflow '" . $workflowExecution["workflowId"] . "' has completed !");
 
-				return true;
-			}
-			else 
-			{
-				// XXX Unknown !
-			}
-		}
+                        return true;
+                    }
+                else 
+                    {
+                        // Unknown
+                    }
+            }
 	}
 
 	// Called when an activity has completed
@@ -191,11 +191,11 @@ Class WorkflowDecider
 
 		// Get previous activity
 		if (!($previous = $this->workflowTracker->get_previous_activity($workflowExecution)))
-		{
-			log_out("ERROR", basename(__FILE__), "Cannot the current activity ! Killing workflow ...");
-			$this->kill_workflow($workflowExecution);
-			return false;
-		}
+            {
+                log_out("ERROR", basename(__FILE__), "Cannot the current activity ! Killing workflow ...");
+                $this->kill_workflow($workflowExecution);
+                return false;
+            }
 
 		// Next Task to process
 		if (!($next = $this->workflowTracker->get_current_activity($workflowExecution)))
@@ -207,8 +207,8 @@ Class WorkflowDecider
 		 * TODO:
 		 * We MUST evaluate the previous task result information.
 		 * Here we must schedule the necessary following task.
-		 * e.g: If the previous task was 'ValidateInputAndAsset' then the output contains the inptu video information.
-		 * Also the input contains the different out videos needed.
+		 * e.g: If the previous task was 'ValidateInputAndAsset' then the output contains the information of the file to process.
+		 * Also the input contains the different videos formats that must be transcoded.
 		 * If several output videos, then we must create several 'TranscodeAsset' activities
 		 *
 		 * Basic implementation for now
@@ -217,40 +217,38 @@ Class WorkflowDecider
 		// If we just finished validating input
 		// Now we schedule N transcoding tasks based on config
 		if ($previous["name"] == 'ValidateInputAndAsset')
-		{
-			if (!isset($input) || !($decodedInput = json_decode($input)))
-			{
-				log_out("ERROR", basename(__FILE__), "No input data from validation activity ! Killing workflow ...");
-				$this->kill_workflow($workflowExecution);
-				return false;
-			}
+            {
+                if (!isset($input) || !($decodedInput = json_decode($input)))
+                    {
+                        log_out("ERROR", basename(__FILE__), "No input data from validation activity ! Killing workflow ...");
+                        $this->kill_workflow($workflowExecution);
+                        return false;
+                    }
 
-			if (!isset($decodedInput->{"outputs"}))
-			{
-				log_out("ERROR", basename(__FILE__), "No outputs configuration from the input config ! Killing workflow ...");
-				$this->kill_workflow($workflowExecution);
-				return false;
-			}
+                if (!isset($decodedInput->{"outputs"}))
+                    {
+                        log_out("ERROR", basename(__FILE__), "No outputs configuration from the input config ! Killing workflow ...");
+                        $this->kill_workflow($workflowExecution);
+                        return false;
+                    }
 
-			// Prepare the different inputs based on the number of desired output videos
-			$nextActivityInputs = array();
-			foreach ($decodedInput->{"outputs"} as $output)
-			{
-				array_push($nextActivityInputs, array(
-					"input_file"               => $decodedInput->{"input_file"},
-					"input_config"             => $decodedInput->{"input_config"},
-					"ffmpeg_validation_output" => $decodedInput->{"ffmpeg_validation_output"},
-					"input_file_duration"      => $decodedInput->{"input_file_duration"},
-					"output"                   => $output
-					));
+                // Prepare the data for all the output needed.
+                $nextActivityInputs = array();
+                foreach ($decodedInput->{"outputs"} as $output)
+                    {
+                        array_push($nextActivityInputs, [
+                            "input_json"               => $decodedInput->{"input_json"},
+                            "input_file"               => $decodedInput->{"input_file"},
+                            "output"                   => $output
+                        ]);
 
-				log_out("INFO", basename(__FILE__), "Registering transcoding activity: '" . $next["name"] . "' for output: '" . $output->{"label"} . "'");
-			}
+                        log_out("INFO", basename(__FILE__), "Registering transcoding activity: '" . $next["name"] . "' for output: '" . $output->{"label"} . "'");
+                    }
 
-			// We provide the custom list of decisions directly
-			if (!$this->start_new_activity($decisionTask, $next, $event, $nextActivityInputs))
-				return false;
-		}
+                // We provide the custom list of decisions directly
+                if (!$this->start_new_activity($decisionTask, $next, $event, $nextActivityInputs))
+                    return false;
+            }
 
 		return true;
 	}
@@ -280,40 +278,39 @@ Class WorkflowDecider
 		// Start an activity 
 		try {
 			if (!$inputs || !count($inputs))
-			{
-				log_out("ERROR", basename(__FILE__), "No inputs provided for the next activity !");
-				return false;
-			}
+                {
+                    log_out("ERROR", basename(__FILE__), "No inputs provided for the next activity !");
+                    return false;
+                }
 
 			// Push all decisions based on input
 			$decisions = array();
 			foreach ($inputs as $input)
-			{
-				array_push($decisions, array(
-					"decisionType" => "ScheduleActivityTask",
-					"scheduleActivityTaskDecisionAttributes" => array(
-						"activityType" => array(
-							"name"    => $activity["name"],
-							"version" => $activity["version"]
+                {
+                    array_push($decisions, array(
+                        "decisionType" => "ScheduleActivityTask",
+                        "scheduleActivityTaskDecisionAttributes" => array(
+                            "activityType" => array(
+                                "name"    => $activity["name"],
+                                "version" => $activity["version"]
 							),
-						"activityId"   => uniqid(),
-						"input"		   => json_encode($input),
-						"taskList"     => $this->taskList,
-						"scheduleToStartTimeout" => "70",
-						"startToCloseTimeout"    => "21600",
-						"scheduleToCloseTimeout" => "21600",
-						"heartbeatTimeout"       => "60"
+                            "activityId"   => uniqid(),
+                            "input"		   => json_encode($input),
+                            "taskList"     => $this->taskList,
+                            "scheduleToStartTimeout" => "70",
+                            "startToCloseTimeout"    => "21600",
+                            "scheduleToCloseTimeout" => "21600",
+                            "heartbeatTimeout"       => "60"
 						)
 					));
-			}
-
-
+                }
+            
 			// http://docs.aws.amazon.com/aws-sdk-php/latest/class-Aws.Swf.SwfClient.html#_respondDecisionTaskCompleted
-			// Send decisions back to SWF so activity can be scheduled
+			// Make a decisions so activity can be scheduled
 			$swf->respondDecisionTaskCompleted(array(
 				"taskToken" => $decisionTask["taskToken"],
 				"decisions" => $decisions
-				));
+            ));
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			log_out("ERROR", basename(__FILE__), "Resource Unknown ! " . $e->getMessage());
 			return false;
@@ -339,7 +336,7 @@ Class WorkflowDecider
 					"decisionType" => "CompleteWorkflowExecution",
 					"completeWorkflowExecutionDecisionAttributes" => array(
 						"result" => "SUCCESS")
-					)]));
+                )]));
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			log_out("ERROR", basename(__FILE__), "Resource Unknown ! " . $e->getMessage());
 			return false;
@@ -360,7 +357,7 @@ Class WorkflowDecider
 			$swf->terminateWorkflowExecution(array(
 				"domain"     => $this->domain,
 				"workflowId" => $workflowExecution["workflowId"]
-				));
+            ));
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Cannot kill the workflow ! Something is messed up ...");
 			return false;
@@ -394,12 +391,12 @@ try {
 // Start polling loop
 log_out("INFO", basename(__FILE__), "Starting decision tasks polling");
 while (1)
-{
-	if (!$wfDecider->poll_for_decisions())
-	{
-		log_out("INFO", basename(__FILE__), "Polling for decisions finished !");
-		exit (1);
-	}
-} 
+    {
+        if (!$wfDecider->poll_for_decisions())
+            {
+                log_out("INFO", basename(__FILE__), "Polling for decisions finished !");
+                exit (1);
+            }
+    } 
 
 

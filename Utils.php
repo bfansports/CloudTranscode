@@ -12,6 +12,7 @@ $root = realpath(dirname(__FILE__));
 $aws = Aws::factory("$root/config/awsConfig.json");
 // SWF client
 $swf = $aws->get('Swf');
+// SQS Client
 $sqs = $aws->get('Sqs');
 
 // Defines
@@ -24,7 +25,7 @@ define('TRANSCODE_WORKFLOW_DESC', 'Cloud Transcode Basic Workflow');
 
 // Activities handled by the decider and activityPoller
 // !! IMPORTANT: Keep execution order !!
-$activities = array(
+$activities = [
 	[
 	"name"        => "ValidateInputAndAsset", 
 	"version"     => "v1",
@@ -45,7 +46,7 @@ $activities = array(
 	"description" => "Make sure the transcoding has been performed properly",
 	"file"    	  => "/activities/ValidateTrancodedAssetActivity.php",
 	"class"   	  => "ValidateTranscodedAssetActivity"
-	]);
+	]];
 
 // Log to STDOUT
 function log_out($type, $source, $message)

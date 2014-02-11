@@ -6,48 +6,39 @@
  */
 class TranscodeAssetActivity extends BasicActivity
 {
-	private $started;
-	private $output;
     private $inputFile;
+    private $inputJSON;
+
+    // Errors
+	const EXEC_FAIL      = "EXEC_FAIL";
+	const TRANSCODE_FAIL = "TRANSCODE_FAIL";
+	const S3_UPLOAD_FAIL = "S3_UPLOAD_FAIL";
 
 	// Perform the activity
 	public function do_activity($task)
 	{
 		global $swf;
-		$this->started = time();
-		// Array returned by this function back to the activity poller
-		// We also send it as hearbeat data "json encoded"
-		$this->output = array(
-			"workflowExecution" => $task->get("workflowExecution"),
-			"activityType"      => $task->get("activityType"),
-			"activityId"        => $task->get("activityId"),
-			"status"            => "STARTING",
-			"started"           => $this->started,
-			"duration"          => 0,
-			"progress"          => 0,
-			"msg"               => "Transcoding process starting ...");
-		$workflowId = $this->output['workflowExecution']['workflowId'];
         
         //print_r($task);
 
 		/**
 		 * Send first heartbeat to initiate status
 		 */
-		if (!$this->sendHeartbeat($task, $this->output))
+		if (!$this->sendHeartbeat($task))
             return false;
         
 		// Processing input variables
-		$input         = json_decode($task->get("input"));
+		$input           = json_decode($task->get("input"));
         $this->inputFile = $input->{"input_file"};
-		$inputFilepath = $this->inputFile->{"filepath"};
-		$inputConfig   = $input->{"input_json"};
-		$output        = $input->{"output"};
+		$this->inputJSON = $input->{"input_json"};
         
-		// Setup transcoding commands
-		$outputPath = "/tmp/";
-		$outputFile = $output->{"file"};
-		$ffmpegArgs = "-i $inputFilepath -y -threads 0 -s " . $output->{'size'} . " -vcodec " . $output->{'video_codec'} . " -acodec " . $output->{'audio_codec'} . " -b:v " . $output->{'video_bitrate'} . " -bufsize " . $output->{'buffer_size'} . " -b:a " . $output->{'audio_bitrate'} . " ${outputPath}${outputFile}";
-		$ffmpegCmd  = "ffmpeg $ffmpegArgs";
+		// Setup transcoding command and parameters
+		$inputFilepath = $input->{"input_file"}->{"filepath"};
+		$outputConfig  = $input->{"output"}; // JSON description of the transcode to do
+		$outputPath    = "/tmp/";
+		$outputFile    = $outputConfig->{"file"};
+		$ffmpegArgs    = "-i $inputFilepath -y -threads 0 -s " . $outputConfig->{'size'} . " -vcodec " . $outputConfig->{'video_codec'} . " -acodec " . $outputConfig->{'audio_codec'} . " -b:v " . $outputConfig->{'video_bitrate'} . " -bufsize " . $outputConfig->{'buffer_size'} . " -b:a " . $outputConfig->{'audio_bitrate'} . " ${outputPath}${outputFile}";
+		$ffmpegCmd     = "ffmpeg $ffmpegArgs";
         
         // Print info
 		log_out("INFO", basename(__FILE__), "FFMPEG CMD:\n$ffmpegCmd\n");
@@ -58,20 +49,23 @@ class TranscodeAssetActivity extends BasicActivity
 		$descriptorSpecs = array(  
             2 => array("pipe", "w") 
         );
+        // Start execution
 		if (!($process = proc_open($ffmpegCmd, $descriptorSpecs, $pipes)))
-            {
-                log_out("ERROR", basename(__FILE__), "Unable to execute command ! Abording ...");
-                return false;
-            }
+            return [
+                "status"  => "ERROR",
+                "error"   => self::EXEC_FAIL,
+                "details" => "Unable to execute command:\n$ffmpegCmd"
+            ];
         // Is resource valid ?
 		if (!is_resource($process))
-            {
-                log_out("ERROR", basename(__FILE__), "Process execution has failed ! Abording ...");
-                return false;
-            }
+            return [
+                "status"  => "ERROR",
+                "error"   => self::EXEC_FAIL,
+                "details" => "Process execution has failed:\n$ffmpegCmd"
+            ];
 
         // While process running, we read output
-		$content = "";
+		$ffmpegOut = "";
 		$i = 0;
         $procStatus = proc_get_status($process);
         while ($procStatus['running']) {
@@ -79,26 +73,24 @@ class TranscodeAssetActivity extends BasicActivity
             $out = fread($pipes[2], 8192);
 
             # Concat out
-            $content .= $out;
+            $ffmpegOut .= $out;
 
             // Get progression and notify SWF with heartbeat
             if ($i == 10) {
                 echo ".\n";
-                $progress = $this->captureProgression($content);
-                $this->output["status"]   = "PROCESSING";
-                $this->output["duration"] = time() - $this->started;
-                $this->output["progress"] = $progress;
-                $this->output["msg"]      = "Video '${inputFilepath}' is being transocoded ...";
+                $progress = $this->captureProgression($ffmpegOut);
+
+                // XXX Notify progress through SQS
 
                 // Notify SWF that we are still running !
-                if (!$this->sendHeartbeat($task, $this->output))
+                if (!$this->sendHeartbeat($task))
                     return false;
                 
                 $i = 0;
             }
                     
             // Get latest status
-            $procStatus = proc_get_status( $process );
+            $procStatus = proc_get_status($process);
 
             // Print progression
             echo ".";
@@ -114,21 +106,31 @@ class TranscodeAssetActivity extends BasicActivity
         // Test if we have an output file !
         if (!file_exists($outputPath . $outputFile) || 
         !filesize($outputPath . $outputFile))
-            {
-                log_out("ERROR", basename(__FILE__), "Output file ${outputPath}${outputFile} hasn't been created successfully or is empty !");
-                return false;
-            }
-
-        // No error. Transcode successful
-        log_out("INFO", basename(__FILE__), "Transcoding asset '$inputFilepath' is DONE !");
-        $this->output["status"]   = "SUCCESS";
-        $this->output["duration"] = time() - $this->started;
-        $this->output["progress"] = 100;
-        $this->output["msg"]      = "Transcoding successful for '$inputFilepath'";
+            return [
+                "status"  => "ERROR",
+                "error"   => self::TRANSCODE_FAIL,
+                "details" => "Output file ${outputPath}${outputFile} hasn't been created successfully or is empty !"
+            ];
         
+        // No error. Transcode successful
         log_out("INFO", basename(__FILE__), "Transcoding successfull !");
+        
+        // Send output file to S3
+        /* if (($err = $this->sendOutputToS3($outputPath . $outputFile))) */
+        /*     return [ */
+        /*         "status"  => "ERROR", */
+        /*         "error"   => self::S3_UPLOAD_FAIL, */
+        /*         "details" => $err */
+        /*     ]; */
 
-		return $this->output;
+		return [
+            "status"  => "SUCCESS",
+            "details" => "'$inputFilepath' transcoded successfully!",
+            "data"    => [
+                "input_json" => $input,
+                "input_file" => $this->inputFile
+            ]
+        ];
 	}
 
 	// REad ffmpeg output and calculate % progress
@@ -161,25 +163,16 @@ class TranscodeAssetActivity extends BasicActivity
 	 * Send heartbeat to SWF to keep the task alive.
 	 * Timeout is configurable at the Activity level
      */
-	private function sendHeartbeat($task, $output)
+	private function sendHeartbeat($task)
 	{
 		global $swf;
 
 		try {
 			$taskToken = $task->get("taskToken");
 			log_out("INFO", basename(__FILE__), "Sending heartbeat to SWF ...");
-
-			/*
-			 * FEATURE REQUEST:
-			 * AWS doesn't give access to the heartbeata data sent here: "output"   => json_encode($output)
-			 * Data becomes available only if the task timeout.
-			 * We need to have access to the heartbeat data. Through the WF history or on demand using an activityID, which I is less overhead.
-			 * We could only access the last heatbeat data for example, keeping the resources necessary for this feature minimal.
-			 * Without this feature we can't capture the status/progress of the current task.
-			 * https://forums.aws.amazon.com/thread.jspa?messageID=516823&#516823
-			 */
+            
 			$info = $swf->recordActivityTaskHeartbeat(array(
-				"output"    => json_encode($output),
+				"details"   => "",
 				"taskToken" => $taskToken));
 
 			// Workflow returns if this task should be canceled

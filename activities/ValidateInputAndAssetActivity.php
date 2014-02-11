@@ -7,11 +7,12 @@ require_once 'BasicActivity.php';
 class ValidateInputAndAssetActivity extends BasicActivity
 {
 	// Errors
-	const NO_INPUT = "NO_INPUT";
-	const INPUT_INVALID = "INPUT_INVALID";
-	const NO_INPUT_FILE = "NO_INPUT_FILE";
-	const GET_OBJECT_FAILED = "GET_OBJECT_FAILED";
+	const NO_INPUT             = "NO_INPUT";
+	const INPUT_INVALID        = "INPUT_INVALID";
+	const NO_INPUT_FILE        = "NO_INPUT_FILE";
+	const GET_OBJECT_FAILED    = "GET_OBJECT_FAILED";
 	const EXEC_FOR_INFO_FAILED = "EXEC_FOR_INFO_FAILED";
+	const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
 
 	// File types
 	const VIDEO = "VIDEO";
@@ -25,34 +26,46 @@ class ValidateInputAndAssetActivity extends BasicActivity
 		log_out("INFO", basename(__FILE__), "Starting transcoding input and Asset validation ...");
 
 		if (!isset($task["input"]) || !$task["input"] || $task["input"] == "")
-            {
-                log_out("ERROR", basename(__FILE__), "Validate transcoding input and Asset !");
-                $this->activity_failed($task, self::NO_INPUT, "Task has no input data !");
-                return false;
-            }
-
+            return [
+                "status"  => "ERROR",
+                "error"   => self::NO_INPUT,
+                "details" => "Validate transcoding input and Asset !"
+            ];
+        
 		// Validate JSON data and Decode as an Object
 		if (!($input = json_decode($task["input"])))
-            {
-                log_out("ERROR", basename(__FILE__), "JSON input is invalid !");
-                $this->activity_failed($task, self::INPUT_INVALID, "JSON input is invalid !");
-                return false;
-            }
+            return [
+                "status"  => "ERROR",
+                "error"   => self::INPUT_INVALID,
+                "details" => "JSON input is invalid !"
+            ];
 
 		// Perfom JSON input validation
 		if (($err = $this->inputValidator($input)))
-            {
-                log_out("ERROR", basename(__FILE__), $err);
-                $this->activity_failed($task, self::INPUT_INVALID, $err);
-                return false;
-            }
+            return [
+                "status"  => "ERROR",
+                "error"   => self::INPUT_INVALID,
+                "details" => $err
+            ];
         
 		// Download input file from S3 and prepare for ffmpeg validation test
 		try {
-			$localPath = '/tmp/';
+            // Create local temporary folder to store video to validate
+            // We keep the file in TMP folder so we can save time if next job is using same file
+            // If same file we don;t download from S3, we use local copy
+            // XXX cleanup those folders regularly !!!
+			$localPath = '/tmp/CloudTranscode/' . $task["workflowExecution"]["workflowId"] . "/";
+            if (!file_exists($localPath))
+                {
+                    if (!mkdir($localPath, 0750, true))
+                        return [
+                            "status"  => "ERROR",
+                            "error"   => self::TMP_FOLDER_FAIL,
+                            "details" => "Unable to create temporary folder to store asset to validate !"
+                        ];
+                }
 			$localCopy = $localPath . $input->{'input_file'};
-			$localCopyInfoLogs = $localPath . $input->{'input_file'} . ".log";
-
+            // Local copy exists ? If not we download the file from S3
 			if (!file_exists($localCopy) || !filesize($localCopy))
                 {
                     log_out("INFO", basename(__FILE__), "Downloading input file from S3. Bucket: '" . $input->{'input_bucket'} . "' File: '" . $input->{'input_file'} . "'");
@@ -70,10 +83,13 @@ class ValidateInputAndAssetActivity extends BasicActivity
 				log_out("INFO", basename(__FILE__), "Using local copy of input file: '" . $localCopy . "'");
 
 		} catch (Exception $e) {
-			$this->activity_failed($task, self::GET_OBJECT_FAILED, "Unable to get input file from S3 ! " . $e->getMessage());
-			return false;
-		}
-
+            return [
+                "status"  => "ERROR",
+                "error"   => self::GET_OBJECT_FAILED,
+                "details" => "Unable to get input file from S3 ! " . $e->getMessage()
+            ];
+        }
+        
 		log_out("INFO", basename(__FILE__), "Finding information about input file '$localCopy' - Type: " . $input->{'input_type'});
 		// Capture input file details about format, duration, size, etc.
 		if (!($fileDetails = $this->getFileDetails($localCopy, $input->{'input_type'})))
@@ -82,27 +98,33 @@ class ValidateInputAndAssetActivity extends BasicActivity
         $fileDetails['filepath'] = $localCopy;
 		// Create result object to be passed to next activity in the Workflow as input
 		$result = [
-			"input_json"             	=> $input,
-			"input_file" 			  	=> $fileDetails,
-			"outputs"                  	=> $input->{'outputs'}
+            "status"  => "SUCCESS",
+            "data"    => [
+                "input_json" => $input,
+                "input_file" => $fileDetails,
+                "outputs"    => $input->{'outputs'}
+            ]
         ];
         
 		return $result;
 	}
 
+    // Execute ffmpeg -i to get info about the file
 	private function getFileDetails($localCopy, $type)
 	{
         $fileDetails = array();
         
-        # Get video information
+        // Get video information
 		if ($type == self::VIDEO)
             {
                 log_out("INFO", basename(__FILE__), "Running FFMPEG validation test on '" . $localCopy . "'");
+                // Execute FFMpeg
                 if (!($handle = popen("ffmpeg -i $localCopy 2>&1", 'r')))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to get information about the video file '$localCopy' !");
                         return false;
                     }
+                // Get output
                 $ffmpegInfoOut = stream_get_contents($handle);
                 if (!$ffmpegInfoOut)
                     {
@@ -110,19 +132,19 @@ class ValidateInputAndAssetActivity extends BasicActivity
                         return false;
                     }
 
-                # Duration
+                // get Duration
                 if (!$this->getDuration($ffmpegInfoOut, $fileDetails))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to extract video duration !");
                         return false;
                     }
-                # Video info
+                // get Video info
                 if (!$this->getVideoInfo($ffmpegInfoOut, $fileDetails))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find video information !");
                         return false;
                     }
-                # Audio Info
+                // get Audio Info
                 if (!$this->getAudioInfo($ffmpegInfoOut, $fileDetails))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find audio information !");
@@ -135,7 +157,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         return ($fileDetails);
 	}
 
-    # Extract video info
+    // Extract video info
     private function getVideoInfo($ffmpegInfoOut, &$fileDetails)
     {
         preg_match("/: Video: (.+?) .+?, (.+?), (.+?), (.+?), (.+?),/", $ffmpegInfoOut, $matches);
@@ -146,7 +168,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
             $fileDetails['vbitrate'] = $matches[4];
             $fileDetails['fps'] = $matches[5];
             
-            # Calculate ratio
+            // Calculate ratio
             $sizeSplit = explode("x", $fileDetails['size']);
             $fileDetails['ratio'] = number_format($sizeSplit[0] / $sizeSplit[1], 1);
 
@@ -156,7 +178,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         return false;
     }
 
-    # Extract audio info
+    // Extract audio info
     private function getAudioInfo($ffmpegInfoOut, &$fileDetails)
     {
         preg_match("/: Audio: (.+?) .+?, (.+?), (.+?), (.+?), ([0-9]+ kb\/s).*?/", $ffmpegInfoOut, $matches);
@@ -164,7 +186,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
             $fileDetails['acodec'] = $matches[1];
             $fileDetails['freq'] = $matches[2];
             $fileDetails['mode'] = $matches[3];
-            # Ignore match 4
+            // Ignore match 4
             $fileDetails['abitrate'] = $matches[5];
 
             return true;
@@ -173,7 +195,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         return false;
     }
     
-    # Extract Duration
+    // Extract Duration
     private function getDuration($ffmpegInfoOut, &$fileDetails)
     {
         preg_match("/Duration: (.*?), start:/", $ffmpegInfoOut, $matches);
@@ -189,29 +211,12 @@ class ValidateInputAndAssetActivity extends BasicActivity
 
         return true;
     }
-
-    # Validate JSON input format
+    
+    // XXX TODO
+    // Validate JSON input format
 	private function inputValidator()
 	{
 
 	}
 
 }
-
-
-/**
- * TEST PROGRAM
- */
-
-// $domainName = "SA_TEST2";
-// $jsonInput = file_get_contents(dirname(__FILE__) . "/../config/input.json");
-
-// $inputValidator = new ValidateInputAndAssetActivity(array(
-// 	"domain"  => $domainName,
-// 	"name"    => "TestActivity",
-// 	"version" => "v1"
-// 	));
-// $inputValidator->do_activity(array(
-// 	"input" => $jsonInput
-// 	));
-

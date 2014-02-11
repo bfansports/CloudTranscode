@@ -59,12 +59,13 @@ class BasicActivity
 		// To be implemented in class that extends this class
 	}
 
+    // Send activity failed to SWF
 	public function activity_failed($task, $reason = "", $details = "")
 	{
 		global $swf;
 
 		try {
-			log_out("ERROR", basename(__FILE__), $details);
+			log_out("ERROR", basename(__FILE__), "[$reason] $details");
 			$swf->respondActivityTaskFailed(array(
 				"taskToken" => $task["taskToken"],
 				"reason"    => $reason,
@@ -76,11 +77,13 @@ class BasicActivity
 		}
 	}
 
+    // Send activity completed to SWF
 	public function activity_completed($task, $result)
 	{
 		global $swf;
 		
 		try {
+            log_out("INFO", basename(__FILE__),"Notify SWF that activity is completed !");
 			$swf->respondActivityTaskCompleted(array(
 				"taskToken" => $task["taskToken"],
 				"result"    => json_encode($result),

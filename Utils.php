@@ -27,26 +27,27 @@ define('TRANSCODE_WORKFLOW_DESC', 'Cloud Transcode Basic Workflow');
 // !! IMPORTANT: Keep execution order !!
 $activities = [
 	[
-	"name"        => "ValidateInputAndAsset", 
-	"version"     => "v1",
-	"description" => "Check input command and asset to be transcoded.",
-	"file"        => "/activities/ValidateInputAndAssetActivity.php",
-	"class"       => "ValidateInputAndAssetActivity"
+        "name"        => "ValidateInputAndAsset", 
+        "version"     => "v1",
+        "description" => "Check input command and asset to be transcoded.",
+        "file"        => "/activities/ValidateInputAndAssetActivity.php",
+        "class"       => "ValidateInputAndAssetActivity"
 	],
 	[
-	"name"    	  => "TranscodeAsset",
-	"version" 	  => "v1",
-	"description" => "Perform transcoding on the asset and generate output file(s)",
-	"file"    	  => "/activities/TranscodeAssetActivity.php",
-	"class"   	  => "TranscodeAssetActivity"
+        "name"    	  => "TranscodeAsset",
+        "version" 	  => "v1",
+        "description" => "Perform transcoding on the asset and generate output file(s)",
+        "file"    	  => "/activities/TranscodeAssetActivity.php",
+        "class"   	  => "TranscodeAssetActivity"
 	],
 	[
-	"name"    	  => "ValidateTrancodedAsset",
-	"version" 	  => "v1",
-	"description" => "Make sure the transcoding has been performed properly",
-	"file"    	  => "/activities/ValidateTrancodedAssetActivity.php",
-	"class"   	  => "ValidateTranscodedAssetActivity"
-	]];
+        "name"    	  => "ValidateTrancodedAsset",
+        "version" 	  => "v1",
+        "description" => "Make sure the transcoding has been performed properly",
+        "file"    	  => "/activities/ValidateTrancodedAssetActivity.php",
+        "class"   	  => "ValidateTranscodedAssetActivity"
+	]
+];
 
 // Log to STDOUT
 function log_out($type, $source, $message)
@@ -61,10 +62,10 @@ function init_domain($domainName)
 
 	// Get existing domain list
 	try
-	{
-		$swf->describeDomain(array("name" => $domainName));
-		return true;
-	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
+        {
+            $swf->describeDomain(array("name" => $domainName));
+            return true;
+        } catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 		log_out("INFO", basename(__FILE__), "Domain doesn't exists. Creating it ...");
 	} catch (Exception $e) {
 		log_out("ERROR", basename(__FILE__), "Unable to get domain list ! " . $e->getMessage());
@@ -73,14 +74,14 @@ function init_domain($domainName)
 
 	// Create domain if not existing
 	try 
-	{
-		$swf->registerDomain(array(
-			"name" => $domainName,
-			"description" => "Cloud Transcode Domain",
-			"workflowExecutionRetentionPeriodInDays" => 1
+        {
+            $swf->registerDomain(array(
+                "name" => $domainName,
+                "description" => "Cloud Transcode Domain",
+                "workflowExecutionRetentionPeriodInDays" => 1
 			));
-		return true;
-	} catch (Exception $e) {
+            return true;
+        } catch (Exception $e) {
 		log_out("ERROR", basename(__FILE__), "Unable to create the domain !" . $e->getMessage());
 		return false;
 	}
@@ -95,12 +96,12 @@ function init_workflow($params)
 		"name"    => $params["name"],
 		"version" => $params["version"]);
 
-		// Get existing workflows
+    // Get existing workflows
 	try {
 		$swf->describeWorkflowType(array(
 			"domain"       => $params["domain"],
 			"workflowType" => $workflowType
-			));
+        ));
 		return true;
 	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 		log_out("ERROR", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
@@ -109,7 +110,7 @@ function init_workflow($params)
 		return false;
 	}
 
-		// If not registered, we register the WF
+    // If not registered, we register the WF
 	try {
 		$swf->registerWorkflowType($params);
 		return true;
@@ -124,10 +125,10 @@ function get_activity($activityName)
 	global $activities;
 
 	foreach ($activities as $activity)
-	{
-		if ($activity["name"] == $activityName)
-			return ($activity);
-	}
+        {
+            if ($activity["name"] == $activityName)
+                return ($activity);
+        }
 
 	return false;
 }

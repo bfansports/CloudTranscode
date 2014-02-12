@@ -1,8 +1,5 @@
 <?php
 
-require_once dirname(__FILE__).'/../Utils.php';
-require_once 'BasicActivity.php';
-
 // This class validate the JSON input. Makes sure the input files to be transcoded exists and is valid.
 class ValidateInputAndAssetActivity extends BasicActivity
 {
@@ -29,7 +26,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
             return [
                 "status"  => "ERROR",
                 "error"   => self::NO_INPUT,
-                "details" => "Validate transcoding input and Asset !"
+                "details" => "No input provided to 'ValidateInputAndAsset'"
             ];
         
 		// Validate JSON data and Decode as an Object
@@ -41,7 +38,9 @@ class ValidateInputAndAssetActivity extends BasicActivity
             ];
 
 		// Perfom JSON input validation
-		if (($err = $this->inputValidator($input)))
+        // XXX need to perfrom input validation over the JSON input format
+        // XXX JSON format needs to be defined and implemented completly
+		if (($err = $this->input_validator($input)))
             return [
                 "status"  => "ERROR",
                 "error"   => self::INPUT_INVALID,
@@ -51,9 +50,9 @@ class ValidateInputAndAssetActivity extends BasicActivity
 		// Download input file from S3 and prepare for ffmpeg validation test
 		try {
             // Create local temporary folder to store video to validate
-            // We keep the file in TMP folder so we can save time if next job is using same file
-            // If same file we don;t download from S3, we use local copy
-            // XXX cleanup those folders regularly !!!
+            // We keep the file in TMP folder so we can save time if activity using this file runs on the same machine.
+            // If same file and workflow, we don't need to download from S3, we use local copy
+            // XXX cleanup those folders regularly or we'll run out of space !!!
 			$localPath = '/tmp/CloudTranscode/' . $task["workflowExecution"]["workflowId"] . "/";
             if (!file_exists($localPath))
                 {
@@ -70,9 +69,9 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 {
                     log_out("INFO", basename(__FILE__), "Downloading input file from S3. Bucket: '" . $input->{'input_bucket'} . "' File: '" . $input->{'input_file'} . "'");
 
-                    // S3 client
+                    // Get S3 client
                     $s3 = $aws->get('S3');
-                    // Download and Save object to a file.
+                    // Download and Save object to a local file.
                     $object = $s3->getObject(array(
                         'Bucket' => $input->{'input_bucket'},
                         'Key'    => $input->{'input_file'},
@@ -92,7 +91,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
 		log_out("INFO", basename(__FILE__), "Finding information about input file '$localCopy' - Type: " . $input->{'input_type'});
 		// Capture input file details about format, duration, size, etc.
-		if (!($fileDetails = $this->getFileDetails($localCopy, $input->{'input_type'})))
+		if (!($fileDetails = $this->get_file_details($localCopy, $input->{'input_type'})))
             return false;
 
         $fileDetails['filepath'] = $localCopy;
@@ -110,7 +109,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
 	}
 
     // Execute ffmpeg -i to get info about the file
-	private function getFileDetails($localCopy, $type)
+	private function get_file_details($localCopy, $type)
 	{
         $fileDetails = array();
         
@@ -133,19 +132,19 @@ class ValidateInputAndAssetActivity extends BasicActivity
                     }
 
                 // get Duration
-                if (!$this->getDuration($ffmpegInfoOut, $fileDetails))
+                if (!$this->get_duration($ffmpegInfoOut, $fileDetails))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to extract video duration !");
                         return false;
                     }
                 // get Video info
-                if (!$this->getVideoInfo($ffmpegInfoOut, $fileDetails))
+                if (!$this->get_video_info($ffmpegInfoOut, $fileDetails))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find video information !");
                         return false;
                     }
                 // get Audio Info
-                if (!$this->getAudioInfo($ffmpegInfoOut, $fileDetails))
+                if (!$this->get_audio_info($ffmpegInfoOut, $fileDetails))
                     {
                         $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find audio information !");
                         return false;
@@ -158,7 +157,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
 	}
 
     // Extract video info
-    private function getVideoInfo($ffmpegInfoOut, &$fileDetails)
+    private function get_video_info($ffmpegInfoOut, &$fileDetails)
     {
         preg_match("/: Video: (.+?) .+?, (.+?), (.+?), (.+?), (.+?),/", $ffmpegInfoOut, $matches);
         if ($matches) {
@@ -179,7 +178,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
     }
 
     // Extract audio info
-    private function getAudioInfo($ffmpegInfoOut, &$fileDetails)
+    private function get_audio_info($ffmpegInfoOut, &$fileDetails)
     {
         preg_match("/: Audio: (.+?) .+?, (.+?), (.+?), (.+?), ([0-9]+ kb\/s).*?/", $ffmpegInfoOut, $matches);
         if ($matches) {
@@ -196,7 +195,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
     }
     
     // Extract Duration
-    private function getDuration($ffmpegInfoOut, &$fileDetails)
+    private function get_duration($ffmpegInfoOut, &$fileDetails)
     {
         preg_match("/Duration: (.*?), start:/", $ffmpegInfoOut, $matches);
         if (!$matches)
@@ -214,7 +213,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
     
     // XXX TODO
     // Validate JSON input format
-	private function inputValidator()
+	private function input_validator()
 	{
 
 	}

@@ -93,6 +93,36 @@ class BasicActivity
 			return false;
 		}
 	}
+
+    /**
+	 * Send heartbeat to SWF to keep the task alive.
+	 * Timeout is configurable at the Activity level
+     */
+	public function send_heartbeat($task, $details = null)
+	{
+		global $swf;
+
+		try {
+			$taskToken = $task->get("taskToken");
+			log_out("INFO", basename(__FILE__), "Sending heartbeat to SWF ...");
+            
+			$info = $swf->recordActivityTaskHeartbeat(array(
+				"details"   => $details,
+				"taskToken" => $taskToken));
+
+			// Workflow returns if this task should be canceled
+			if ($info->get("cancelRequested") == true)
+                {
+                    log_out("WARNING", basename(__FILE__), "Cancel has been requested for this task '" . $task->get("activityId") . "' ! Killing task ...");
+                    return false;
+                }
+		} catch (Exception $e) {
+			log_out("ERROR", basename(__FILE__), "Unable to send heartbeat ! " . $e->getMessage());
+			return false;
+		}
+        
+        return true;
+	}
 }
 
 

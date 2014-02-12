@@ -7,14 +7,19 @@
  */
 class WorkflowManager
 {
-	private	$domainName;
+	private	$domain;
+    private $config;
     
-	function __construct($domainName)
+	function __construct($config)
 	{
-        if (!$domainName)
-			throw new Exception("Domain is null !\n");
-
-		$this->domainName = $domainName;
+        if (!$config)
+        {
+            log_out("ERROR", basename(__FILE__), "No config provided to the Workflow manager ! Abording ...");
+			return false;
+        }
+        
+        $this->domain = $config['cloudTranscode']['SWF']['domain'];
+        $this->config = $config;
 	}	
     
 	/**
@@ -28,9 +33,9 @@ class WorkflowManager
 
 		try {
 			$swf->requestCancelWorkflowExecution([
-				"domain"     => $this->domainName,
-				"workflowId" => $workflowExecution["workflowId"]
-            ]);
+                    "domain"     => $this->domain,
+                    "workflowId" => $workflowExecution["workflowId"]
+                ]);
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Cannot cancel the workflow '" . $workflowExecution["workflowId"] . "' !");
 			return false;
@@ -52,11 +57,11 @@ class WorkflowManager
 
 		try {
 			$swf->terminateWorkflowExecution([
-				"domain"     => $this->domainName,
-				"workflowId" => $workflowExecution["workflowId"],
-				"reason"     => $reason,
-				"details"    => $details
-            ]);
+                    "domain"     => $this->domain,
+                    "workflowId" => $workflowExecution["workflowId"],
+                    "reason"     => $reason,
+                    "details"    => $details
+                ]);
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Cannot terminate the workflow '" . $workflowExecution["workflowId"] . "' ! Something is messed up ...");
 			return false;
@@ -77,12 +82,12 @@ class WorkflowManager
 
 		try {
 			$info = $swf->describeWorkflowType([
-				"domain"       => $this->domainName,
-				"workflowType" => [
-					"name"    => TRANSCODE_WORKFLOW,
-                    "version" => TRANSCODE_WORKFLOW_VERS
-                ]
-            ]);
+                    "domain"       => $this->domain,
+                    "workflowType" => [
+                        "name"    => $this->config["cloudTrancode"]["SWF"]["name"],
+                        "version" => $this->config["cloudTrancode"]["SWF"]["version"]
+                    ]
+                ]);
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Cannot get workflow '" . $workflowExecution["workflowId"] . "' type information !");
 			return false;
@@ -103,9 +108,9 @@ class WorkflowManager
 
 		try {
 			$info = $swf->describeWorkflowExecution([
-				"domain"     => $this->domainName,
-				"execution" => $workflowExecution
-            ]);
+                    "domain"     => $this->domain,
+                    "execution" => $workflowExecution
+                ]);
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Cannot get workflow '" . $workflowExecution["workflowId"] . "' execution status !");
 			return false;
@@ -125,9 +130,9 @@ class WorkflowManager
 
 		try {
 			$history = $swf->getWorkflowExecutionHistory([
-				"domain" => $this->domainName,
-				"execution" => $workflowExecution
-            ]);
+                    "domain" => $this->domain,
+                    "execution" => $workflowExecution
+                ]);
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			log_out("ERROR", basename(__FILE__), "Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage());
 			return false;
@@ -151,14 +156,14 @@ class WorkflowManager
 
 		try {
 			$swf->respondDecisionTaskCompleted([
-				"taskToken" => $taskToken,
-				"decision"  => [
-					"decisionType" => "RequestCancelActivityTask",
-					"requestCancelActivityTaskDecisionAttributes" => [
-						"activityId" => $activityId
+                    "taskToken" => $taskToken,
+                    "decision"  => [
+                        "decisionType" => "RequestCancelActivityTask",
+                        "requestCancelActivityTaskDecisionAttributes" => [
+                            "activityId" => $activityId
+                        ]
                     ]
-                ]
-            ]);
+                ]);
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Unable to cancel activity '" . $activityId . "' !");
 			return false;
@@ -173,15 +178,17 @@ class WorkflowManager
 	 * @param  [String] $activityId [description]
 	 * @return [Boolean]             [description]
 	 */
-    public function start_activities($taskToken, $decisions)
+    public function respond_decisions($taskToken, $decisions = null)
     {
         global $swf;
-
+        
+        // If no decisions, we send an empty response == continue workflow execution
+        $params = [ "taskToken" => $taskToken ];
+        if ($decisions)
+            $params["decisions"] = $decisions;
+        
 		try {
-			$swf->respondDecisionTaskCompleted(array(
-				"taskToken" => $taskToken,
-				"decisions" => $decisions
-            ));
+			$swf->respondDecisionTaskCompleted($params);
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
 			log_out("ERROR", basename(__FILE__), "Resource Unknown ! " . $e->getMessage());
 			return false;

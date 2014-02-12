@@ -8,11 +8,20 @@ class ValidateTranscodedAssetActivity extends BasicActivity
 	{
 		global $swf;
 
-		echo "[INFO] [ValidateInputAndAssetActivity] Validate transcoded asset !\n";
+		$input = json_decode($task->get("input"));
+        
+		log_out("INFO", basename(__FILE__), 
+            "Validate Transcoded assets !");
+        
+        //print_r($input);
 
-		$result = "Result TASK 3";
-
-		return $result;
+		return [
+            "status"  => "SUCCESS",
+            "data"    => [
+                "input_json" => $input->{"input_json"},
+                "input_file" => $input->{"input_file"}
+            ]
+        ];
 	}
 }
 

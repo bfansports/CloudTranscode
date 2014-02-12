@@ -22,7 +22,7 @@ Class ActivityPoller
 
         $this->domain   = $config['cloudTranscode']['SWF']['domain'];
         $this->taskList = array("name" => $config['cloudTranscode']['SWF']['taskList']);
-
+        
         // Init domain
         if (!init_domain($this->domain))
             throw new Exception("Unable to init the domain !\n");
@@ -74,6 +74,9 @@ Class ActivityPoller
 
         // Can activity be handled by this poller ?
         // /** Utils.php **/
+        // XXX TO IMPROVE:
+        // ActivityPoller should be loaded with a list of Activity it call handle.
+        // For now all ActivityPoller can handle all acitivties
         if (!($activity = get_activity($activityType["name"]))) 
         {
             log_out("ERROR", basename(__FILE__), "This activity type is unknown ! Skipping ...");
@@ -82,6 +85,7 @@ Class ActivityPoller
             return true;
         }
 		
+        // Has activity handler object been instantiated ?
         if (!isset($activity["object"])) 
         {
             log_out("ERROR", basename(__FILE__),"The activity handler for this activity is not instantiated !");
@@ -119,6 +123,7 @@ log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['S
 log_out("INFO", basename(__FILE__), "Clients: ");
 print_r($config['clients']);
 
+// Instantiate AcivityPoller
 try {
     $wfActivityPoller = new ActivityPoller($config);
 } catch (Exception $e) {

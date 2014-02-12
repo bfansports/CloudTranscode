@@ -15,14 +15,6 @@ $swf = $aws->get('Swf');
 // SQS Client
 $sqs = $aws->get('Sqs');
 
-// Defines
-define('DOMAIN', 'CloudTranscode');
-define('TASK_LIST', 'CloudTranscodeTaskList');
-// TRanscoding workflow
-define('TRANSCODE_WORKFLOW', 'basic_workflow');
-define('TRANSCODE_WORKFLOW_VERS', 'v1');
-define('TRANSCODE_WORKFLOW_DESC', 'Cloud Transcode Basic Workflow');
-
 // Activities handled by the decider and activityPoller
 // !! IMPORTANT: Keep execution order !!
 $activities = [
@@ -87,6 +79,7 @@ function init_domain($domainName)
 	}
 }
 
+// Init the workflow. Create one if needed
 function init_workflow($params)
 {
 	global $swf;
@@ -96,7 +89,7 @@ function init_workflow($params)
 		"name"    => $params["name"],
 		"version" => $params["version"]);
 
-    // Get existing workflows
+    // Check if a workflow of this type already exists
 	try {
 		$swf->describeWorkflowType(array(
 			"domain"       => $params["domain"],
@@ -110,7 +103,7 @@ function init_workflow($params)
 		return false;
 	}
 
-    // If not registered, we register the WF
+    // If not registered, we register this type of workflow
 	try {
 		$swf->registerWorkflowType($params);
 		return true;

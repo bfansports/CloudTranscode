@@ -132,7 +132,8 @@ Class DeciderBrain
             }
             
             log_out("INFO", basename(__FILE__), "Starting activity: '" . $nextActivity["name"] . "'");
-            // Start new activity(ies). Several activity to be scheduled if several outputs needed !
+            // Start new activity(ies).
+            // Several activity to be scheduled if several outputs needed !
             if (!$this->start_new_activity($taskToken, 
                     $nextActivity, 
                     $nextActivitiesInput))
@@ -144,6 +145,10 @@ Class DeciderBrain
             if (!$this->workflowTracker->are_similar_activities_completed($workflowExecution, $activity))
             {
                 log_out("INFO", basename(__FILE__), "There are still 'TranscodeAsset' activities running ...");
+                
+                // Send 
+                $this->workflowManager->respond_decisions($taskToken);
+                
                 return false;
             }
 
@@ -151,19 +156,21 @@ Class DeciderBrain
             $nextActivity = $this->workflowTracker->move_to_next_activity($workflowExecution);
 
             log_out("INFO", basename(__FILE__), "Starting activity: '" . $nextActivity["name"] . "'");
-            // Start new activity(ies). Several activity to be scheduled if several outputs needed !
-            if (!$this->start_new_activity($taskToken, $nextActivity, 
-                    [ 
-                        "input_file" => $activityResult->{"input_file"},
-                        "input_json" => $activityResult->{"input_json"}
+            // Start new activity to validate transcoded outputs
+            if (!$this->start_new_activity($taskToken, $nextActivity, [ 
+                        [ 
+                            "input_file" => $activityResult->{"input_file"},
+                            "input_json" => $activityResult->{"input_json"}
+                        ]
                     ]))
                 return false;
         }
         else if ($activity['activityType']['name'] == 'ValidateTrancodedAsset')
         {
             // The workflow is over !
-            if (!$this->workflowManager->start_activities($taskToken, 
-                    ["decisionType" => "CompleteWorkflowExecution"]))
+            if (!$this->workflowManager->respond_decisions($taskToken, [
+                        ["decisionType" => "CompleteWorkflowExecution"]
+                    ]))
                 return false;
         }
         else
@@ -226,8 +233,10 @@ Class DeciderBrain
         $decisions = array();
         foreach ($inputs as $input)
         {
-            // See format:
+            // See doc:
             // http://docs.aws.amazon.com/amazonswf/latest/apireference/API_RespondDecisionTaskCompleted.html
+            // XXX Timeout should be configurable base on client/job profile
+            // If slow profile then longer timeout
             array_push($decisions, [
                     "decisionType" => "ScheduleActivityTask",
                     "scheduleActivityTaskDecisionAttributes" => [
@@ -238,7 +247,7 @@ Class DeciderBrain
                         "activityId"   => uniqid(),
                         "input"		   => json_encode($input),
                         "taskList"     => $this->taskList,
-                        "scheduleToStartTimeout" => "70",
+                        "scheduleToStartTimeout" => "21600",
                         "startToCloseTimeout"    => "21600",
                         "scheduleToCloseTimeout" => "21600",
                         "heartbeatTimeout"       => "60"
@@ -247,7 +256,7 @@ Class DeciderBrain
         }
         
         // Send response to SWF to schedule new activities
-        if (!$this->workflowManager->start_activities($taskToken, $decisions))
+        if (!$this->workflowManager->respond_decisions($taskToken, $decisions))
             return false;
         
 		return true;

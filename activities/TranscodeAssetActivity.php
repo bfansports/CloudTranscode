@@ -17,15 +17,7 @@ class TranscodeAssetActivity extends BasicActivity
 	// Perform the activity
 	public function do_activity($task)
 	{
-		global $swf;
-        
         //print_r($task);
-
-		/**
-		 * Send first heartbeat to initiate status
-		 */
-		if (!$this->sendHeartbeat($task))
-            return false;
         
 		// Processing input variables
 		$input           = json_decode($task->get("input"));
@@ -78,12 +70,12 @@ class TranscodeAssetActivity extends BasicActivity
             // Get progression and notify SWF with heartbeat
             if ($i == 10) {
                 echo ".\n";
-                $progress = $this->captureProgression($ffmpegOut);
+                $progress = $this->capture_progression($ffmpegOut);
 
-                // XXX Notify progress through SQS
-
+                // XXX. HERE, Notify progress through SQS
+                
                 // Notify SWF that we are still running !
-                if (!$this->sendHeartbeat($task))
+                if (!$this->send_heartbeat($task))
                     return false;
                 
                 $i = 0;
@@ -127,14 +119,14 @@ class TranscodeAssetActivity extends BasicActivity
             "status"  => "SUCCESS",
             "details" => "'$inputFilepath' transcoded successfully!",
             "data"    => [
-                "input_json" => $input,
+                "input_json" => $this->inputJSON,
                 "input_file" => $this->inputFile
             ]
         ];
 	}
 
 	// REad ffmpeg output and calculate % progress
-	private function captureProgression($out)
+	private function capture_progression($out)
 	{
 		// # get the current time
 		preg_match_all("/time=(.*?) bitrate/", $out, $matches); 
@@ -158,37 +150,6 @@ class TranscodeAssetActivity extends BasicActivity
 
 		return ($progress);
 	}
-
-	/**
-	 * Send heartbeat to SWF to keep the task alive.
-	 * Timeout is configurable at the Activity level
-     */
-	private function sendHeartbeat($task)
-	{
-		global $swf;
-
-		try {
-			$taskToken = $task->get("taskToken");
-			log_out("INFO", basename(__FILE__), "Sending heartbeat to SWF ...");
-            
-			$info = $swf->recordActivityTaskHeartbeat(array(
-				"details"   => "",
-				"taskToken" => $taskToken));
-
-			// Workflow returns if this task should be canceled
-			if ($info->get("cancelRequested") == true)
-                {
-                    log_out("WARNING", basename(__FILE__), "Cancel has been requested for this task '" . $task->get("activityId") . "' ! Killing task ...");
-                    return false;
-                }
-		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to send heartbeat ! " . $e->getMessage());
-			return false;
-		}
-        
-        return true;
-	}
-
 }
 
 

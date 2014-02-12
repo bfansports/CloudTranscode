@@ -39,7 +39,7 @@ Class Decider
 
         // Instantiate manager
         // Used to perform actions on the workflow. Toolbox.
-		$this->workflowManager = new WorkflowManager($this->domain);
+		$this->workflowManager = new WorkflowManager($config);
         
 		// Instantiate tracker. 
         // Used to track workflow execution and track workflow status
@@ -47,7 +47,8 @@ Class Decider
         
         // Instantiate DeciderBrain
         // This is where the decisions are made and new activity initiated
-		$this->deciderBrain = new DeciderBrain($this->workflowTracker, $this->workflowManager, $this->taskList);
+		$this->deciderBrain = new DeciderBrain($this->workflowTracker, 
+            $this->workflowManager, $this->taskList);
 	}	
 
 	// Poll for decision tasks

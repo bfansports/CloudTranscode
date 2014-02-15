@@ -1,6 +1,10 @@
 <?php
 
-// This class serves as a skeletton for classes impleting actual activity
+require_once 'ActivityUtils.php';
+
+/**
+ * This class serves as a skeletton for classes impleting actual activity
+ */
 class BasicActivity
 {
 	private $activityType; // Type of activity
@@ -41,8 +45,7 @@ class BasicActivity
 			return false;
 		}
 
-		// Register if doesn't exists
-		print_r($params);
+		// Register activites if doesn't exists in SWF
 		try {
 			$swf->registerActivityType($params);
 		} catch (Exception $e) {
@@ -57,6 +60,12 @@ class BasicActivity
 	protected function do_activity($task)
 	{
 		// To be implemented in class that extends this class
+	}
+
+    // Perform JSON input validation
+    protected function input_validator()
+	{
+        // To be implemented in class that extends this class
 	}
 
     // Send activity failed to SWF

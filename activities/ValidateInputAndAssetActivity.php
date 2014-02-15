@@ -1,6 +1,9 @@
 <?php
 
-// This class validate the JSON input. Makes sure the input files to be transcoded exists and is valid.
+/**
+ * This class validate the JSON input. 
+ * Makes sure the input files to be transcoded exists and is valid.
+ */
 class ValidateInputAndAssetActivity extends BasicActivity
 {
 	// Errors
@@ -17,84 +20,56 @@ class ValidateInputAndAssetActivity extends BasicActivity
 	// Perform the activity
 	public function do_activity($task)
 	{
-		global $aws;
-		global $swf;
+        // XXX
+        // XXX. HERE, Notify validation task starts through SQS !
+        // XXX
 
-		log_out("INFO", basename(__FILE__), "Starting transcoding input and Asset validation ...");
-
-		if (!isset($task["input"]) || !$task["input"] || $task["input"] == "")
-            return [
-                "status"  => "ERROR",
-                "error"   => self::NO_INPUT,
-                "details" => "No input provided to 'ValidateInputAndAsset'"
-            ];
+		// Perfom input validation
+		if (($validation = $this->input_validator($task)) &&
+            $validation['status'] == "ERROR")
+            return $validation;
+        $input = $validation['input'];
         
-		// Validate JSON data and Decode as an Object
-		if (!($input = json_decode($task["input"])))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::INPUT_INVALID,
-                "details" => "JSON input is invalid !"
-            ];
 
-		// Perfom JSON input validation
-        // XXX need to perfrom input validation over the JSON input format
-        // XXX JSON format needs to be defined and implemented completly
-		if (($err = $this->input_validator($input)))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::INPUT_INVALID,
-                "details" => $err
-            ];
+        /**
+         * INIT
+         */
         
-		// Download input file from S3 and prepare for ffmpeg validation test
-		try {
-            // Create local temporary folder to store video to validate
-            // We keep the file in TMP folder so we can save time if activity using this file runs on the same machine.
-            // If same file and workflow, we don't need to download from S3, we use local copy
-            // XXX cleanup those folders regularly or we'll run out of space !!!
-			$localPath = '/tmp/CloudTranscode/' . $task["workflowExecution"]["workflowId"] . "/";
-            if (!file_exists($localPath))
-                {
-                    if (!mkdir($localPath, 0750, true))
-                        return [
-                            "status"  => "ERROR",
-                            "error"   => self::TMP_FOLDER_FAIL,
-                            "details" => "Unable to create temporary folder to store asset to validate !"
-                        ];
-                }
-			$localCopy = $localPath . $input->{'input_file'};
-            // Local copy exists ? If not we download the file from S3
-			if (!file_exists($localCopy) || !filesize($localCopy))
-                {
-                    log_out("INFO", basename(__FILE__), "Downloading input file from S3. Bucket: '" . $input->{'input_bucket'} . "' File: '" . $input->{'input_file'} . "'");
-
-                    // Get S3 client
-                    $s3 = $aws->get('S3');
-                    // Download and Save object to a local file.
-                    $object = $s3->getObject(array(
-                        'Bucket' => $input->{'input_bucket'},
-                        'Key'    => $input->{'input_file'},
-                        'SaveAs' => $localCopy
-					));
-                }
-			else 
-				log_out("INFO", basename(__FILE__), "Using local copy of input file: '" . $localCopy . "'");
-
-		} catch (Exception $e) {
+        // Create TMP storage to put the file to validate. See: ActivityUtils.php
+        // XXX cleanup those folders regularly or we'll run out of space !!!
+        if (!($localPath = createTmpLocalStorage($task["workflowExecution"]["workflowId"])))
+            return [
+                "status"  => "ERROR",
+                "error"   => self::TMP_FOLDER_FAIL,
+                "details" => "Unable to create temporary folder to store asset to validate !"
+            ];
+        $pathToFile = $localPath . "/" . $input->{'input_file'};
+        
+        // Download file from S3 and save as $pathToFile. See: ActivityUtils.php
+        if (($err = getFileFromS3($pathToFile, 
+                    $input->{'input_bucket'}, 
+                    $input->{'input_file'})))
             return [
                 "status"  => "ERROR",
                 "error"   => self::GET_OBJECT_FAILED,
-                "details" => "Unable to get input file from S3 ! " . $e->getMessage()
+                "details" => $err
             ];
-        }
         
-		log_out("INFO", basename(__FILE__), "Finding information about input file '$localCopy' - Type: " . $input->{'input_type'});
-		// Capture input file details about format, duration, size, etc.
-		if (!($fileDetails = $this->get_file_details($localCopy, $input->{'input_type'})))
-            return false;
+        
+        /**
+         * PROCESS
+         */
 
-        $fileDetails['filepath'] = $localCopy;
+		log_out("INFO", basename(__FILE__), "Starting Asset validation ...");
+		log_out("INFO", basename(__FILE__), "Finding information about input file '$pathToFile' - Type: " . $input->{'input_type'});
+		// Capture input file details about format, duration, size, etc.
+		if (!($fileDetails = $this->get_file_details($pathToFile, $input->{'input_type'})))
+            return false;
+        
+        // XXX
+        // XXX. HERE, Notify validation task success through SQS !
+        // XXX
+
 		// Create result object to be passed to next activity in the Workflow as input
 		$result = [
             "status"  => "SUCCESS",
@@ -109,49 +84,49 @@ class ValidateInputAndAssetActivity extends BasicActivity
 	}
 
     // Execute ffmpeg -i to get info about the file
-	private function get_file_details($localCopy, $type)
+	private function get_file_details($pathToFile, $type)
 	{
         $fileDetails = array();
         
         // Get video information
 		if ($type == self::VIDEO)
+        {
+            log_out("INFO", basename(__FILE__), "Running FFMPEG validation test on '" . $pathToFile . "'");
+            // Execute FFMpeg
+            if (!($handle = popen("ffmpeg -i $pathToFile 2>&1", 'r')))
             {
-                log_out("INFO", basename(__FILE__), "Running FFMPEG validation test on '" . $localCopy . "'");
-                // Execute FFMpeg
-                if (!($handle = popen("ffmpeg -i $localCopy 2>&1", 'r')))
-                    {
-                        $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to get information about the video file '$localCopy' !");
-                        return false;
-                    }
-                // Get output
-                $ffmpegInfoOut = stream_get_contents($handle);
-                if (!$ffmpegInfoOut)
-                    {
-                        $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to read FFMpeg output !");
-                        return false;
-                    }
-
-                // get Duration
-                if (!$this->get_duration($ffmpegInfoOut, $fileDetails))
-                    {
-                        $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to extract video duration !");
-                        return false;
-                    }
-                // get Video info
-                if (!$this->get_video_info($ffmpegInfoOut, $fileDetails))
-                    {
-                        $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find video information !");
-                        return false;
-                    }
-                // get Audio Info
-                if (!$this->get_audio_info($ffmpegInfoOut, $fileDetails))
-                    {
-                        $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find audio information !");
-                        return false;
-                    }
-                
-                fclose($handle);
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to get information about the video file '$pathToFile' !");
+                return false;
             }
+            // Get output
+            $ffmpegInfoOut = stream_get_contents($handle);
+            if (!$ffmpegInfoOut)
+            {
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to read FFMpeg output !");
+                return false;
+            }
+
+            // get Duration
+            if (!$this->get_duration($ffmpegInfoOut, $fileDetails))
+            {
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to extract video duration !");
+                return false;
+            }
+            // get Video info
+            if (!$this->get_video_info($ffmpegInfoOut, $fileDetails))
+            {
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find video information !");
+                return false;
+            }
+            // get Audio Info
+            if (!$this->get_audio_info($ffmpegInfoOut, $fileDetails))
+            {
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find audio information !");
+                return false;
+            }
+                
+            fclose($handle);
+        }
         
         return ($fileDetails);
 	}
@@ -211,11 +186,30 @@ class ValidateInputAndAssetActivity extends BasicActivity
         return true;
     }
     
-    // XXX TODO
-    // Validate JSON input format
-	private function input_validator()
+    // Validate input
+	protected function input_validator($task)
 	{
-
+        // XXX need to perfrom input validation over the JSON input format
+        // XXX JSON format needs to be defined and implemented completly
+        if (!isset($task["input"]) || !$task["input"] || $task["input"] == "")
+            return [
+                "status"  => "ERROR",
+                "error"   => self::NO_INPUT,
+                "details" => "No input provided to 'ValidateInputAndAsset'"
+            ];
+        
+		// Validate JSON data and Decode as an Object
+		if (!($input = json_decode($task["input"])))
+            return [
+                "status"  => "ERROR",
+                "error"   => self::INPUT_INVALID,
+                "details" => "JSON input is invalid !"
+            ];
+        
+        // Return input
+        return [
+            "status" => "VALID",
+            "input"  => $input
+        ] ;
 	}
-
 }

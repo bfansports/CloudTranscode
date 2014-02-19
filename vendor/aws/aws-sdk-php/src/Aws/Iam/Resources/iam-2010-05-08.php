@@ -65,6 +65,11 @@ return array (
             'https' => true,
             'hostname' => 'iam.amazonaws.com',
         ),
+        'cn-north-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'iam.cn-north-1.amazonaws.com.cn',
+        ),
         'us-gov-west-1' => array(
             'http' => false,
             'https' => true,
@@ -2313,11 +2318,6 @@ return array (
                 'AssignmentStatus' => array(
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'Assigned',
-                        'Unassigned',
-                        'Any',
-                    ),
                 ),
                 'Marker' => array(
                     'type' => 'string',
@@ -2676,10 +2676,6 @@ return array (
                     'required' => true,
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'Active',
-                        'Inactive',
-                    ),
                 ),
             ),
             'errorResponses' => array(
@@ -3039,10 +3035,6 @@ return array (
                     'required' => true,
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'Active',
-                        'Inactive',
-                    ),
                 ),
             ),
             'errorResponses' => array(

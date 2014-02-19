@@ -64,6 +64,11 @@ return array (
             'https' => true,
             'hostname' => 'rds.sa-east-1.amazonaws.com',
         ),
+        'cn-north-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'rds.cn-north-1.amazonaws.com.cn',
+        ),
         'us-gov-west-1' => array(
             'http' => false,
             'https' => true,
@@ -1916,12 +1921,6 @@ return array (
                 'SourceType' => array(
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'db-instance',
-                        'db-parameter-group',
-                        'db-security-group',
-                        'db-snapshot',
-                    ),
                 ),
                 'StartTime' => array(
                     'type' => array(
@@ -2556,10 +2555,6 @@ return array (
                             ),
                             'ApplyMethod' => array(
                                 'type' => 'string',
-                                'enum' => array(
-                                    'immediate',
-                                    'pending-reboot',
-                                ),
                             ),
                         ),
                     ),
@@ -3121,10 +3116,6 @@ return array (
                             ),
                             'ApplyMethod' => array(
                                 'type' => 'string',
-                                'enum' => array(
-                                    'immediate',
-                                    'pending-reboot',
-                                ),
                             ),
                         ),
                     ),

@@ -29,6 +29,16 @@ return array (
             'https' => true,
             'hostname' => 'email.us-east-1.amazonaws.com',
         ),
+        'us-west-2' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'email.us-west-2.amazonaws.com',
+        ),
+        'eu-west-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'email.eu-west-1.amazonaws.com',
+        ),
     ),
     'operations' => array(
         'DeleteIdentity' => array(
@@ -225,10 +235,6 @@ return array (
                 'IdentityType' => array(
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'EmailAddress',
-                        'Domain',
-                    ),
                 ),
                 'NextToken' => array(
                     'type' => 'string',
@@ -519,10 +525,6 @@ return array (
                     'required' => true,
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'Bounce',
-                        'Complaint',
-                    ),
                 ),
                 'SnsTopic' => array(
                     'type' => 'string',

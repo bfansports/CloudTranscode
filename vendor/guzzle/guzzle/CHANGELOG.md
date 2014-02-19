@@ -1,6 +1,46 @@
 CHANGELOG
 =========
 
+3.8.1 (2013-01-28)
+------------------
+
+* Bug: Always using GET requests when redirecting from a 303 response
+* Bug: CURLOPT_SSL_VERIFYHOST is now correctly set to false when setting `$certificateAuthority` to false in
+  `Guzzle\Http\ClientInterface::setSslVerification()`
+* Bug: RedirectPlugin now uses strict RFC 3986 compliance when combining a base URL with a relative URL
+* Bug: The body of a request can now be set to `"0"`
+* Sending PHP stream requests no longer forces `HTTP/1.0`
+* Adding more information to ExceptionCollection exceptions so that users have more context, including a stack trace of
+  each sub-exception
+* Updated the `$ref` attribute in service descriptions to merge over any existing parameters of a schema (rather than
+  clobbering everything).
+* Merging URLs will now use the query string object from the relative URL (thus allowing custom query aggregators)
+* Query strings are now parsed in a way that they do no convert empty keys with no value to have a dangling `=`.
+  For example `foo&bar=baz` is now correctly parsed and recognized as `foo&bar=baz` rather than `foo=&bar=baz`.
+* Now properly escaping the regular expression delimiter when matching Cookie domains.
+* Network access is now disabled when loading XML documents
+
+3.8.0 (2013-12-05)
+------------------
+
+* Added the ability to define a POST name for a file
+* JSON response parsing now properly walks additionalProperties
+* cURL error code 18 is now retried automatically in the BackoffPlugin
+* Fixed a cURL error when URLs contain fragments
+* Fixed an issue in the BackoffPlugin retry event where it was trying to access all exceptions as if they were
+  CurlExceptions
+* CURLOPT_PROGRESS function fix for PHP 5.5 (69fcc1e)
+* Added the ability for Guzzle to work with older versions of cURL that do not support `CURLOPT_TIMEOUT_MS`
+* Fixed a bug that was encountered when parsing empty header parameters
+* UriTemplate now has a `setRegex()` method to match the docs
+* The `debug` request parameter now checks if it is truthy rather than if it exists
+* Setting the `debug` request parameter to true shows verbose cURL output instead of using the LogPlugin
+* Added the ability to combine URLs using strict RFC 3986 compliance
+* Command objects can now return the validation errors encountered by the command
+* Various fixes to cache revalidation (#437 and 29797e5)
+* Various fixes to the AsyncPlugin
+* Cleaned up build scripts
+
 3.7.4 (2013-10-02)
 ------------------
 

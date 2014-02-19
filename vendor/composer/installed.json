@@ -1,18 +1,18 @@
 [
     {
         "name": "symfony/event-dispatcher",
-        "version": "v2.3.7",
-        "version_normalized": "2.3.7.0",
+        "version": "v2.4.2",
+        "version_normalized": "2.4.2.0",
         "target-dir": "Symfony/Component/EventDispatcher",
         "source": {
             "type": "git",
             "url": "https://github.com/symfony/EventDispatcher.git",
-            "reference": "2d8ece3c610726a73d0c95c885134efea182610e"
+            "reference": "4708b8cd41984a5ba29fe7dd40716f7f761ac501"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/2d8ece3c610726a73d0c95c885134efea182610e",
-            "reference": "2d8ece3c610726a73d0c95c885134efea182610e",
+            "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/4708b8cd41984a5ba29fe7dd40716f7f761ac501",
+            "reference": "4708b8cd41984a5ba29fe7dd40716f7f761ac501",
             "shasum": ""
         },
         "require": {
@@ -25,11 +25,11 @@
             "symfony/dependency-injection": "",
             "symfony/http-kernel": ""
         },
-        "time": "2013-10-13 06:32:10",
+        "time": "2014-02-11 13:52:09",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "2.3-dev"
+                "dev-master": "2.4-dev"
             }
         },
         "installation-source": "dist",
@@ -45,7 +45,9 @@
         "authors": [
             {
                 "name": "Fabien Potencier",
-                "email": "fabien@symfony.com"
+                "email": "fabien@symfony.com",
+                "homepage": "http://fabien.potencier.org",
+                "role": "Lead Developer"
             },
             {
                 "name": "Symfony Community",
@@ -57,17 +59,17 @@
     },
     {
         "name": "guzzle/guzzle",
-        "version": "v3.7.4",
-        "version_normalized": "3.7.4.0",
+        "version": "v3.8.1",
+        "version_normalized": "3.8.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/guzzle/guzzle.git",
-            "reference": "b170b028c6bb5799640e46c8803015b0f9a45ed9"
+            "reference": "4de0618a01b34aa1c8c33a3f13f396dcd3882eba"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b170b028c6bb5799640e46c8803015b0f9a45ed9",
-            "reference": "b170b028c6bb5799640e46c8803015b0f9a45ed9",
+            "url": "https://api.github.com/repos/guzzle/guzzle/zipball/4de0618a01b34aa1c8c33a3f13f396dcd3882eba",
+            "reference": "4de0618a01b34aa1c8c33a3f13f396dcd3882eba",
             "shasum": ""
         },
         "require": {
@@ -105,21 +107,21 @@
             "phpunit/phpunit": "3.7.*",
             "psr/log": "1.0.*",
             "symfony/class-loader": "*",
-            "zendframework/zend-cache": "2.0.*",
-            "zendframework/zend-log": "2.0.*"
+            "zendframework/zend-cache": "<2.3",
+            "zendframework/zend-log": "<2.3"
         },
-        "time": "2013-10-02 20:47:00",
+        "time": "2014-01-28 22:29:15",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "3.7-dev"
+                "dev-master": "3.8-dev"
             }
         },
         "installation-source": "dist",
         "autoload": {
             "psr-0": {
-                "Guzzle\\Tests": "tests/",
-                "Guzzle": "src/"
+                "Guzzle": "src/",
+                "Guzzle\\Tests": "tests/"
             }
         },
         "notification-url": "https://packagist.org/downloads/",
@@ -151,21 +153,21 @@
     },
     {
         "name": "aws/aws-sdk-php",
-        "version": "2.4.11",
-        "version_normalized": "2.4.11.0",
+        "version": "2.5.2",
+        "version_normalized": "2.5.2.0",
         "source": {
             "type": "git",
             "url": "https://github.com/aws/aws-sdk-php.git",
-            "reference": "e8421b7a9da3f0a6fddcc6ffb10e21b86348ba0d"
+            "reference": "f720d799ea385f86ef33966908a1217dda5e49ce"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/e8421b7a9da3f0a6fddcc6ffb10e21b86348ba0d",
-            "reference": "e8421b7a9da3f0a6fddcc6ffb10e21b86348ba0d",
+            "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/f720d799ea385f86ef33966908a1217dda5e49ce",
+            "reference": "f720d799ea385f86ef33966908a1217dda5e49ce",
             "shasum": ""
         },
         "require": {
-            "guzzle/guzzle": "~3.7.0",
+            "guzzle/guzzle": ">=3.7.0,<3.9.0",
             "php": ">=5.3.3"
         },
         "require-dev": {
@@ -183,11 +185,11 @@
             "monolog/monolog": "Adds support for logging HTTP requests and responses",
             "symfony/yaml": "Eases the ability to write manifests for creating jobs in AWS Import/Export"
         },
-        "time": "2013-11-26 20:13:01",
+        "time": "2014-01-30 00:45:15",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "2.4.x-dev"
+                "dev-master": "2.5.x-dev"
             }
         },
         "installation-source": "dist",

@@ -34,7 +34,8 @@ Class DeciderBrain
     
     public function handle_event($events, $newEvents, $event, $taskToken, $workflowExecution)
     {
-        log_out("INFO", basename(__FILE__), "==> *" . $event["eventType"] . "*");
+        log_out("INFO", basename(__FILE__), "*" . $event["eventType"] . "*", 
+            $workflowExecution['workflowId']);
         
         // Do we know this event ?
         if (!isset($this->eventsMap[$event["eventType"]]))
@@ -54,7 +55,8 @@ Class DeciderBrain
     {
         if (!isset($event["workflowExecutionStartedEventAttributes"]["input"]))
         {
-            log_out("ERROR", basename(__FILE__), "Workflow doesn't contain any input data !");
+            log_out("ERROR", basename(__FILE__), "Workflow doesn't contain any input data !", 
+                $workflowExecution['workflowId']);
             return false;
         }
         // Get the input passed to the workflow at startup
@@ -64,7 +66,8 @@ Class DeciderBrain
 		if (!($fistActivity = $this->workflowTracker->get_first_activity($workflowExecution)))
 			return false;
 
-		log_out("INFO", basename(__FILE__), "Starting activity: '" . $fistActivity["name"] . "'");
+		log_out("INFO", basename(__FILE__), "Starting activity: '" . $fistActivity["name"] . "'", 
+            $workflowExecution['workflowId']);
         // Start new activity
         if (!$this->start_new_activity($taskToken, 
                 $fistActivity, 
@@ -77,7 +80,9 @@ Class DeciderBrain
     // Workflow completed !
     private function workflow_execution_completed($events, $newEvents, $event, $taskToken, $workflowExecution)
     {
-        log_out("INFO", basename(__FILE__), "Workflow '" . $workflowExecution["workflowId"] . "' has completed !");
+        log_out("INFO", basename(__FILE__), 
+            "Workflow '" . $workflowExecution["workflowId"] . "' has completed !", 
+            $workflowExecution['workflowId']);
         return true;
     }
     
@@ -131,7 +136,9 @@ Class DeciderBrain
                     ]);
             }
             
-            log_out("INFO", basename(__FILE__), "Starting activity: '" . $nextActivity["name"] . "'");
+            log_out("INFO", basename(__FILE__), 
+                "Starting activity: '" . $nextActivity["name"] . "'", 
+                $workflowExecution['workflowId']);
             // Start new activity(ies).
             // Several activity to be scheduled if several outputs needed !
             if (!$this->start_new_activity($taskToken, 
@@ -144,7 +151,9 @@ Class DeciderBrain
             // Check if we are done with all outputs that needs to be transcoded ?
             if (!$this->workflowTracker->are_similar_activities_completed($workflowExecution, $activity))
             {
-                log_out("INFO", basename(__FILE__), "There are still 'TranscodeAsset' activities running ...");
+                log_out("INFO", basename(__FILE__), 
+                    "There are still 'TranscodeAsset' activities running ...", 
+                    $workflowExecution['workflowId']);
                 
                 // Send 
                 $this->workflowManager->respond_decisions($taskToken);
@@ -155,7 +164,9 @@ Class DeciderBrain
             // We get the next activity information
             $nextActivity = $this->workflowTracker->move_to_next_activity($workflowExecution);
 
-            log_out("INFO", basename(__FILE__), "Starting activity: '" . $nextActivity["name"] . "'");
+            log_out("INFO", basename(__FILE__), 
+                "Starting activity: '" . $nextActivity["name"] . "'", 
+                $workflowExecution['workflowId']);
             // Start new activity to validate transcoded outputs
             if (!$this->start_new_activity($taskToken, $nextActivity, [ 
                         [ 
@@ -167,6 +178,10 @@ Class DeciderBrain
         }
         else if ($activity['activityType']['name'] == 'ValidateTrancodedAsset')
         {
+            log_out("INFO", basename(__FILE__), 
+                "Post processing validation performed! Workflow is over ...", 
+                $workflowExecution['workflowId']);
+           
             // The workflow is over !
             if (!$this->workflowManager->respond_decisions($taskToken, [
                         ["decisionType" => "CompleteWorkflowExecution"]
@@ -175,7 +190,9 @@ Class DeciderBrain
         }
         else
         {
-            log_out("ERROR", basename(__FILE__), "Unknown activity has completed ! Something is messed up !");
+            log_out("ERROR", basename(__FILE__), 
+                "Unknown activity has completed ! Something is messed up !", 
+                $workflowExecution['workflowId']);
             return false;
         }
         
@@ -186,13 +203,15 @@ Class DeciderBrain
     {
         if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
         {
-            log_out("ERROR", basename(__FILE__), "Activity timed out but we can't get the current activity ! Something is messed up ...");
+            log_out("ERROR", basename(__FILE__), 
+                "Activity timed out but we can't get the current activity ! Something is messed up ...", 
+                $workflowExecution['workflowId']);
             $this->workflowManager->terminate_workflow($workflowExecution);
             return false;
         }
 
         $msg = "Activity '" . $activity['name'] . "' timed out ! Killing workflow ...";
-        log_out("ERROR", basename(__FILE__), $msg);
+        log_out("ERROR", basename(__FILE__), $msg, $workflowExecution['workflowId']);
         $this->workflowManager->terminate_workflow($workflowExecution, self::ACTIVITY_TIMEOUT, $msg);
 
         return true;
@@ -202,13 +221,15 @@ Class DeciderBrain
     {
         if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
         {
-            log_out("ERROR", basename(__FILE__), "Activity failed but we can't get the current activity ! Something is messed up ...");	
+            log_out("ERROR", basename(__FILE__), 
+                "Activity failed but we can't get the current activity ! Something is messed up ...", 
+                $workflowExecution['workflowId']);	
             $this->workflowManager->terminate_workflow($workflowExecution);
             return false;
         }
 
         $msg = "Activity '" . $activity['name'] . "' failed :[ ! Killing workflow ...";
-        log_out("ERROR", basename(__FILE__), $msg);
+        log_out("ERROR", basename(__FILE__), $msg, $workflowExecution['workflowId']);
         $this->workflowManager->terminate_workflow($workflowExecution, self::ACTIVITY_FAILED, $msg);
 
         return true;
@@ -247,9 +268,9 @@ Class DeciderBrain
                         "activityId"   => uniqid(),
                         "input"		   => json_encode($input),
                         "taskList"     => $this->taskList,
-                        "scheduleToStartTimeout" => "21600",
-                        "startToCloseTimeout"    => "21600",
-                        "scheduleToCloseTimeout" => "21600",
+                        "scheduleToStartTimeout" => "7200", // 2 hours
+                        "startToCloseTimeout"    => "18000", // 5 hours
+                        "scheduleToCloseTimeout" => "25200", // 7 hours
                         "heartbeatTimeout"       => "60"
                     ]
                 ]);

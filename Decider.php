@@ -29,7 +29,7 @@ Class Decider
 	{
 		$this->domain   = $config['cloudTranscode']['SWF']['domain'];
 		$this->taskList = array("name" => $config['cloudTranscode']['SWF']['taskList']);
-
+        
 		// Init domain
 		if (!init_domain($this->domain))
 			throw new Exception("[ERROR] Unable to init the domain !\n");

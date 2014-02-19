@@ -61,14 +61,16 @@ Class ActivityPoller
                     "taskList" => $this->taskList
                 ));
 
-            // Polling timeout, we return for another round
-            if (!($activityType = $activityTask->get("activityType")))
+            // Get activityType and WorkflowExecution info
+            if (!($activityType = $activityTask->get("activityType")) ||
+                !($workflowExecution = $activityTask->get("workflowExecution")))
                 return true;
-
+            
             //print_r($activityTask);
 
         } catch (Exception $e) {
-            log_out("ERROR", basename(__FILE__), "Unable to poll activity tasks ! " . $e->getMessage());
+            log_out("ERROR", basename(__FILE__), 
+                "Unable to poll activity tasks ! " . $e->getMessage());
             return true;
         }
 
@@ -79,16 +81,24 @@ Class ActivityPoller
         // For now all ActivityPoller can handle all acitivties
         if (!($activity = get_activity($activityType["name"]))) 
         {
-            log_out("ERROR", basename(__FILE__), "This activity type is unknown ! Skipping ...");
-            log_out("ERROR", basename(__FILE__), "Detail: ");
+            log_out("ERROR", basename(__FILE__), "This activity type is unknown ! Skipping ...",
+                $workflowExecution['workflowId']);
+            log_out("ERROR", basename(__FILE__), "Detail: ",
+                $workflowExecution['workflowId']);
             print_r($activity);
             return true;
         }
-		
+        
+        log_out("INFO", basename(__FILE__), 
+            "Starting activity => " . $activity["name"],
+            $workflowExecution['workflowId']);
+
         // Has activity handler object been instantiated ?
         if (!isset($activity["object"])) 
         {
-            log_out("ERROR", basename(__FILE__),"The activity handler for this activity is not instantiated !");
+            log_out("ERROR", basename(__FILE__),
+                "The activity handler for this activity is not instantiated !",
+                $workflowExecution['workflowId']);
             return true;
         }
 

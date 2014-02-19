@@ -10,7 +10,7 @@ Guzzle is a PHP HTTP client and framework for building RESTful web service clien
 - Service description DSL allows you build awesome web service clients faster.
 - Symfony2 event-based plugin system allows you to completely modify the behavior of a request.
 
-Get answers with: [Documentation](http://www.guzzlephp.org/), [Forums](https://groups.google.com/forum/?hl=en#!forum/guzzle), IRC ([#guzzlephp](irc://irc.freenode.net/#guzzlephp) @ irc.freenode.net)
+Get answers with: [Documentation](http://docs.guzzlephp.org/), [Forums](https://groups.google.com/forum/?hl=en#!forum/guzzle), IRC ([#guzzlephp](irc://irc.freenode.net/#guzzlephp) @ irc.freenode.net)
 
 ```php
 // Really simple using a static facade
@@ -43,8 +43,10 @@ require 'vendor/autoload.php';
 
 ### Installing via phar
 
-[Download the phar](http://guzzlephp.org/guzzle.phar) and include it in your project
-([minimal phar](http://guzzlephp.org/guzzle-min.phar))
+As of the 3.7.4 release, each release of Guzzle includes a "guzzle.phar" file that includes all of the files needed to
+run Guzzle and all of Guzzle's dependencies. Simply download the phar and include it in your project.
+
+You can find a list of each release and the available downloads at https://github.com/guzzle/guzzle/releases.
 
 Features
 --------
@@ -157,7 +159,7 @@ $response = Guzzle::get('http://guzzlephp.org');
 
 // Custom options can be passed into requests created by the static client
 $response = Guzzle::post('http://guzzlephp.org', [
-    'headers' => ['X-Foo' => 'Bar']
+    'headers' => ['X-Foo' => 'Bar'],
     'body'    => ['Foo' => 'Bar'],
     'query'   => ['Test' => 123],
     'timeout' => 10,

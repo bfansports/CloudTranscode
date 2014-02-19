@@ -20,7 +20,7 @@ return array (
     'serviceFullName' => 'Amazon ElastiCache',
     'serviceType' => 'query',
     'resultWrapped' => true,
-    'signatureVersion' => 'v2',
+    'signatureVersion' => 'v4',
     'namespace' => 'ElastiCache',
     'regions' => array(
         'us-east-1' => array(
@@ -57,6 +57,11 @@ return array (
             'http' => false,
             'https' => true,
             'hostname' => 'elasticache.ap-southeast-2.amazonaws.com',
+        ),
+        'cn-north-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'elasticache.cn-north-1.amazonaws.com.cn',
         ),
         'sa-east-1' => array(
             'http' => false,
@@ -1033,12 +1038,6 @@ return array (
                 'SourceType' => array(
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'cache-cluster',
-                        'cache-parameter-group',
-                        'cache-security-group',
-                        'cache-subnet-group',
-                    ),
                 ),
                 'StartTime' => array(
                     'type' => array(

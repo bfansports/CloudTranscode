@@ -521,14 +521,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client();
         $request = $client->get('/', array(), array('debug' => true));
-        $match = false;
-        foreach ($request->getEventDispatcher()->getListeners('request.sent') as $l) {
-            if ($l[0] instanceof LogPlugin) {
-                $match = true;
-                break;
-            }
-        }
-        $this->assertTrue($match);
+        $this->assertTrue($request->getCurlOptions()->get(CURLOPT_VERBOSE));
     }
 
     public function testCanSetVerifyToOff()
@@ -610,5 +603,11 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $client->get('/', array(), array('cert' => array('/foo.pem', 'bar')));
         $this->assertEquals('/foo.pem', $request->getCurlOptions()->get(CURLOPT_SSLCERT));
         $this->assertEquals('bar', $request->getCurlOptions()->get(CURLOPT_SSLCERTPASSWD));
+    }
+
+    public function testCreatesBodyWithoutZeroString()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', 'http://test.com', array(), '0');
+        $this->assertSame('0', (string) $request->getBody());
     }
 }

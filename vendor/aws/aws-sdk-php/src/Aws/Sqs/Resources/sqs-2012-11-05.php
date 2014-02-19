@@ -64,6 +64,11 @@ return array (
             'https' => true,
             'hostname' => 'sqs.sa-east-1.amazonaws.com',
         ),
+        'cn-north-1' => array(
+            'http' => true,
+            'https' => true,
+            'hostname' => 'sqs.cn-north-1.amazonaws.com.cn',
+        ),
         'us-gov-west-1' => array(
             'http' => true,
             'https' => true,
@@ -121,7 +126,7 @@ return array (
             ),
             'errorResponses' => array(
                 array(
-                    'reason' => 'The operation that you requested would violate a limit. For example, ReceiveMessage returns this error if the maximum number of messages inflight has already been reached. AddPermission returns this error if the maximum number of permissions for the queue has already been reached.',
+                    'reason' => 'The action that you requested would violate a limit. For example, ReceiveMessage returns this error if the maximum number of messages inflight has already been reached. AddPermission returns this error if the maximum number of permissions for the queue has already been reached.',
                     'class' => 'OverLimitException',
                 ),
             ),
@@ -279,7 +284,7 @@ return array (
                     'class' => 'QueueDeletedRecentlyException',
                 ),
                 array(
-                    'reason' => 'A queue already exists with this name. SQS returns this error only if the request includes attributes whose values differ from those of the existing queue.',
+                    'reason' => 'A queue already exists with this name. Amazon SQS returns this error only if the request includes attributes whose values differ from those of the existing queue.',
                     'class' => 'QueueNameExistsException',
                 ),
             ),
@@ -438,21 +443,6 @@ return array (
                     'items' => array(
                         'name' => 'AttributeName',
                         'type' => 'string',
-                        'enum' => array(
-                            'All',
-                            'Policy',
-                            'VisibilityTimeout',
-                            'MaximumMessageSize',
-                            'MessageRetentionPeriod',
-                            'ApproximateNumberOfMessages',
-                            'ApproximateNumberOfMessagesNotVisible',
-                            'CreatedTimestamp',
-                            'LastModifiedTimestamp',
-                            'QueueArn',
-                            'ApproximateNumberOfMessagesDelayed',
-                            'DelaySeconds',
-                            'ReceiveMessageWaitTimeSeconds',
-                        ),
                     ),
                 ),
             ),
@@ -486,6 +476,36 @@ return array (
                     'location' => 'aws.query',
                 ),
                 'QueueOwnerAWSAccountId' => array(
+                    'type' => 'string',
+                    'location' => 'aws.query',
+                ),
+            ),
+            'errorResponses' => array(
+                array(
+                    'reason' => 'The queue referred to does not exist.',
+                    'class' => 'QueueDoesNotExistException',
+                ),
+            ),
+        ),
+        'ListDeadLetterSourceQueues' => array(
+            'httpMethod' => 'POST',
+            'uri' => '/',
+            'class' => 'Aws\\Common\\Command\\QueryCommand',
+            'responseClass' => 'ListDeadLetterSourceQueuesResult',
+            'responseType' => 'model',
+            'parameters' => array(
+                'Action' => array(
+                    'static' => true,
+                    'location' => 'aws.query',
+                    'default' => 'ListDeadLetterSourceQueues',
+                ),
+                'Version' => array(
+                    'static' => true,
+                    'location' => 'aws.query',
+                    'default' => '2012-11-05',
+                ),
+                'QueueUrl' => array(
+                    'required' => true,
                     'type' => 'string',
                     'location' => 'aws.query',
                 ),
@@ -566,7 +586,7 @@ return array (
             ),
             'errorResponses' => array(
                 array(
-                    'reason' => 'The operation that you requested would violate a limit. For example, ReceiveMessage returns this error if the maximum number of messages inflight has already been reached. AddPermission returns this error if the maximum number of permissions for the queue has already been reached.',
+                    'reason' => 'The action that you requested would violate a limit. For example, ReceiveMessage returns this error if the maximum number of messages inflight has already been reached. AddPermission returns this error if the maximum number of permissions for the queue has already been reached.',
                     'class' => 'OverLimitException',
                 ),
             ),
@@ -895,6 +915,7 @@ return array (
                             'ApproximateNumberOfMessagesDelayed',
                             'DelaySeconds',
                             'ReceiveMessageWaitTimeSeconds',
+                            'RedrivePolicy',
                         ),
                     ),
                     'filters' => array(
@@ -933,6 +954,25 @@ return array (
                 'QueueUrl' => array(
                     'type' => 'string',
                     'location' => 'xml',
+                ),
+            ),
+        ),
+        'ListDeadLetterSourceQueuesResult' => array(
+            'type' => 'object',
+            'additionalProperties' => true,
+            'properties' => array(
+                'queueUrls' => array(
+                    'type' => 'array',
+                    'location' => 'xml',
+                    'sentAs' => 'QueueUrl',
+                    'data' => array(
+                        'xmlFlattened' => true,
+                    ),
+                    'items' => array(
+                        'name' => 'QueueUrl',
+                        'type' => 'string',
+                        'sentAs' => 'QueueUrl',
+                    ),
                 ),
             ),
         ),
@@ -1001,6 +1041,7 @@ return array (
                                         'ApproximateNumberOfMessagesDelayed',
                                         'DelaySeconds',
                                         'ReceiveMessageWaitTimeSeconds',
+                                        'RedrivePolicy',
                                     ),
                                 ),
                                 'filters' => array(
@@ -1109,6 +1150,9 @@ return array (
     ),
     'iterators' => array(
         'operations' => array(
+            'ListDeadLetterSourceQueues' => array(
+                'result_key' => 'queueUrls',
+            ),
             'ListQueues' => array(
                 'result_key' => 'QueueUrls',
             ),

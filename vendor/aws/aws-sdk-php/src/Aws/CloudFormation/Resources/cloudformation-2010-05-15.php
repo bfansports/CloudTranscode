@@ -63,6 +63,11 @@ return array (
             'https' => true,
             'hostname' => 'cloudformation.sa-east-1.amazonaws.com',
         ),
+        'cn-north-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'cloudformation.cn-north-1.amazonaws.com.cn',
+        ),
         'us-gov-west-1' => array(
             'http' => false,
             'https' => true,
@@ -171,19 +176,11 @@ return array (
                     'items' => array(
                         'name' => 'Capability',
                         'type' => 'string',
-                        'enum' => array(
-                            'CAPABILITY_IAM',
-                        ),
                     ),
                 ),
                 'OnFailure' => array(
                     'type' => 'string',
                     'location' => 'aws.query',
-                    'enum' => array(
-                        'DO_NOTHING',
-                        'ROLLBACK',
-                        'DELETE',
-                    ),
                 ),
                 'StackPolicyBody' => array(
                     'type' => 'string',
@@ -217,12 +214,15 @@ return array (
             ),
             'errorResponses' => array(
                 array(
+                    'reason' => 'Quota for the resource has already been reached.',
                     'class' => 'LimitExceededException',
                 ),
                 array(
+                    'reason' => 'Resource with the name requested already exists.',
                     'class' => 'AlreadyExistsException',
                 ),
                 array(
+                    'reason' => 'The template contains resources with capabilities that were not specified in the Capabilities parameter.',
                     'class' => 'InsufficientCapabilitiesException',
                 ),
             ),
@@ -524,24 +524,6 @@ return array (
                     'items' => array(
                         'name' => 'StackStatus',
                         'type' => 'string',
-                        'enum' => array(
-                            'CREATE_IN_PROGRESS',
-                            'CREATE_FAILED',
-                            'CREATE_COMPLETE',
-                            'ROLLBACK_IN_PROGRESS',
-                            'ROLLBACK_FAILED',
-                            'ROLLBACK_COMPLETE',
-                            'DELETE_IN_PROGRESS',
-                            'DELETE_FAILED',
-                            'DELETE_COMPLETE',
-                            'UPDATE_IN_PROGRESS',
-                            'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
-                            'UPDATE_COMPLETE',
-                            'UPDATE_ROLLBACK_IN_PROGRESS',
-                            'UPDATE_ROLLBACK_FAILED',
-                            'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
-                            'UPDATE_ROLLBACK_COMPLETE',
-                        ),
                     ),
                 ),
             ),
@@ -651,9 +633,6 @@ return array (
                     'items' => array(
                         'name' => 'Capability',
                         'type' => 'string',
-                        'enum' => array(
-                            'CAPABILITY_IAM',
-                        ),
                     ),
                 ),
                 'StackPolicyBody' => array(
@@ -671,6 +650,7 @@ return array (
             ),
             'errorResponses' => array(
                 array(
+                    'reason' => 'The template contains resources with capabilities that were not specified in the Capabilities parameter.',
                     'class' => 'InsufficientCapabilitiesException',
                 ),
             ),

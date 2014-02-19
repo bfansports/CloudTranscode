@@ -1,0 +1,3 @@
+.*
+# Ignore the local config
+config/awsConfig.json

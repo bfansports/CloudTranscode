@@ -7,8 +7,6 @@
 class ValidateInputAndAssetActivity extends BasicActivity
 {
 	// Errors
-	const NO_INPUT             = "NO_INPUT";
-	const INPUT_INVALID        = "INPUT_INVALID";
 	const NO_INPUT_FILE        = "NO_INPUT_FILE";
 	const GET_OBJECT_FAILED    = "GET_OBJECT_FAILED";
 	const EXEC_FOR_INFO_FAILED = "EXEC_FOR_INFO_FAILED";
@@ -30,23 +28,25 @@ class ValidateInputAndAssetActivity extends BasicActivity
             return $validation;
         $input = $validation['input'];
         
-
+        // Create a key workflowId:activityId to put in logs
+        $this->activityLogKey = $task->get("workflowExecution")['workflowId'] . ":" . $task->get("activityId");
+        
         /**
          * INIT
          */
         
         // Create TMP storage to put the file to validate. See: ActivityUtils.php
         // XXX cleanup those folders regularly or we'll run out of space !!!
-        if (!($localPath = createTmpLocalStorage($task["workflowExecution"]["workflowId"])))
+        if (!($localPath = create_tmp_local_storage($task["workflowExecution"]["workflowId"])))
             return [
                 "status"  => "ERROR",
                 "error"   => self::TMP_FOLDER_FAIL,
                 "details" => "Unable to create temporary folder to store asset to validate !"
             ];
-        $pathToFile = $localPath . "/" . $input->{'input_file'};
+        $pathToFile = $localPath . $input->{'input_file'};
         
         // Download file from S3 and save as $pathToFile. See: ActivityUtils.php
-        if (($err = getFileFromS3($pathToFile, 
+        if (($err = get_file_from_S3($pathToFile, 
                     $input->{'input_bucket'}, 
                     $input->{'input_file'})))
             return [
@@ -60,8 +60,11 @@ class ValidateInputAndAssetActivity extends BasicActivity
          * PROCESS
          */
 
-		log_out("INFO", basename(__FILE__), "Starting Asset validation ...");
-		log_out("INFO", basename(__FILE__), "Finding information about input file '$pathToFile' - Type: " . $input->{'input_type'});
+		log_out("INFO", basename(__FILE__), "Starting Asset validation ...",
+            $this->activityLogKey);
+		log_out("INFO", basename(__FILE__), 
+            "Finding information about input file '$pathToFile' - Type: " . $input->{'input_type'},
+            $this->activityLogKey);
 		// Capture input file details about format, duration, size, etc.
 		if (!($fileDetails = $this->get_file_details($pathToFile, $input->{'input_type'})))
             return false;
@@ -91,37 +94,44 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Get video information
 		if ($type == self::VIDEO)
         {
-            log_out("INFO", basename(__FILE__), "Running FFMPEG validation test on '" . $pathToFile . "'");
+            log_out("INFO", basename(__FILE__), 
+                "Running FFMPEG validation test on '" . $pathToFile . "'",
+                $this->activityLogKey);
             // Execute FFMpeg
             if (!($handle = popen("ffmpeg -i $pathToFile 2>&1", 'r')))
             {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to get information about the video file '$pathToFile' !");
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
+                    "Unable to get information about the video file '$pathToFile' !");
                 return false;
             }
             // Get output
             $ffmpegInfoOut = stream_get_contents($handle);
             if (!$ffmpegInfoOut)
             {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to read FFMpeg output !");
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
+                    "Unable to read FFMpeg output !");
                 return false;
             }
 
             // get Duration
             if (!$this->get_duration($ffmpegInfoOut, $fileDetails))
             {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to extract video duration !");
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
+                    "Unable to extract video duration !");
                 return false;
             }
             // get Video info
             if (!$this->get_video_info($ffmpegInfoOut, $fileDetails))
             {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find video information !");
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
+                    "Unable to find video information !");
                 return false;
             }
             // get Audio Info
             if (!$this->get_audio_info($ffmpegInfoOut, $fileDetails))
             {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, "Unable to find audio information !");
+                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
+                    "Unable to find audio information !");
                 return false;
             }
                 
@@ -189,27 +199,16 @@ class ValidateInputAndAssetActivity extends BasicActivity
     // Validate input
 	protected function input_validator($task)
 	{
-        // XXX need to perfrom input validation over the JSON input format
-        // XXX JSON format needs to be defined and implemented completly
-        if (!isset($task["input"]) || !$task["input"] || $task["input"] == "")
-            return [
-                "status"  => "ERROR",
-                "error"   => self::NO_INPUT,
-                "details" => "No input provided to 'ValidateInputAndAsset'"
-            ];
-        
-		// Validate JSON data and Decode as an Object
-		if (!($input = json_decode($task["input"])))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::INPUT_INVALID,
-                "details" => "JSON input is invalid !"
-            ];
-        
+        if (($input = $this->check_task_basics($task)) &&
+            $input['status'] == "ERROR") 
+        {
+            log_out("ERROR", basename(__FILE__), 
+                $input['details'],
+                $this->activityLogKey);
+            return ($input);
+        }
+
         // Return input
-        return [
-            "status" => "VALID",
-            "input"  => $input
-        ] ;
+        return $input;
 	}
 }

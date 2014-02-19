@@ -42,9 +42,13 @@ $activities = [
 ];
 
 // Log to STDOUT
-function log_out($type, $source, $message)
+function log_out($type, $source, $message, $workflowId = 0)
 {
-	echo time() . " [$type] [$source] $message\n";
+    $log = time() . " [$type] [$source]";
+    if ($workflowId)
+        $log .= " [$workflowId]";
+
+	echo "$log $message\n";
 }
 
 // Initialize the domain. Create it if needed

@@ -10,8 +10,6 @@ class TranscodeAssetActivity extends BasicActivity
     private $inputJSON;
 
     // Errors
-	const NO_INPUT        = "NO_INPUT";
-	const INPUT_INVALID   = "INPUT_INVALID";
 	const EXEC_FAIL       = "EXEC_FAIL";
 	const TRANSCODE_FAIL  = "TRANSCODE_FAIL";
 	const S3_UPLOAD_FAIL  = "S3_UPLOAD_FAIL";
@@ -30,6 +28,8 @@ class TranscodeAssetActivity extends BasicActivity
             return $validation;
         $input = $validation['input'];
 
+        // Create a key workflowId:activityId to put in logs
+        $this->activityLogKey = $task->get("workflowExecution")['workflowId'] . ":" . $task->get("activityId");
         
         /**
          * INIT
@@ -41,16 +41,16 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Create TMP storage to put the file to validate. See: ActivityUtils.php
         // XXX cleanup those folders regularly or we'll run out of space !!!
-        if (!($localPath = createTmpLocalStorage($task["workflowExecution"]["workflowId"])))
+        if (!($localPath = create_tmp_local_storage($task["workflowExecution"]["workflowId"])))
             return [
                 "status"  => "ERROR",
                 "error"   => self::TMP_FOLDER_FAIL,
                 "details" => "Unable to create temporary folder to store asset to validate !"
             ];
-        $pathToFile = $localPath . "/" . $this->inputJSON->{'input_file'};
+        $pathToFile = $localPath . $this->inputJSON->{'input_file'};
         
         // Download file from S3 and save as$pathToFile . See: ActivityUtils.php
-        if (($err = getFileFromS3($pathToFile, 
+        if (($err = get_file_from_S3($pathToFile, 
                     $this->inputJSON->{'input_bucket'}, 
                     $this->inputJSON->{'input_file'})))
             return [
@@ -66,15 +66,21 @@ class TranscodeAssetActivity extends BasicActivity
 
 		// Setup transcoding command and parameters
         $outputConfig  = $input->{"output"}; // JSON description of the transcode to do
-		$outputPathToFile = $localPath . "/" . $outputConfig->{"file"};
+		$outputPathToFile = $localPath . "transcode/" . $outputConfig->{"file"};
         // Create FFMpeg command
 		$ffmpegArgs    = "-i $pathToFile -y -threads 0 -s " . $outputConfig->{'size'} . " -vcodec " . $outputConfig->{'video_codec'} . " -acodec " . $outputConfig->{'audio_codec'} . " -b:v " . $outputConfig->{'video_bitrate'} . " -bufsize " . $outputConfig->{'buffer_size'} . " -b:a " . $outputConfig->{'audio_bitrate'} . " $outputPathToFile";
 		$ffmpegCmd     = "ffmpeg $ffmpegArgs";
         
         // Print info
-		log_out("INFO", basename(__FILE__), "FFMPEG CMD:\n$ffmpegCmd\n");
-		log_out("INFO", basename(__FILE__), "Start Transcoding Asset '$pathToFile' to '$outputPathToFile' ...");
-		log_out("INFO", basename(__FILE__), "Video duration (sec): " . $this->inputFile->{'duration'});
+		log_out("INFO", basename(__FILE__), 
+            "FFMPEG CMD:\n$ffmpegCmd\n",
+            $this->activityLogKey);
+		log_out("INFO", basename(__FILE__), 
+            "Start Transcoding Asset '$pathToFile' to '$outputPathToFile' ...",
+            $this->activityLogKey);
+		log_out("INFO", basename(__FILE__), 
+            "Video duration (sec): " . $this->inputFile->{'duration'},
+            $this->activityLogKey);
         
         // Command output capture method: pipe STDERR (FFMpeg print out on STDERR)
 		$descriptorSpecs = array(  
@@ -150,7 +156,9 @@ class TranscodeAssetActivity extends BasicActivity
             ];
         
         // No error. Transcode successful
-        log_out("INFO", basename(__FILE__), "Transcoding successfull !");
+        log_out("INFO", basename(__FILE__), 
+            "Transcoding successfull !",
+            $this->activityLogKey);
 
         // XXX
         // XXX. HERE, Notify upload starting through SQS !
@@ -158,10 +166,14 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Send output file to S3
         $outputBucket = str_replace("//","/",$outputConfig->{"output_bucket"}."/".$task["workflowExecution"]["workflowId"]);
-        log_out("INFO", basename(__FILE__), "Start uploading '$outputPathToFile' to S3 bucket '$outputBucket' ...");
-        if (($err = putFileToS3($outputPathToFile, 
+        log_out("INFO", basename(__FILE__), 
+            "Start uploading '$outputPathToFile' to S3 bucket '$outputBucket' ...",
+            $this->activityLogKey);
+        if (($err = put_file_to_S3($outputPathToFile, 
                     $outputBucket,
-                    $outputConfig->{'file'}
+                    $outputConfig->{'file'},
+                    array($this, "send_heartbeat"),
+                    $task
                 )))
             return [
                 "status"  => "ERROR",
@@ -174,8 +186,9 @@ class TranscodeAssetActivity extends BasicActivity
         // XXX
 
         // Return success !
-        $msg = "'$pathToFile' transcoded and upload successfully into S3 bucket '$outputBucket' !";
-        log_out("INFO", basename(__FILE__), $msg);
+        $msg = "'$pathToFile' successfully transcoded and upload into S3 bucket '$outputBucket' !";
+        log_out("INFO", basename(__FILE__), $msg,
+            $this->activityLogKey);
 		return [
             "status"  => "SUCCESS",
             "details" => $msg,
@@ -207,7 +220,8 @@ class TranscodeAssetActivity extends BasicActivity
         $progress = 0;
         if ($done)
             $progress = round(($done/$this->inputFile->{"duration"})*100);
-		log_out("INFO", basename(__FILE__), "Progress: $done / $progress%");
+		log_out("INFO", basename(__FILE__), "Progress: $done / $progress%",
+            $this->activityLogKey);
 
 		return ($progress);
 	}
@@ -215,28 +229,17 @@ class TranscodeAssetActivity extends BasicActivity
     // Validate input
 	protected function input_validator($task)
 	{
-        // XXX need to perfrom input validation over the JSON input format
-        // XXX JSON format needs to be defined and implemented completly
-        if (!isset($task["input"]) || !$task["input"] || $task["input"] == "")
-            return [
-                "status"  => "ERROR",
-                "error"   => self::NO_INPUT,
-                "details" => "No input provided to 'ValidateInputAndAsset'"
-            ];
-        
-		// Validate JSON data and Decode as an Object
-		if (!($input = json_decode($task["input"])))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::INPUT_INVALID,
-                "details" => "JSON input is invalid !"
-            ];
+        if (($input = $this->check_task_basics($task)) &&
+            $input['status'] == "ERROR") 
+        {
+            log_out("ERROR", basename(__FILE__), 
+                $input['details'],
+                $this->activityLogKey);
+            return ($input);
+        }
         
         // Return input
-        return [
-            "status" => "VALID",
-            "input"  => $input
-        ] ;
+        return $input;
 	}
 }
 

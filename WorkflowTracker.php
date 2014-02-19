@@ -30,7 +30,8 @@ class WorkflowTracker
     {
         if (!$events) {
             if (!($events = $this->workflowManager->get_workflow_excution_history($workflowExecution))) {
-                log_out("ERROR", basename(__FILE__), "Unable to get workflow Input data !");
+                log_out("ERROR", basename(__FILE__), "Unable to get workflow Input data !", 
+                    $workflowExecution['workflowId']);
                 return false;
             }
         }
@@ -42,7 +43,9 @@ class WorkflowTracker
                 return ($event["workflowExecutionStartedEventAttributes"]["input"]);
         }
 
-        log_out("ERROR", basename(__FILE__), "Input value cannot be retrieved from workflow events history !");
+        log_out("ERROR", basename(__FILE__), 
+            "Input value cannot be retrieved from workflow events history !", 
+            $workflowExecution['workflowId']);
         return false;
     }
     
@@ -51,7 +54,9 @@ class WorkflowTracker
     // See Utils.php for activity list
     public function register_workflow_in_tracker($workflowExecution, $activities) 
     {
-        log_out("INFO", basename(__FILE__), "Registering workflow '" . $workflowExecution["workflowId"] . "' in the workflow tracker !");
+        log_out("INFO", basename(__FILE__), 
+            "Registering workflow '" . $workflowExecution["workflowId"] . "' in the workflow tracker !", 
+            $workflowExecution['workflowId']);
         $this->executionTracker[$workflowExecution["workflowId"]] = 
             array(
                 "step"              => 0,
@@ -74,7 +79,9 @@ class WorkflowTracker
             "completedId"  => 0,
         ];
         
-        log_out("INFO", basename(__FILE__), "Registering scheduled activityId '" . $newActivity['activityId'] . "' for workflow: '" . $workflowExecution["workflowId"] . "'.");
+        log_out("INFO", basename(__FILE__), 
+            "Registering scheduled activityId '" . $newActivity['activityId'] . "'.", 
+            $workflowExecution['workflowId']);
         // We store that activity in the workflow tracker
         array_push($this->executionTracker[$workflowExecution["workflowId"]]["ongoingActivities"], $newActivity);
         return $newActivity;
@@ -90,13 +97,17 @@ class WorkflowTracker
             // Did I find the ongoing activity I'm looking for ?
             if ($activity["scheduledId"] == $scheduledEventId)
             {
-                log_out("INFO", basename(__FILE__), "Registering started activityId '" . $activity['activityId'] . "' for workflow: '" . $workflowExecution["workflowId"] . "'.");
+                log_out("INFO", basename(__FILE__), 
+                    "Registering started activityId '" . $activity['activityId'] . "'.", 
+                    $workflowExecution['workflowId']);
                 $activity["startedId"] = $event["eventId"];
                 return $activity;
             }
         }
         
-        log_out("ERROR", basename(__FILE__), "Can't find the scheduled activity that just started ! Something is messed up !");
+        log_out("ERROR", basename(__FILE__), 
+            "Can't find the scheduled activity that just started ! Something is messed up !", 
+            $workflowExecution['workflowId']);
         return false;
     }
 
@@ -112,14 +123,18 @@ class WorkflowTracker
             if ($activity["scheduledId"] == $scheduledEventId &&
                 $activity["startedId"]   == $startedEventId)
             {
-                log_out("INFO", basename(__FILE__), "Registering completed activityId '" . $activity['activityId'] . "' for workflow: '" . $workflowExecution["workflowId"] . "'.");
+                log_out("INFO", basename(__FILE__), 
+                    "Registering completed activityId '" . $activity['activityId'] . "'.", 
+                    $workflowExecution['workflowId']);
                 $activity["completedId"]   = $event["eventId"];
                 $activity["completedTime"] = $event["eventTimestamp"];
                 return $activity;
             }
         }
 
-        log_out("ERROR", basename(__FILE__), "Can't find the scheduled/started activity that just completed ! Something is messed up !");
+        log_out("ERROR", basename(__FILE__), 
+            "Can't find the scheduled/started activity that just completed ! Something is messed up !", 
+            $workflowExecution['workflowId']);
         return false;
     }
 

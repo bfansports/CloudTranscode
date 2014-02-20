@@ -1,15 +1,50 @@
 {
     "cloudTranscode": {
-        "SWF": {
+        "workflow": {
             "domain": "Cloud Transcode",
-            "taskList": "cloudTranscodeTaskList",
+            "decisionTaskList": "cloudTranscodeTaskList",
             "name": "cloudTranscodeBasicWorkflow",
             "version": "v1",
-            "description": "Basic Cloud Transcode Workflow",
-            "defaultTaskStartToCloseTimeout": 3600,
-            "defaultExecutionStartToCloseTimeout": 86400,
-            "defaultChildPolicy": "TERMINATE"
-        }
+            "description": "Basic Cloud Transcode Workflow"
+        },
+	"activities": [
+	    {
+		"name": "ValidateInputAndAsset", 
+		"version": "v1",
+		"description": "Check input command and asset to be transcoded.",
+		"file": "/activities/ValidateInputAndAssetActivity.php",
+		"class": "ValidateInputAndAssetActivity",
+		"activityTaskList": "validatorTaskList",
+		"scheduleToStartTimeout": 7200,
+		"startToCloseTimeout": 18000,
+		"scheduleToCloseTimeout": 25200,
+		"heartbeatTimeout": 60
+	    },
+	    {
+		"name": "TranscodeAsset", 
+		"version": "v1",
+		"description": "Perform transcoding on input asset and generate output file(s)",
+		"file": "/activities/TranscodeAssetActivity.php",
+		"class": "TranscodeAssetActivity",
+		"activityTaskList": "transcoderTaskList",
+		"scheduleToStartTimeout": 7200,
+		"startToCloseTimeout": 18000,
+		"scheduleToCloseTimeout": 25200,
+		"heartbeatTimeout": 60
+	    },
+	    {
+		"name": "ValidateTrancodedAsset", 
+		"version": "v1",
+		"description": "Make sure the transcoding has been performed properly",
+		"file": "/activities/ValidateTrancodedAssetActivity.php",
+		"class": "ValidateTranscodedAssetActivity",
+		"activityTaskList": "validatorTaskList",
+		"scheduleToStartTimeout": 7200,
+		"startToCloseTimeout": 18000,
+		"scheduleToCloseTimeout": 25200,
+		"heartbeatTimeout": 60
+	    }
+	]
     },
     "clients": [
         {

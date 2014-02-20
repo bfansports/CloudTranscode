@@ -2,18 +2,17 @@
 
 Class DeciderBrain
 {
-    // Event mapper
     private $eventsMap;
-    
 	private $workflowTracker;
 	private $workflowManager;
-    private $taskList;
+    private $decisionTaskList;
+    private $activityList;
     
     // Errors
-	const ACTIVITY_TIMEOUT     = "ACTIVITY_TIMEOUT";
-	const ACTIVITY_FAILED      = "ACTIVITY_FAILED";
+	const ACTIVITY_TIMEOUT = "ACTIVITY_TIMEOUT";
+	const ACTIVITY_FAILED  = "ACTIVITY_FAILED";
 
-    function __construct($workflowTracker, $workflowManager, $taskList)
+    function __construct($config, $workflowTracker, $workflowManager)
 	{
         // Init eventMap. Maps events with callback functions.
         $this->eventsMap = [
@@ -27,31 +26,39 @@ Class DeciderBrain
             'ActivityTaskCanceled'       => 'activity_task_canceled',
         ];
         
-        $this->workflowTracker = $workflowTracker;
-        $this->workflowManager = $workflowManager;
-        $this->taskList = $taskList;
+        $this->workflowTracker  = $workflowTracker;
+        $this->workflowManager  = $workflowManager;
+        $this->decisionTaskList = array("name" => 
+            $config['cloudTranscode']['workflow']['decisionTaskList']);
+        $this->activityList     = $config['cloudTranscode']['activities'];
     }
     
-    public function handle_event($events, $newEvents, $event, $taskToken, $workflowExecution)
+    /**
+	 * Handles new incoming events
+	 * @param [String] $event [New event]
+	 * @param [String] $taskToken [Decision task token]
+	 * @param [String] $workflowExecution [workflow info]
+	 */
+    public function handle_event($event, $taskToken, $workflowExecution)
     {
         log_out("INFO", basename(__FILE__), "*" . $event["eventType"] . "*", 
             $workflowExecution['workflowId']);
         
         // Do we know this event ?
         if (!isset($this->eventsMap[$event["eventType"]]))
-            return false;
-        
+            return;
         
         // We call the callback function that handles this event 
-        $this->{$this->eventsMap[$event["eventType"]]}($events, $newEvents, $event, $taskToken, $workflowExecution);
+        $this->{$this->eventsMap[$event["eventType"]]}($event, $taskToken, $workflowExecution);
     }
 
+    
     /**
      * Callback functions
      */
 
     // Workflow started !
-    private function workflow_execution_started($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function workflow_execution_started($event, $taskToken, $workflowExecution)
     {
         if (!isset($event["workflowExecutionStartedEventAttributes"]["input"]))
         {
@@ -66,10 +73,8 @@ Class DeciderBrain
 		if (!($fistActivity = $this->workflowTracker->get_first_activity($workflowExecution)))
 			return false;
 
-		log_out("INFO", basename(__FILE__), "Starting activity: '" . $fistActivity["name"] . "'", 
-            $workflowExecution['workflowId']);
         // Start new activity
-        if (!$this->start_new_activity($taskToken, 
+        if (!$this->schedule_new_activity($workflowExecution, $taskToken, 
                 $fistActivity, 
                 [json_decode($workflowInput)]))
 			return false;
@@ -78,7 +83,7 @@ Class DeciderBrain
     }
     
     // Workflow completed !
-    private function workflow_execution_completed($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function workflow_execution_completed($event, $taskToken, $workflowExecution)
     {
         log_out("INFO", basename(__FILE__), 
             "Workflow '" . $workflowExecution["workflowId"] . "' has completed !", 
@@ -87,17 +92,18 @@ Class DeciderBrain
     }
     
     // Activity scheduled
-    private function activity_task_scheduled($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function activity_task_scheduled($event, $taskToken, $workflowExecution)
     {
         //print_r($event);
         
         // Register new scheduled activities in tracker
-        if (!($activity = $this->workflowTracker->record_activity_scheduled($workflowExecution, $event)))
+        if (!($activity = 
+                $this->workflowTracker->record_activity_scheduled($workflowExecution, $event)))
             return false;
     }
 
     // Activity started !
-    private function activity_task_started($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function activity_task_started($event, $taskToken, $workflowExecution)
     {
         //print_r($event);
 
@@ -107,7 +113,7 @@ Class DeciderBrain
     }
     
     // Activity Task completed
-    private function activity_task_completed($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function activity_task_completed($event, $taskToken, $workflowExecution)
     {
         //print_r($event);
         
@@ -115,7 +121,8 @@ Class DeciderBrain
         $activityResult = json_decode($event['activityTaskCompletedEventAttributes']['result']);
 
         // Register new completed activities in tracker
-        if (!($activity = $this->workflowTracker->record_activity_completed($workflowExecution, $event)))
+        if (!($activity = 
+                $this->workflowTracker->record_activity_completed($workflowExecution, $event)))
             return false;
         
         // We completed 'ValidateInputAndAsset' activity
@@ -126,7 +133,7 @@ Class DeciderBrain
             
             // Prepare the data for transcoding activity
             // One input for each transcoding activity
-            $nextActivitiesInput = array();
+            $nextActivitiesInput = [];
             foreach ($activityResult->{"outputs"} as $output)
             {
                 array_push($nextActivitiesInput, [
@@ -136,12 +143,9 @@ Class DeciderBrain
                     ]);
             }
             
-            log_out("INFO", basename(__FILE__), 
-                "Starting activity: '" . $nextActivity["name"] . "'", 
-                $workflowExecution['workflowId']);
             // Start new activity(ies).
             // Several activity to be scheduled if several outputs needed !
-            if (!$this->start_new_activity($taskToken, 
+            if (!$this->schedule_new_activity($workflowExecution, $taskToken, 
                     $nextActivity, 
                     $nextActivitiesInput))
                 return false;
@@ -164,11 +168,8 @@ Class DeciderBrain
             // We get the next activity information
             $nextActivity = $this->workflowTracker->move_to_next_activity($workflowExecution);
 
-            log_out("INFO", basename(__FILE__), 
-                "Starting activity: '" . $nextActivity["name"] . "'", 
-                $workflowExecution['workflowId']);
             // Start new activity to validate transcoded outputs
-            if (!$this->start_new_activity($taskToken, $nextActivity, [ 
+            if (!$this->schedule_new_activity($workflowExecution, $taskToken, $nextActivity, [ 
                         [ 
                             "input_file" => $activityResult->{"input_file"},
                             "input_json" => $activityResult->{"input_json"}
@@ -199,7 +200,7 @@ Class DeciderBrain
         return true;
     }
 
-    private function activity_task_timed_out($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function activity_task_timed_out($event, $taskToken, $workflowExecution)
     {
         if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
         {
@@ -217,7 +218,7 @@ Class DeciderBrain
         return true;
     }
     
-    private function activity_task_failed($events, $newEvents, $event, $taskToken, $workflowExecution)
+    private function activity_task_failed($event, $taskToken, $workflowExecution)
     {
         if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
         {
@@ -242,7 +243,7 @@ Class DeciderBrain
      */
     
     // Start a new activity
-	private function start_new_activity($taskToken, $activity, $inputs)
+	private function schedule_new_activity($workflowExecution, $taskToken, $activity, $inputs)
 	{
         if (!$inputs || !count($inputs))
         {
@@ -251,13 +252,9 @@ Class DeciderBrain
         }
 
         // Create new decisions based on input
-        $decisions = array();
+        $decisions = [];
         foreach ($inputs as $input)
         {
-            // See doc:
-            // http://docs.aws.amazon.com/amazonswf/latest/apireference/API_RespondDecisionTaskCompleted.html
-            // XXX Timeout should be configurable base on client/job profile
-            // If slow profile then longer timeout
             array_push($decisions, [
                     "decisionType" => "ScheduleActivityTask",
                     "scheduleActivityTaskDecisionAttributes" => [
@@ -267,14 +264,18 @@ Class DeciderBrain
                         ],
                         "activityId"   => uniqid(),
                         "input"		   => json_encode($input),
-                        "taskList"     => $this->taskList,
-                        "scheduleToStartTimeout" => "7200", // 2 hours
-                        "startToCloseTimeout"    => "18000", // 5 hours
-                        "scheduleToCloseTimeout" => "25200", // 7 hours
-                        "heartbeatTimeout"       => "60"
+                        "taskList"     => [ "name" => $activity["activityTaskList"] ],
+                        "scheduleToStartTimeout" => $activity["scheduleToStartTimeout"],
+                        "startToCloseTimeout"    => $activity["startToCloseTimeout"],
+                        "scheduleToCloseTimeout" => $activity["scheduleToCloseTimeout"],
+                        "heartbeatTimeout"       => $activity["heartbeatTimeout"]
                     ]
                 ]);
         }
+
+        log_out("INFO", basename(__FILE__), 
+            "Scheduling new activity: name='" . $activity["name"] . "',version='" . $activity["version"] . "',taskList='" . $activity["activityTaskList"]  . "'", 
+            $workflowExecution['workflowId']);
         
         // Send response to SWF to schedule new activities
         if (!$this->workflowManager->respond_decisions($taskToken, $decisions))
@@ -282,6 +283,4 @@ Class DeciderBrain
         
 		return true;
 	}
-    
-    
 }

@@ -16,26 +16,35 @@ require 'DeciderBrain.php';
 Class Decider
 {
 	private $domain;
-	private $taskList;
+	private $decisionTaskList;
+	private $activityList;
 
 	private $workflowManager;
 	private $workflowTracker;
 
     // Decider brain, where all decisions are made
     private $deciderBrain;
-
-
+    
 	function __construct($config)
 	{
-		$this->domain   = $config['cloudTranscode']['SWF']['domain'];
-		$this->taskList = array("name" => $config['cloudTranscode']['SWF']['taskList']);
-        
-		// Init domain
+		$this->domain = $config['cloudTranscode']['workflow']['domain'];
+		$this->decisionTaskList = array("name" => $config['cloudTranscode']['workflow']['decisionTaskList']);
+        $this->activityList = $config['cloudTranscode']['activities'];
+            
+		// Init domain. see: Utils.php
 		if (!init_domain($this->domain))
-			throw new Exception("[ERROR] Unable to init the domain !\n");
-
-		if (!init_workflow($config['cloudTranscode']['SWF']))
-			throw new Exception("[ERROR] Unable to init the workflow !\n");
+        {
+            log_out("ERROR", 
+                basename(__FILE__), "Unable to init the domain !");
+            exit(1);
+        }
+        // Init workflow. see: Utils.php
+		if (!init_workflow($config['cloudTranscode']['workflow']))
+        {
+            log_out("ERROR", 
+                basename(__FILE__), "Unable to init the workflow !");
+            exit(1);
+        }
 
         // Instantiate manager
         // Used to perform actions on the workflow. Toolbox.
@@ -43,12 +52,12 @@ Class Decider
         
 		// Instantiate tracker. 
         // Used to track workflow execution and track workflow status
-		$this->workflowTracker = new WorkflowTracker($this->domain, $this->workflowManager);
+		$this->workflowTracker = new WorkflowTracker($config, $this->workflowManager);
         
         // Instantiate DeciderBrain
         // This is where the decisions are made and new activity initiated
-		$this->deciderBrain = new DeciderBrain($this->workflowTracker, 
-            $this->workflowManager, $this->taskList);
+		$this->deciderBrain = new DeciderBrain($config, $this->workflowTracker, 
+            $this->workflowManager);
 	}	
 
 	// Poll for decision tasks
@@ -61,30 +70,28 @@ Class Decider
 			// Poll decision task
 			log_out("INFO", basename(__FILE__), "Polling ...");
 			$decisionTask = $swf->pollForDecisionTask(array(
-				"domain"   => $this->domain,
-				"taskList" => $this->taskList,
-            ));
+                    "domain"   => $this->domain,
+                    "taskList" => $this->decisionTaskList,
+                ));
 
 			// Polling timeout, we return for another round ...
 			if (!($workflowExecution = $decisionTask->get("workflowExecution")))
 				return true;
 
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to pull jobs for decision ! " . $e->getMessage());
+			log_out("ERROR", basename(__FILE__), 
+                "Unable to pull jobs for decision ! " . $e->getMessage());
 			return true;
 		}
 
-        // Is workflow already trackked by tracker ?
-        if (!$this->workflowTracker->is_workflow_tracked($workflowExecution))
-            {
-                // Register workflow in tracker.
-                if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, $activities))
-                    {
-                        log_out("ERROR", basename(__FILE__), 
-                            "Unable to register the workflow in tracker ! Can't process decision task !");
-                        return false; 
-                    }
-            }
+        // Register workflow in tracker.
+        if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, 
+                $this->activityList))
+        {
+            log_out("ERROR", basename(__FILE__), 
+                "Unable to register the workflow in tracker ! Can't process decision task !");
+            return false; 
+        }
 		
 		// We give the new decision task to the event handler for processing
 		$this->decision_task_event_handler($decisionTask, $workflowExecution);
@@ -97,7 +104,7 @@ Class Decider
 	{
 		global $swf;
 
-		// Creating $events shortcut.
+		// Get list of all events in WF history
 		$events = $decisionTask->get("events");
 
 		// We modify the event array to keep only the latest events 
@@ -110,12 +117,12 @@ Class Decider
         
 		// Check new incoming event
 		foreach ($newEvents as $event) 
-            {
-                // We ask the brain to make a decision
-                // We pass all events, new events, and this event
-                $this->deciderBrain->handle_event($events, $newEvents, $event, 
-                    $decisionTask["taskToken"], $workflowExecution);
-            }
+        {
+            // We ask the brain to make a decision
+            // We pass all events, new events, and this event
+            $this->deciderBrain->handle_event($event, $decisionTask["taskToken"], 
+                $workflowExecution);
+        }
 	}
 }
 
@@ -125,28 +132,25 @@ Class Decider
 
 // Get config file
 $config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
-log_out("INFO", basename(__FILE__), "Domain: '" . $config['cloudTranscode']['SWF']['domain'] . "'");
-log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['SWF']['taskList'] . "'");
+log_out("INFO", 
+    basename(__FILE__), "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
+log_out("INFO", 
+    basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'");
 log_out("INFO", basename(__FILE__), "Clients: ");
 print_r($config['clients']);
 
 // Start decider
-try {
-	$wfDecider = new Decider($config);
-} catch (Exception $e) {
-	log_out("ERROR", basename(__FILE__), "Unable to create WorkflowDecider ! " . $e->getMessage());
-	exit (1);
-}
+$decider = new Decider($config);
 
 // Start polling loop
 log_out("INFO", basename(__FILE__), "Starting decision tasks polling");
 while (1)
+{
+    if (!$decider->poll_for_decisions())
     {
-        if (!$wfDecider->poll_for_decisions())
-            {
-                log_out("INFO", basename(__FILE__), "Polling for decisions finished !");
-                exit (1);
-            }
-    } 
+        log_out("INFO", basename(__FILE__), "Polling for decisions over! Exiting ...");
+        exit(1);
+    }
+} 
 
 

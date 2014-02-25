@@ -12,6 +12,10 @@ Class DeciderBrain
 	const ACTIVITY_TIMEOUT = "ACTIVITY_TIMEOUT";
 	const ACTIVITY_FAILED  = "ACTIVITY_FAILED";
 
+    // Activities
+    const VALIDATE_INPUT  = "ValidateInputAndAsset";
+    const TRANSCODE_ASSET = "TranscodeAsset";
+
     function __construct($config, $workflowTracker, $workflowManager)
 	{
         // Init eventMap. Maps events with callback functions.
@@ -41,13 +45,13 @@ Class DeciderBrain
 	 */
     public function handle_event($event, $taskToken, $workflowExecution)
     {
-        log_out("INFO", basename(__FILE__), "*" . $event["eventType"] . "*", 
-            $workflowExecution['workflowId']);
-        
         // Do we know this event ?
         if (!isset($this->eventsMap[$event["eventType"]]))
             return;
         
+        log_out("INFO", basename(__FILE__), "*" . $event["eventType"] . "*", 
+            $workflowExecution['workflowId']);
+
         // We call the callback function that handles this event 
         $this->{$this->eventsMap[$event["eventType"]]}($event, $taskToken, $workflowExecution);
     }
@@ -118,15 +122,17 @@ Class DeciderBrain
         //print_r($event);
         
         // We get the output of the completed activity
-        $activityResult = json_decode($event['activityTaskCompletedEventAttributes']['result']);
+        $activityResult = 
+            json_decode($event['activityTaskCompletedEventAttributes']['result']);
 
         // Register new completed activities in tracker
         if (!($activity = 
-                $this->workflowTracker->record_activity_completed($workflowExecution, $event)))
+                $this->workflowTracker->record_activity_completed($workflowExecution,
+                    $event)))
             return false;
         
         // We completed 'ValidateInputAndAsset' activity
-        if ($activity['activityType']['name'] == 'ValidateInputAndAsset')
+        if ($activity['activityType']['name'] == self::VALIDATE_INPUT)
         {
             // We get the next activity information
             $nextActivity = $this->workflowTracker->move_to_next_activity($workflowExecution);
@@ -150,44 +156,13 @@ Class DeciderBrain
                     $nextActivitiesInput))
                 return false;
         }
-        else if ($activity['activityType']['name'] == 'TranscodeAsset')
+        else if ($activity['activityType']['name'] == self::TRANSCODE_ASSET)
         {
-            // Check if we are done with all outputs that needs to be transcoded ?
-            if (!$this->workflowTracker->are_similar_activities_completed($workflowExecution, $activity))
-            {
-                log_out("INFO", basename(__FILE__), 
-                    "There are still 'TranscodeAsset' activities running ...", 
-                    $workflowExecution['workflowId']);
-                
-                // Send 
-                $this->workflowManager->respond_decisions($taskToken);
-                
-                return false;
-            }
+            // XXX
+            // Send message through SQS to tell activity transcode complete
 
-            // We get the next activity information
-            $nextActivity = $this->workflowTracker->move_to_next_activity($workflowExecution);
-
-            // Start new activity to validate transcoded outputs
-            if (!$this->schedule_new_activity($workflowExecution, $taskToken, $nextActivity, [ 
-                        [ 
-                            "input_file" => $activityResult->{"input_file"},
-                            "input_json" => $activityResult->{"input_json"}
-                        ]
-                    ]))
-                return false;
-        }
-        else if ($activity['activityType']['name'] == 'ValidateTrancodedAsset')
-        {
-            log_out("INFO", basename(__FILE__), 
-                "Post processing validation performed! Workflow is over ...", 
-                $workflowExecution['workflowId']);
-           
-            // The workflow is over !
-            if (!$this->workflowManager->respond_decisions($taskToken, [
-                        ["decisionType" => "CompleteWorkflowExecution"]
-                    ]))
-                return false;
+            return $this->transcode_asset_completed($event, $taskToken, 
+                $workflowExecution, $activity, $activityResult);
         }
         else
         {
@@ -210,9 +185,24 @@ Class DeciderBrain
             $this->workflowManager->terminate_workflow($workflowExecution);
             return false;
         }
-
-        $msg = "Activity '" . $activity['name'] . "' timed out ! Killing workflow ...";
+        
+        $msg = "Activity '" . $activity['name'] . "' timed out !";
         log_out("ERROR", basename(__FILE__), $msg, $workflowExecution['workflowId']);
+
+        // If TRANSCODE_ASSET, we want to continue as more than one transcode 
+        // may be in progress
+        if ($activity['name'] == self::TRANSCODE_ASSET)
+        {
+            // XXX
+            // Send message through SQS to tell activity transcode timed out
+
+            return $this->transcode_asset_completed($event, $taskToken, 
+                $workflowExecution, $activity);
+        }
+
+        // Kill workflow
+        log_out("ERROR", basename(__FILE__), "Killing workflow ...", 
+            $workflowExecution['workflowId']);
         $this->workflowManager->terminate_workflow($workflowExecution, self::ACTIVITY_TIMEOUT, $msg);
 
         return true;
@@ -229,8 +219,23 @@ Class DeciderBrain
             return false;
         }
 
-        $msg = "Activity '" . $activity['name'] . "' failed :[ ! Killing workflow ...";
+        $msg = "Activity '" . $activity['name'] . "' failed !";
         log_out("ERROR", basename(__FILE__), $msg, $workflowExecution['workflowId']);
+
+        // If TRANSCODE_ASSET, we want to continue as more than one transcode 
+        // may be in progress
+        if ($activity['name'] == self::TRANSCODE_ASSET)
+        {
+            // XXX
+            // Send message through SQS to tell activity transcode failed
+            
+            return $this->transcode_asset_completed($event, $taskToken, 
+                $workflowExecution, $activity);
+        }
+        
+        // Kill workflow
+        log_out("ERROR", basename(__FILE__), "Killing workflow ...", 
+            $workflowExecution['workflowId']);
         $this->workflowManager->terminate_workflow($workflowExecution, self::ACTIVITY_FAILED, $msg);
 
         return true;
@@ -242,6 +247,37 @@ Class DeciderBrain
      * TOOLS
      */
     
+    // When we receive completed, failed or timeout event from 'TranscodeAsset' activity
+    private function transcode_asset_completed($event, $taskToken, 
+        $workflowExecution, $activity)
+    {
+        // Check if we are done with all outputs that needs to be transcoded ?
+        if (!$this->workflowTracker->are_similar_activities_completed($workflowExecution, 
+                $activity))
+        {
+            log_out("INFO", basename(__FILE__), 
+                "There are still 'TranscodeAsset' activities running ...", 
+                $workflowExecution['workflowId']);
+                
+            // Send decision
+            $this->workflowManager->respond_decisions($taskToken);
+                
+            return false;
+        }
+
+        log_out("INFO", basename(__FILE__), 
+            "All transcode activities are over. Workflow completed.", 
+            $workflowExecution['workflowId']);
+            
+        // The workflow is over !
+        if (!$this->workflowManager->respond_decisions($taskToken, [
+                    ["decisionType" => "CompleteWorkflowExecution"]
+                ]))
+            return false;
+            
+        return true;
+    }
+
     // Start a new activity
 	private function schedule_new_activity($workflowExecution, $taskToken, $activity, $inputs)
 	{

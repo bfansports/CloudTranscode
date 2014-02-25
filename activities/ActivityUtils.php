@@ -40,7 +40,7 @@ function get_file_from_S3($pathToFile, $bucket, $filename)
             return false;
 
 		} catch (Exception $e) {
-            $err = "Unable to get input file from S3 ! " . $e->getMessage();
+            $err = "Unable to get '$bucket':'$filename' file from S3 ! " . $e->getMessage();
             log_out("ERROR", basename(__FILE__), $err);
             return $err;
         }

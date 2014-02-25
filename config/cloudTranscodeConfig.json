@@ -31,18 +31,6 @@
 		"startToCloseTimeout": 18000,
 		"scheduleToCloseTimeout": 25200,
 		"heartbeatTimeout": 60
-	    },
-	    {
-		"name": "ValidateTrancodedAsset", 
-		"version": "v1",
-		"description": "Make sure the transcoding has been performed properly",
-		"file": "/activities/ValidateTrancodedAssetActivity.php",
-		"class": "ValidateTranscodedAssetActivity",
-		"activityTaskList": "validatorTaskList",
-		"scheduleToStartTimeout": 7200,
-		"startToCloseTimeout": 18000,
-		"scheduleToCloseTimeout": 25200,
-		"heartbeatTimeout": 60
 	    }
 	]
     },

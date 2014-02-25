@@ -109,6 +109,8 @@ Class ActivityPoller
 
         // Run activity task
         $result = $activity["object"]->do_activity($activityTask);
+        
+        // Check activity results
         if ($result["status"] == "ERROR")
         {
             $activity["object"]->activity_failed($activityTask, 

@@ -181,10 +181,6 @@ class TranscodeAssetActivity extends BasicActivity
                 "details" => $err
             ];
         
-        // XXX
-        // XXX. HERE, Notify task success through SQS !
-        // XXX
-
         // Return success !
         $msg = "'$pathToFile' successfully transcoded and upload into S3 bucket '$outputBucket' !";
         log_out("INFO", basename(__FILE__), $msg,

@@ -7,9 +7,9 @@ require_once 'ActivityUtils.php';
  */
 class BasicActivity
 {
-	private $activityType; // Type of activity
-	private $activityResult; // Contain activity result output
-    private $activityLogKey; // Create a key workflowId:activityId to put in logs
+	private   $activityType; // Type of activity
+	private   $activityResult; // Contain activity result output
+    protected $activityLogKey; // Create a key workflowId:activityId to put in logs
 
     // Constants
 	const NO_INPUT             = "NO_INPUT";
@@ -136,7 +136,7 @@ class BasicActivity
 		
 		try {
             log_out("INFO", basename(__FILE__),
-                "Notify SWF that activity is completed !",
+                "Notify SWF activity is completed !",
                 $this->activityLogKey);
 			$swf->respondActivityTaskCompleted(array(
                     "taskToken" => $task["taskToken"],

@@ -66,8 +66,13 @@ class ValidateInputAndAssetActivity extends BasicActivity
             "Finding information about input file '$pathToFile' - Type: " . $input->{'input_type'},
             $this->activityLogKey);
 		// Capture input file details about format, duration, size, etc.
-		if (!($fileDetails = $this->get_file_details($pathToFile, $input->{'input_type'})))
-            return false;
+		if ($fileDetails = $this->get_file_details($pathToFile, $input->{'input_type'}))
+        {
+            // IF there is a status ERROR then it failed !
+            if (isset($fileDetails["status"]) &&
+                $fileDetails["status"] == "ERROR")
+                return  $fileDetails;
+        }
         
         // XXX
         // XXX. HERE, Notify validation task success through SQS !
@@ -99,42 +104,45 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 $this->activityLogKey);
             // Execute FFMpeg
             if (!($handle = popen("ffmpeg -i $pathToFile 2>&1", 'r')))
-            {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
-                    "Unable to get information about the video file '$pathToFile' !");
-                return false;
-            }
+                return [
+                    "status"  => "ERROR",
+                    "error"   => self::EXEC_FOR_INFO_FAILED,
+                    "details" => "Unable to get information about the video file '$pathToFile' !"
+                ];
+            
             // Get output
             $ffmpegInfoOut = stream_get_contents($handle);
             if (!$ffmpegInfoOut)
-            {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
-                    "Unable to read FFMpeg output !");
-                return false;
-            }
+                return [
+                    "status"  => "ERROR",
+                    "error"   => self::EXEC_FOR_INFO_FAILED,
+                    "details" => "Unable to read FFMpeg output !"
+                ];
 
             // get Duration
             if (!$this->get_duration($ffmpegInfoOut, $fileDetails))
-            {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
-                    "Unable to extract video duration !");
-                return false;
-            }
+                return [
+                    "status"  => "ERROR",
+                    "error"   => self::EXEC_FOR_INFO_FAILED,
+                    "details" => "Unable to extract video duration !"
+                ];
+            
             // get Video info
             if (!$this->get_video_info($ffmpegInfoOut, $fileDetails))
-            {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
-                    "Unable to find video information !");
-                return false;
-            }
+                return [
+                    "status"  => "ERROR",
+                    "error"   => self::EXEC_FOR_INFO_FAILED,
+                    "details" => "Unable to find video information !"
+                ];
+            
             // get Audio Info
             if (!$this->get_audio_info($ffmpegInfoOut, $fileDetails))
-            {
-                $this->activity_failed($task, self::EXEC_FOR_INFO_FAILED, 
-                    "Unable to find audio information !");
-                return false;
-            }
-                
+                return [
+                    "status"  => "ERROR",
+                    "error"   => self::EXEC_FOR_INFO_FAILED,
+                    "details" => "Unable to find audio information !"
+                ];
+            
             fclose($handle);
         }
         

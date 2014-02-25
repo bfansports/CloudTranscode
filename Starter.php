@@ -15,7 +15,7 @@ global $sqs;
 // Get config file
 $config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
 log_out("INFO", basename(__FILE__), "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
-log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['workflow']['taskList'] . "'");
+log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'");
 log_out("INFO", basename(__FILE__), "Clients: ");
 print_r($config['clients']);
 
@@ -82,7 +82,7 @@ while (1)
                                 "domain"       => $config['cloudTranscode']['workflow']['domain'],
                                 "workflowId"   => uniqid(),
                                 "workflowType" => $workflowType,
-                                "taskList"     => array("name" => $config['cloudTranscode']['workflow']['taskList']),
+                                "taskList"     => array("name" => $config['cloudTranscode']['workflow']['decisionTaskList']),
                                 "input"        => $msg['Body']
                             ));
                     }

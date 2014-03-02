@@ -11,4 +11,4 @@ http://sportarchive.github.io/CloudTranscode/
 ## FFMpeg performance benchmark on Amazon EC2
 
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performance:
-https://github.com/sportarchive/CloudTranscode/blob/master/benchmark-aws-ffmpeg.xlsx
+https://github.com/sportarchive/CloudTranscode/blob/master/doc/benchmark-aws-ffmpeg.xlsx

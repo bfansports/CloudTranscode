@@ -153,17 +153,17 @@
     },
     {
         "name": "aws/aws-sdk-php",
-        "version": "2.5.2",
-        "version_normalized": "2.5.2.0",
+        "version": "2.5.3",
+        "version_normalized": "2.5.3.0",
         "source": {
             "type": "git",
             "url": "https://github.com/aws/aws-sdk-php.git",
-            "reference": "f720d799ea385f86ef33966908a1217dda5e49ce"
+            "reference": "de3dc8b9c7ce8ec70fc6184a8b3b4aff6728ae17"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/f720d799ea385f86ef33966908a1217dda5e49ce",
-            "reference": "f720d799ea385f86ef33966908a1217dda5e49ce",
+            "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/de3dc8b9c7ce8ec70fc6184a8b3b4aff6728ae17",
+            "reference": "de3dc8b9c7ce8ec70fc6184a8b3b4aff6728ae17",
             "shasum": ""
         },
         "require": {
@@ -185,7 +185,7 @@
             "monolog/monolog": "Adds support for logging HTTP requests and responses",
             "symfony/yaml": "Eases the ability to write manifests for creating jobs in AWS Import/Export"
         },
-        "time": "2014-01-30 00:45:15",
+        "time": "2014-02-27 20:50:34",
         "type": "library",
         "extra": {
             "branch-alias": {

@@ -14,9 +14,9 @@
  * permissions and limitations under the License.
  */
 
-namespace Aws\Support\Exception;
+namespace Aws\Route53\Exception;
 
 /**
- * The requested CaseId could not be located.
+ * The resource you are trying to access is unsupported on this Route 53 endpoint. Please consider using a newer endpoint or a tool that does so.
  */
-class CaseIdNotFoundException extends SupportException {}
+class IncompatibleVersionException extends Route53Exception {}

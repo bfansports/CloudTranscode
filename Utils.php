@@ -1,13 +1,14 @@
 <?php
 
+$root = realpath(dirname(__FILE__));
+
 // Composer for loading dependices: http://getcomposer.org/
-require "./vendor/autoload.php";
+require "$root/vendor/autoload.php";
 
 // Amazon library
 use Aws\Common\Aws;
 use Aws\Swf\Exception;
 
-$root = realpath(dirname(__FILE__));
 // Create AWS SDK instance
 $aws = Aws::factory("$root/config/awsConfig.json");
 // SWF client
@@ -89,5 +90,20 @@ function init_workflow($params)
 		log_out("ERROR", basename(__FILE__), "Unable to register new workflow ! " . $e->getMessage());
 		return false;
 	}
+}
+
+// Create a local TMP folder using the workflowID
+function create_tmp_local_storage($workflowId)
+{
+    $tmpRoot = '/tmp/CloudTranscode/';
+    
+    $localPath = $tmpRoot . $workflowId . "/";
+    if (!file_exists($localPath . "transcode/"))
+    {
+        if (!mkdir($localPath . "transcode/", 0750, true))
+            return false;
+    }
+    
+    return $localPath;
 }
 

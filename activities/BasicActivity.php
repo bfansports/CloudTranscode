@@ -1,7 +1,5 @@
 <?php
 
-require_once 'ActivityUtils.php';
-
 /**
  * This class serves as a skeletton for classes impleting actual activity
  */
@@ -16,6 +14,7 @@ class BasicActivity
 	const INPUT_INVALID        = "INPUT_INVALID";
 	const NO_WF_EXECUTION      = "NO_WF_EXECUTION";
     const ACTIVITY_TASK_EMPTY  = "ACTIVITY_TASK_EMPTY";
+    const HEARTBEAT_FAILED     = "HEARTBEAT_FAILED";
 
 	function __construct($params)
 	{

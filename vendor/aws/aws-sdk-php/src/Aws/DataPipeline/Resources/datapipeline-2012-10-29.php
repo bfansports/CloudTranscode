@@ -29,6 +29,26 @@ return array (
             'https' => true,
             'hostname' => 'datapipeline.us-east-1.amazonaws.com',
         ),
+        'us-west-2' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'datapipeline.us-west-2.amazonaws.com',
+        ),
+        'eu-west-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'datapipeline.eu-west-1.amazonaws.com',
+        ),
+        'ap-southeast-2' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'datapipeline.ap-southeast-2.amazonaws.com',
+        ),
+        'ap-northeast-1' => array(
+            'http' => false,
+            'https' => true,
+            'hostname' => 'datapipeline.ap-northeast-1.amazonaws.com',
+        ),
     ),
     'operations' => array(
         'ActivatePipeline' => array(
@@ -1416,6 +1436,30 @@ return array (
                     'location' => 'json',
                 ),
             ),
+        ),
+    ),
+    'iterators' => array(
+        'ListPipelines' => array(
+            'input_token' => 'marker',
+            'output_token' => 'marker',
+            'more_results' => 'hasMoreResults',
+            'result_key' => 'pipelineIdList',
+        ),
+        'DescribeObjects' => array(
+            'input_token' => 'marker',
+            'output_token' => 'marker',
+            'more_results' => 'hasMoreResults',
+            'result_key' => 'pipelineObjects',
+        ),
+        'DescribePipelines' => array(
+            'result_key' => 'pipelineDescriptionList',
+        ),
+        'QueryObjects' => array(
+            'input_token' => 'marker',
+            'output_token' => 'marker',
+            'more_results' => 'hasMoreResults',
+            'limit_key' => 'limit',
+            'result_key' => 'ids',
         ),
     ),
 );

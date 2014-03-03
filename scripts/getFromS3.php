@@ -1,6 +1,8 @@
 <?php
 
-require "../Utils.php";
+$root = realpath(dirname(__FILE__));
+
+require "$root/../Utils.php";
 
 function usage()
 {

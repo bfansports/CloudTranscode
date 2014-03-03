@@ -92,18 +92,4 @@ function init_workflow($params)
 	}
 }
 
-// Create a local TMP folder using the workflowID
-function create_tmp_local_storage($workflowId)
-{
-    $tmpRoot = '/tmp/CloudTranscode/';
-    
-    $localPath = $tmpRoot . $workflowId . "/";
-    if (!file_exists($localPath . "transcode/"))
-    {
-        if (!mkdir($localPath . "transcode/", 0750, true))
-            return false;
-    }
-    
-    return $localPath;
-}
 

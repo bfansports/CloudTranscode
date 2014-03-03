@@ -41,7 +41,8 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Create TMP storage to put the file to validate. See: ActivityUtils.php
         // XXX cleanup those folders regularly or we'll run out of space !!!
-        if (!($localPath = create_tmp_local_storage($task["workflowExecution"]["workflowId"])))
+        if (!($localPath = 
+                $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"])))
             return [
                 "status"  => "ERROR",
                 "error"   => self::TMP_FOLDER_FAIL,
@@ -49,15 +50,10 @@ class TranscodeAssetActivity extends BasicActivity
             ];
         $pathToFile = $localPath . $this->inputJSON->{'input_file'};
         
-        // Download file from S3 and save as$pathToFile . See: ActivityUtils.php
-        if (($err = get_file_from_S3($pathToFile, 
-                    $this->inputJSON->{'input_bucket'}, 
-                    $this->inputJSON->{'input_file'})))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::GET_OBJECT_FAILED,
-                "details" => $err
-            ];
+        // Get file from S3 or local copy if any
+        if (($result = $this->get_file_from_s3($task, $this->inputJSON, $pathToFile))
+            && $result["status"] == "ERROR")
+            return $result;
         
         
         /**
@@ -91,14 +87,14 @@ class TranscodeAssetActivity extends BasicActivity
             return [
                 "status"  => "ERROR",
                 "error"   => self::EXEC_FAIL,
-                "details" => "Unable to execute command:\n$ffmpegCmd"
+                "details" => "Unable to execute command:\n$ffmpegCmd\n"
             ];
         // Is resource valid ?
 		if (!is_resource($process))
             return [
                 "status"  => "ERROR",
                 "error"   => self::EXEC_FAIL,
-                "details" => "Process execution has failed:\n$ffmpegCmd"
+                "details" => "Process execution has failed:\n$ffmpegCmd\n"
             ];
 
         // XXX
@@ -127,7 +123,11 @@ class TranscodeAssetActivity extends BasicActivity
 
                 // Notify SWF that we are still running !
                 if (!$this->send_heartbeat($task))
-                    return false;
+                    return [
+                        "status"  => "ERROR",
+                        "error"   => self::HEARTBEAT_FAILED,
+                        "details" => "Heartbeat failed !"
+                    ];
                 
                 $i = 0;
             }
@@ -140,6 +140,7 @@ class TranscodeAssetActivity extends BasicActivity
             flush();
 
             $i++;
+            sleep(1);
         }
         echo "\n";
             
@@ -164,25 +165,20 @@ class TranscodeAssetActivity extends BasicActivity
         // XXX. HERE, Notify upload starting through SQS !
         // XXX
         
-        // Send output file to S3
+        // Sanitize output bucket "/"
         $outputBucket = str_replace("//","/",$outputConfig->{"output_bucket"}."/".$task["workflowExecution"]["workflowId"]);
+        
         log_out("INFO", basename(__FILE__), 
             "Start uploading '$outputPathToFile' to S3 bucket '$outputBucket' ...",
             $this->activityLogKey);
-        if (($err = put_file_to_S3($outputPathToFile, 
-                    $outputBucket,
-                    $outputConfig->{'file'},
-                    array($this, "send_heartbeat"),
-                    $task
-                )))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::S3_UPLOAD_FAIL,
-                "details" => $err
-            ];
+        // Send output file to S3 bucket
+        if (($result = $this->put_file_into_s3($task, $outputBucket, 
+                    $outputConfig->{'file'}, $pathToFile))
+            && $result["status"] == "ERROR")
+            return $result;
         
         // Return success !
-        $msg = "'$pathToFile' successfully transcoded and upload into S3 bucket '$outputBucket' !";
+        $msg = "'$pathToFile' successfully transcoded and uploaded into S3 bucket '$outputBucket' !";
         log_out("INFO", basename(__FILE__), $msg,
             $this->activityLogKey);
 		return [

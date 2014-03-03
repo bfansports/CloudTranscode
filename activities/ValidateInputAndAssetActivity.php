@@ -7,15 +7,8 @@
 class ValidateInputAndAssetActivity extends BasicActivity
 {
 	// Errors
-	const NO_INPUT_FILE        = "NO_INPUT_FILE";
-	const GET_OBJECT_FAILED    = "GET_OBJECT_FAILED";
 	const EXEC_FOR_INFO_FAILED = "EXEC_FOR_INFO_FAILED";
-	const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
-	const NO_OUTPUT_DATA       = "NO_OUTPUT_DATA";
-
-	// File types
-	const VIDEO = "VIDEO";
-
+    
 	// Perform the activity
 	public function do_activity($task)
 	{
@@ -38,7 +31,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
         // Create TMP storage to put the file to validate. See: ActivityUtils.php
         // XXX cleanup those folders regularly or we'll run out of space !!!
-        if (!($localPath = create_tmp_local_storage($task["workflowExecution"]["workflowId"])))
+        if (!($localPath = 
+                $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"])))
             return [
                 "status"  => "ERROR",
                 "error"   => self::TMP_FOLDER_FAIL,
@@ -47,7 +41,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         $pathToFile = $localPath . $input->{'input_file'};
         
         // Get file from S3 or local copy if any
-        if (($result = $this->get_file_from_s3($task, $pathToFile))
+        if (($result = $this->get_file_from_s3($task, $input, $pathToFile))
             && $result["status"] == "ERROR")
             return $result;
         
@@ -86,66 +80,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
         return $result;
     }
-
-    private function get_file_from_s3($task, $pathToFile)
-    {
-        /*
-         * SEE: ActivityUtils.php
-         */
-
-        // Download file from S3 and save as $pathToFile. See: ActivityUtils.php
-        $workerData = new workerData([
-                'pathToFile'  => $pathToFile,
-                'inputBucket' => $input->{'input_bucket'},
-                'inputFile'   => $input->{'input_file'}
-            ]);
-        $s3Get = new getFileFromS3($workerData);
-        // Start thread to download from S3
-        $s3Get->start();
-        // We look if the job is still running
-        // We send regular heartbeat
-        while ($my->isWorking())
-        {
-            sleep(5);
-            
-            // Send heartbeat to SWF
-            if (!$this->send_heartbeat($task))
-                return [
-                    "status"  => "ERROR",
-                    "error"   => self::HEARTBEAT_FAILED,
-                    "details" => "Heartbeat failed !"
-                ];
-        }
-
-        // If we have no output data !
-        if (!$workerData || !isset($workerData->output) ||
-            !$workerData->output)
-            return [
-                "status"  => "ERROR",
-                "error"   => self::NO_OUTPUT_DATA,
-                "details" => "getFileFromS3 job didn't return any data !"
-            ];
-        
-        // Send heartbeat to SWF
-        if (!$this->send_heartbeat($task))
-            return false;
-
-        // If we got an error !
-        if ($workerData->output["status"] == "ERROR")
-            return [
-                "status"  => "ERROR",
-                "error"   => self::GET_OBJECT_FAILED,
-                "details" => $workerData->output["msg"]
-            ];
-        
-        // SUCCESS
-        log_out("INFO", basename(__FILE__), 
-            $workerData->output["msg"],
-            $this->activityLogKey);
-
-        return ["status" => "SUCCESS"];
-    }
-
+    
     // Execute ffmpeg -i to get info about the file
     private function get_file_details($pathToFile, $type)
     {

@@ -3,6 +3,9 @@
 /**
  * This class serves as a skeletton for classes impleting actual activity
  */
+
+require 'InputValidator.php';
+
 class BasicActivity
 {
 	private   $activityType; // Type of activity
@@ -12,14 +15,12 @@ class BasicActivity
     
     // Constants
 	const NO_INPUT             = "NO_INPUT";
-	const INPUT_INVALID        = "INPUT_INVALID";
 	const NO_WF_EXECUTION      = "NO_WF_EXECUTION";
     const ACTIVITY_TASK_EMPTY  = "ACTIVITY_TASK_EMPTY";
     const HEARTBEAT_FAILED     = "HEARTBEAT_FAILED";
 	const NO_OUTPUT_DATA       = "NO_OUTPUT_DATA";
 	const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
-	const GET_OBJECT_FAILED    = "GET_OBJECT_FAILED";
-	const PUT_OBJECT_FAILED    = "PUT_OBJECT_FAILED";
+	const S3_OPS_FAILED        = "S3_OPS_FAILED";
     
     // Scripts
     const GET_FROM_S3 = "getFromS3.php";
@@ -89,10 +90,33 @@ class BasicActivity
 	}
 
     // Perform JSON input validation
-    protected function input_validator()
+    public function input_validator($task)
 	{
-        // To be implemented in class that extends this class
+         if (($validation = $this->check_task_basics($task)) &&
+            $validation['status'] == "ERROR") 
+        {
+            log_out("ERROR", basename(__FILE__), 
+                $validation['details'],
+                $this->activityLogKey);
+            return ($validation);
+        }
+        
+        $validator = new InputValidator();
+        if (($decoded = $validator->decode_json_format($validation['input'])) &&
+            $decoded['status'] == "ERROR")
+        {
+            log_out("ERROR", basename(__FILE__), 
+                $decoded['details'],
+                $this->activityLogKey);
+        }
+        
+        return ($decoded);
 	}
+
+    protected function validate_json_format($decoded_json)
+    {
+        
+    }
 
     protected function check_task_basics($task)
     {
@@ -110,17 +134,9 @@ class BasicActivity
                 "details" => "No input provided to 'ValidateInputAndAsset'"
             ];
         
-		// Validate JSON data and Decode as an Object
-		if (!($input = json_decode($task["input"])))
-            return [
-                "status"  => "ERROR",
-                "error"   => self::INPUT_INVALID,
-                "details" => "JSON input is invalid !"
-            ];
-
         return [
             "status" => "VALID",
-            "input"  => $input
+            "input"  => $task["input"]
         ];
     }
 
@@ -205,11 +221,11 @@ class BasicActivity
     // Get a file from S3 using external script localted in "scripts" folder
     public function get_file_from_s3($task, $input, $pathToFile)
     {
-        log_out("INFO", basename(__FILE__), "Downloading '" . $input->{'input_bucket'} . "/" . $input->{'input_file'}  . "' to '$pathToFile' ...",
+        log_out("INFO", basename(__FILE__), "Downloading '" . $input['input_bucket'] . "/" . $input['input_file']  . "' to '$pathToFile' ...",
             $this->activityLogKey);
         
-        $cmd = "php " . $this->root . "/../scripts/" . self::GET_FROM_S3 . " --bucket " . $input->{'input_bucket'};
-        $cmd .= " --file " . $input->{'input_file'};
+        $cmd = "php " . $this->root . "/../scripts/" . self::GET_FROM_S3 . " --bucket " . $input['input_bucket'];
+        $cmd .= " --file " . $input['input_file'];
         $cmd .= " --to " . $pathToFile;
         
         // HAndle execution
@@ -239,10 +255,11 @@ class BasicActivity
             1 => array("pipe", "w"),
             2 => array("pipe", "w") 
         );
+        log_out("INFO", basename(__FILE__), "Executing: $cmd");
         if (!($process = proc_open($cmd, $descriptorSpecs, $pipes)))
             return [
                 "status"  => "ERROR",
-                "error"   => self::PUT_OBJECT_FAILED,
+                "error"   => self::S3_OPS_FAILED,
                 "details" => "Unable to execute command:\n$cmd\n"
             ];
         
@@ -271,7 +288,7 @@ class BasicActivity
         {
             return [
                 "status"  => "ERROR",
-                "error"   => self::PUT_OBJECT_FAILED,
+                "error"   => self::S3_OPS_FAILED,
                 "details" => $outErr
             ];
         }
@@ -289,7 +306,7 @@ class BasicActivity
         {
             return [
                 "status"  => "ERROR",
-                "error"   => self::PUT_OBJECT_FAILED,
+                "error"   => self::S3_OPS_FAILED,
                 "details" => $out
             ];
         }
@@ -298,7 +315,7 @@ class BasicActivity
         {
             return [
                 "status"  => "ERROR",
-                "error"   => self::PUT_OBJECT_FAILED,
+                "error"   => self::S3_OPS_FAILED,
                 "details" => $outDecoded["msg"]
             ];
         }

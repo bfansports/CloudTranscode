@@ -4,6 +4,7 @@
  * This class validate the JSON input. 
  * Makes sure the input files to be transcoded exists and is valid.
  */
+
 class ValidateInputAndAssetActivity extends BasicActivity
 {
 	// Errors
@@ -38,7 +39,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 "error"   => self::TMP_FOLDER_FAIL,
                 "details" => "Unable to create temporary folder to store asset to validate !"
             ];
-        $pathToFile = $localPath . $input->{'input_file'};
+        $pathToFile = $localPath . $input['input_file'];
         
         // Get file from S3 or local copy if any
         if (($result = $this->get_file_from_s3($task, $input, $pathToFile))
@@ -52,11 +53,11 @@ class ValidateInputAndAssetActivity extends BasicActivity
         log_out("INFO", basename(__FILE__), "Starting Asset validation ...",
             $this->activityLogKey);
         log_out("INFO", basename(__FILE__), 
-            "Finding information about input file '$pathToFile' - Type: " . $input->{'input_type'},
+            "Finding information about input file '$pathToFile' - Type: " . $input['input_type'],
             $this->activityLogKey);
         
         // Capture input file details about format, duration, size, etc.
-        if ($fileDetails = $this->get_file_details($pathToFile, $input->{'input_type'}))
+        if ($fileDetails = $this->get_file_details($pathToFile, $input['input_type']))
         {
             // IF there is a status ERROR then it failed !
             if (isset($fileDetails["status"]) &&
@@ -74,7 +75,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
             "data"    => [
                 "input_json" => $input,
                 "input_file" => $fileDetails,
-                "outputs"    => $input->{'outputs'}
+                "outputs"    => $input['outputs']
             ]
         ];
         
@@ -194,19 +195,4 @@ class ValidateInputAndAssetActivity extends BasicActivity
         return true;
     }
     
-    // Validate input
-    protected function input_validator($task)
-    {
-        if (($input = $this->check_task_basics($task)) &&
-            $input['status'] == "ERROR") 
-        {
-            log_out("ERROR", basename(__FILE__), 
-                $input['details'],
-                $this->activityLogKey);
-            return ($input);
-        }
-
-        // Return input
-        return $input;
-    }
 }

@@ -36,8 +36,8 @@ class TranscodeAssetActivity extends BasicActivity
          */
 
 		// Referencing input variables
-        $this->inputFile = $input->{"input_file"};
-		$this->inputJSON = $input->{"input_json"};
+        $this->inputFile = $input["input_file"];
+		$this->inputJSON = $input["input_json"];
         
         // Create TMP storage to put the file to validate. See: ActivityUtils.php
         // XXX cleanup those folders regularly or we'll run out of space !!!
@@ -48,7 +48,7 @@ class TranscodeAssetActivity extends BasicActivity
                 "error"   => self::TMP_FOLDER_FAIL,
                 "details" => "Unable to create temporary folder to store asset to validate !"
             ];
-        $pathToFile = $localPath . $this->inputJSON->{'input_file'};
+        $pathToFile = $localPath . $this->inputJSON['input_file'];
         
         // Get file from S3 or local copy if any
         if (($result = $this->get_file_from_s3($task, $this->inputJSON, $pathToFile))
@@ -61,10 +61,10 @@ class TranscodeAssetActivity extends BasicActivity
          */
 
 		// Setup transcoding command and parameters
-        $outputConfig  = $input->{"output"}; // JSON description of the transcode to do
-		$outputPathToFile = $localPath . "transcode/" . $outputConfig->{"file"};
+        $outputConfig  = $input["output"]; // JSON description of the transcode to do
+		$outputPathToFile = $localPath . "transcode/" . $outputConfig["file"];
         // Create FFMpeg command
-		$ffmpegArgs    = "-i $pathToFile -y -threads 0 -s " . $outputConfig->{'size'} . " -vcodec " . $outputConfig->{'video_codec'} . " -acodec " . $outputConfig->{'audio_codec'} . " -b:v " . $outputConfig->{'video_bitrate'} . " -bufsize " . $outputConfig->{'buffer_size'} . " -b:a " . $outputConfig->{'audio_bitrate'} . " $outputPathToFile";
+		$ffmpegArgs    = "-i $pathToFile -y -threads 0 -s " . $outputConfig['size'] . " -vcodec " . $outputConfig['video_codec'] . " -acodec " . $outputConfig['audio_codec'] . " -b:v " . $outputConfig['video_bitrate'] . " -bufsize " . $outputConfig['buffer_size'] . " -b:a " . $outputConfig['audio_bitrate'] . " $outputPathToFile";
 		$ffmpegCmd     = "ffmpeg $ffmpegArgs";
         
         // Print info
@@ -218,21 +218,6 @@ class TranscodeAssetActivity extends BasicActivity
 		return ($progress);
 	}
 
-    // Validate input
-	protected function input_validator($task)
-	{
-        if (($input = $this->check_task_basics($task)) &&
-            $input['status'] == "ERROR") 
-        {
-            log_out("ERROR", basename(__FILE__), 
-                $input['details'],
-                $this->activityLogKey);
-            return ($input);
-        }
-        
-        // Return input
-        return $input;
-	}
 }
 
 

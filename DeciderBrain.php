@@ -125,12 +125,12 @@ Class DeciderBrain
         $activityResult = 
             json_decode($event['activityTaskCompletedEventAttributes']['result']);
 
-        // Register new completed activities in tracker
+        // Register completed activity in tracker
         if (!($activity = 
                 $this->workflowTracker->record_activity_completed($workflowExecution,
                     $event)))
             return false;
-        
+
         // We completed 'ValidateInputAndAsset' activity
         if ($activity['activityType']['name'] == self::VALIDATE_INPUT)
         {
@@ -177,21 +177,18 @@ Class DeciderBrain
 
     private function activity_task_timed_out($event, $taskToken, $workflowExecution)
     {
-        if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
-        {
-            log_out("ERROR", basename(__FILE__), 
-                "Activity timed out but we can't get the current activity ! Something is messed up ...", 
-                $workflowExecution['workflowId']);
-            $this->workflowManager->terminate_workflow($workflowExecution);
+        // Record activity timeout in tracker
+        if (!($activity = 
+                $this->workflowTracker->record_activity_timed_out($workflowExecution,
+                    $event)))
             return false;
-        }
-        
-        $msg = "Activity '" . $activity['name'] . "' timed out !";
+
+        $msg = "Activity '" . $activity['activityType']['name'] . "' timed out !";
         log_out("ERROR", basename(__FILE__), $msg, $workflowExecution['workflowId']);
 
         // If TRANSCODE_ASSET, we want to continue as more than one transcode 
         // may be in progress
-        if ($activity['name'] == self::TRANSCODE_ASSET)
+        if ($activity['activityType']['name'] == self::TRANSCODE_ASSET)
         {
             // XXX
             // Send message through SQS to tell activity transcode timed out
@@ -210,21 +207,18 @@ Class DeciderBrain
     
     private function activity_task_failed($event, $taskToken, $workflowExecution)
     {
-        if (!($activity = $this->workflowTracker->get_current_activity($workflowExecution)))
-        {
-            log_out("ERROR", basename(__FILE__), 
-                "Activity failed but we can't get the current activity ! Something is messed up ...", 
-                $workflowExecution['workflowId']);	
-            $this->workflowManager->terminate_workflow($workflowExecution);
+         // Record activity timeout in tracker
+        if (!($activity = 
+                $this->workflowTracker->record_activity_failed($workflowExecution,
+                    $event)))
             return false;
-        }
-
-        $msg = "Activity '" . $activity['name'] . "' failed !";
+        
+        $msg = "Activity '" . $activity['activityType']['name'] . "' failed !";
         log_out("ERROR", basename(__FILE__), $msg, $workflowExecution['workflowId']);
 
         // If TRANSCODE_ASSET, we want to continue as more than one transcode 
         // may be in progress
-        if ($activity['name'] == self::TRANSCODE_ASSET)
+        if ($activity['activityType']['name'] == self::TRANSCODE_ASSET)
         {
             // XXX
             // Send message through SQS to tell activity transcode failed

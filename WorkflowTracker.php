@@ -55,7 +55,7 @@ class WorkflowTracker
         ];
         
         log_out("INFO", basename(__FILE__), 
-            "Recording scheduled activityId '" . $newActivity['activityId'] . "'.", 
+            "Recording scheduled activityId '" . $newActivity['activityId'] . "', activityType '" . $newActivity['activityType'] . "'", 
             $workflowExecution['workflowId']);
         // We store that activity in the workflow tracker
         array_push($tracker["ongoingActivities"], $newActivity);
@@ -111,12 +111,72 @@ class WorkflowTracker
                 return $activity;
             }
         }
-
-        print "$scheduledEventId - $startedEventId \n";
-        print_r($ongoingActivities);
-
+        
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just completed ! Something is messed up !", 
+            $workflowExecution['workflowId']);
+        return false;
+    }
+
+    // Register newly created activities in the tracker
+    public function record_activity_timed_out($workflowExecution, $event) 
+    {
+        $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
+        
+        $scheduledEventId  = $event["activityTaskTimedOutEventAttributes"]["scheduledEventId"];
+        $startedEventId    = $event["activityTaskTimedOutEventAttributes"]["startedEventId"];
+        $timeoutType       = $event["activityTaskTimedOutEventAttributes"]["timeoutType"];
+        $ongoingActivities = &$tracker["ongoingActivities"];
+        foreach ($ongoingActivities as &$activity)
+        {
+            // Did I find the ongoing activity I'm looking for ?
+            if ($activity["scheduledId"] == $scheduledEventId &&
+                $activity["startedId"]   == $startedEventId)
+            {
+                log_out("INFO", basename(__FILE__), 
+                    "Recording timed out activityId '" . $activity['activityId'] . "'.", 
+                    $workflowExecution['workflowId']);
+                $activity["timeoutType"] = $timeoutType;
+                return $activity;
+            }
+        }
+        
+        log_out("ERROR", basename(__FILE__), 
+            "Can't find the scheduled/started ID related to this activity that just timed out ! Something is messed up !", 
+            $workflowExecution['workflowId']);
+        return false;
+    }
+
+    // Register newly created activities in the tracker
+    public function record_activity_failed($workflowExecution, $event) 
+    {
+        $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
+        
+        print_r($event);
+
+        $scheduledEventId  = $event["activityTaskFailedEventAttributes"]["scheduledEventId"];
+        $startedEventId    = $event["activityTaskFailedEventAttributes"]["startedEventId"];
+        $details           = $event["activityTaskFailedEventAttributes"]["details"];
+        $reason            = $event["activityTaskFailedEventAttributes"]["reason"];
+        $ongoingActivities = &$tracker["ongoingActivities"];
+        foreach ($ongoingActivities as &$activity)
+        {
+            // Did I find the ongoing activity I'm looking for ?
+            if ($activity["scheduledId"] == $scheduledEventId &&
+                $activity["startedId"]   == $startedEventId)
+            {
+                log_out("INFO", basename(__FILE__), 
+                    "Recording failed activityId '" . $activity['activityId'] . "'.", 
+                    $workflowExecution['workflowId']);
+                $activity["failed"]  = true;
+                $activity["details"] = $details;
+                $activity["reason"]  = $reason;
+                return $activity;
+            }
+        }
+        
+        log_out("ERROR", basename(__FILE__), 
+            "Can't find the scheduled/started ID related to this activity that just failed ! Something is messed up !", 
             $workflowExecution['workflowId']);
         return false;
     }

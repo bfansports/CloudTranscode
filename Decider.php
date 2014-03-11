@@ -130,8 +130,36 @@ Class Decider
  * DECIDER START
  */
 
+
+
+function usage($defaultConfigFile)
+{
+    echo("Usage: php ". basename(__FILE__) . " [-h] [-c <path to JSON config file>]\n");
+    echo("-h: Print this help\n");
+    echo("-c <file path>: Optional parameter to override the default configuration file: '$defaultConfigFile'.\n");
+    exit(0);
+}
+
+function check_input_parameters(&$defaultConfigFile)
+{
+    // Handle input parameters
+    $options = getopt("c:h");
+    if (!count($options) || isset($options['h']))
+        usage($defaultConfigFile);
+    
+    if (isset($options['c']))
+    {
+        log_out("INFO", 
+            basename(__FILE__), "Custom config file: '" . $options['c'] . "'");
+        $defaultConfigFile = $options['c'];
+    }
+}
+
 // Get config file
-$config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), true);
+$defaultConfigFile = realpath(dirname(__FILE__)) . "/config/cloudTranscodeConfig.json";
+check_input_parameters($defaultConfigFile);
+
+$config = json_decode(file_get_contents($defaultConfigFile), true);
 log_out("INFO", 
     basename(__FILE__), "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
 log_out("INFO", 

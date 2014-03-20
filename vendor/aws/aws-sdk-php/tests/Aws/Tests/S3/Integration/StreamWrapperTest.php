@@ -70,6 +70,15 @@ class StreamWrapperTest extends \Aws\Tests\IntegrationTestCase
         $this->assertFalse(is_file('s3://wefwefwe' . $this->bucket . '/wefweewegr'));
     }
 
+    public function testMkdirs()
+    {
+        $path = 's3://' . $this->bucket . '/subdir';
+        $this->assertTrue(mkdir($path));
+        sleep(1);
+        $this->assertTrue(is_dir($path));
+        unlink($path);
+    }
+
     /**
      * @depends testChecksIfThingsExist
      */
@@ -211,6 +220,14 @@ class StreamWrapperTest extends \Aws\Tests\IntegrationTestCase
             unlink('../streamtest' . $file);
         }
         chdir($dir);
+    }
+
+    public function testCanListWithEmptyDirs()
+    {
+        $file = 's3://' . $this->bucket . '/empty/';
+        file_put_contents($file, '');
+        file_put_contents($file . 'bar', 'hello');
+        $this->assertEquals(array('bar'), scandir($file));
     }
 
     private function getS3Files($prefix)

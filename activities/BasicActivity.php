@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This class serves as a skeletton for classes impleting actual activity
+ * This class serves as a skeleton for classes implementing actual activity
  */
 
 require 'InputValidator.php';
@@ -92,7 +92,7 @@ class BasicActivity
     // Perform JSON input validation
     public function input_validator($task)
 	{
-         if (($validation = $this->check_task_basics($task)) &&
+        if (($validation = $this->check_task_basics($task)) &&
             $validation['status'] == "ERROR") 
         {
             log_out("ERROR", basename(__FILE__), 

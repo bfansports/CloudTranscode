@@ -1,7 +1,7 @@
 {
     "require": {
         "aws/aws-sdk-php": "2.*",
-	"justinrainbow/json-schema": "1.4.*@dev"
+	"justinrainbow/json-schema": "1.3.*"
     }
 }
 

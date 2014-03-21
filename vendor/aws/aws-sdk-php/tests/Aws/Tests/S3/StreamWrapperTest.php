@@ -275,35 +275,73 @@ class StreamWrapperTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse(mkdir('s3://'));
     }
 
-    public function testCreatingBucketWithKeyReturnsFalse()
+    /**
+     * @expectedExceptionMessage Directory already exists: s3://already-existing-bucket
+     * @expectedException \PHPUnit_Framework_Error_Warning
+     */
+    public function testCreatingAlreadyExistingBucketRaisesError()
     {
-        $this->assertFalse(mkdir('s3://foo/bar'));
+        $this->setMockResponse($this->client, new Response(200));
+        mkdir('s3://already-existing-bucket');
     }
 
     /**
-     * @expectedException PHPUnit_Framework_Error_Warning
+     * @expectedExceptionMessage Directory already exists: s3://already-existing-bucket/key
+     * @expectedException \PHPUnit_Framework_Error_Warning
+     */
+    public function testCreatingAlreadyExistingBucketForKeyRaisesError()
+    {
+        $this->setMockResponse($this->client, array(
+            new Response(200),        // HEAD object response
+        ));
+        mkdir('s3://already-existing-bucket/key');
+    }
+
+    public function testCreatingBucketWithKeyReturnsTrue()
+    {
+        $this->setMockResponse($this->client, array(
+            new Response(404), // headObject
+            new Response(200)  // putObject
+        ));
+        $this->assertTrue(mkdir('s3://foo/bar'));
+    }
+
+    /**
+     * @expectedException \PHPUnit_Framework_Error_Warning
      * @expectedExceptionMessage 403 Forbidden
      */
     public function testCreatingBucketWithExceptionRaisesError()
     {
-        $this->setMockResponse($this->client, array(new Response(403)));
-        $this->assertFalse(mkdir('s3://bucket'));
+        $this->setMockResponse($this->client, array(
+            new Response(404),
+            new Response(403))
+        );
+        mkdir('s3://bucket');
     }
 
     public function testCreatingBucketsSetsAclBasedOnPermissions()
     {
-        $this->setMockResponse($this->client, array(new Response(204), new Response(204), new Response(204)));
+        $this->setMockResponse($this->client, array(
+            new Response(404), new Response(204), // mkdir #1
+            new Response(404), new Response(204), // mkdir #2
+            new Response(404), new Response(204), // mkdir #3
+        ));
         $this->assertTrue(mkdir('s3://bucket', 0777));
         $this->assertTrue(mkdir('s3://bucket', 0601));
         $this->assertTrue(mkdir('s3://bucket', 0500));
         $requests = $this->getMockedRequests();
-        $this->assertEquals(3, count($requests));
-        $this->assertEquals('PUT', $requests[0]->getMethod());
-        $this->assertEquals('/', $requests[0]->getResource());
-        $this->assertEquals('bucket.s3.amazonaws.com', $requests[0]->getHost());
-        $this->assertContains('public-read', (string) $requests[0]);
-        $this->assertContains('authenticated-read', (string) $requests[1]);
-        $this->assertContains('private', (string) $requests[2]);
+        $this->assertEquals(6, count($requests));
+
+        $this->assertEquals('HEAD', $requests[0]->getMethod());
+        $this->assertEquals('HEAD', $requests[2]->getMethod());
+        $this->assertEquals('HEAD', $requests[4]->getMethod());
+
+        $this->assertEquals('PUT', $requests[1]->getMethod());
+        $this->assertEquals('/', $requests[1]->getResource());
+        $this->assertEquals('bucket.s3.amazonaws.com', $requests[1]->getHost());
+        $this->assertContains('public-read', (string) $requests[1]);
+        $this->assertContains('authenticated-read', (string) $requests[3]);
+        $this->assertContains('private', (string) $requests[5]);
     }
 
     /**

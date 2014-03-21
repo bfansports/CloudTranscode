@@ -1,0 +1,39 @@
+{
+    "id": "http://sport-archive.com/input-schema/output/base",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "SA transcode output specification",
+    "type": "object",
+    "properties": {
+	    "type": {
+	        "type": "string",
+            "enum": [ "VIDEO" ],
+            "description": "Type of the file to output VIDEO, AUDIO, DOC, IMG"
+	    },
+        "label": {
+	        "type": "string",
+            "description": "Give a label to your output"
+        },
+        "output_bucket": {
+	        "type": "string",
+            "description": "S3 bucket and path where the output file will be uploaded"
+        },
+        "file": {
+	        "type": "string",
+            "description": "Filename where to upload the resulting file"
+        },
+        "format": {
+	        "type": "string",
+            "description": "Provide the type of output file you need your document transcoded to"
+        },
+        "rrs": {
+	        "type": "boolean",
+            "description": "Activate reduced redundancy or not in S3 storage"
+        },
+        "encrypt": {
+	        "type": "boolean",
+            "description": "Activate backend storage encryption"
+        }
+    },
+    "required": ["type", "output_bucket", "file"],
+    "additionalProperties": true
+}

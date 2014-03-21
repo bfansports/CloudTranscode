@@ -1,0 +1,73 @@
+{
+    "api_key": "1234567890abcdefghijkl",
+    "input_type": "VIDEO",
+    "input_bucket": "my-bucket-in/path_to_file/",
+    "input_file": "test2.mp4",
+    "job_label": "test2 transcode",
+    "outputs": [
+	{
+	    "output_type": "VIDEO",
+	    "output_label": "SD smartphone test2 output",
+	    "output_bucket": "my-bucket-out/output2/",
+	    "output_file": "test2_sd_phone.mp4",
+	    "format": "mp4",
+	    "s3_rrs": true,
+	    "s3_encrypt": false,
+	    "preset": "h264_AAC_SD",
+	    "size": "480x270", // Override preset size
+	    "video_codec": "libx264",
+	    "audio_codec": "libfdk_aac",
+	    "video_bitrate": "364k",
+	    "audio_bitrate": "64k",
+	    "frame_rate": 25,
+	    "thumbnails": {
+		"mode": "interval",
+		"output_bucket": "my-bucket-out/thumbs2/",
+		"label": "test2SD",
+		"size": "64x48",
+		"interval": 5,
+		"s3_rrs": false,
+		"s3_encrypt": false,
+	    },
+	    "watermark": {
+		"input_bucket": "my-bucket-in/watermark/",
+		"input_file": "watermark.png",
+		"size": "48x48",
+		"opacity": 0.6,
+		"x": "20",
+		"y": "20"
+	    }
+	},
+	{
+	    "output_type": "VIDEO",
+	    "output_label": "HD smartphone test2 output",
+	    "output_bucket": "my-bucket-out/output2/",
+	    "output_file": "test2_hd_phone.mp4",
+	    "format": "mp4",
+	    "s3_rrs": false,
+	    "s3_encrypt": true,
+	    "preset": "h264_AAC_HD",
+	    "size": "640x360", // Override preset size
+	    "video_codec": "libx264",
+	    "audio_codec": "libfdk_aac",
+	    "video_bitrate": "800k",
+	    "audio_bitrate": "96k",
+	    "frame_rate": 25,
+	    "thumbnails": {
+		"mode": "snapshot",
+		"output_bucket": "my-bucket-out/thumbs2/",
+		"label": "test2HD",
+		"s3_rrs": true,
+		"size": "64x48"
+	    },
+	    "watermark": {
+		"input_bucket": "my-bucket-in/watermark/",
+		"input_file": "watermark.png",
+		"size": "48x48",
+		"opacity": 0.6,
+		"x": "20",
+		"y": "20"
+	    }
+	}
+    ]
+}

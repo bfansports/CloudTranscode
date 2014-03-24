@@ -1,7 +1,7 @@
 {
     "api_key": "1234567890abcdefghijkl",
     "input_type": "VIDEO",
-    "input_bucket": "my-bucket-in/path_to_file/",
+    "input_bucket": "ct-my-bucket-in/input1/",
     "input_file": "test1.mp4",
     "job_label": "test1 thumbnails",
     "outputs": [
@@ -10,7 +10,7 @@
 	    "thumbnails": [ // Ok only if input_type == VIDEO
 		{
 		    "mode": "interval",
-		    "output_bucket": "my-bucket-out/thumbs_test/",
+		    "output_bucket": "ct-my-bucket-out/thumbs_interval1/",
 		    "label": "thumb_test_interval",
 		    "size": "64x48",
 		    "interval": 5,
@@ -19,7 +19,7 @@
 		},
 		{
 		    "mode": "snapshot",
-		    "output_bucket": "my-bucket-out/thumbs_test/",
+		    "output_bucket": "ct-my-bucket-out/thumbs_snap1/",
 		    "label": "thumb_test_snapshot",
 		    "size": "64x48",
 		    "s3_rrs": true,

@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "3716aa23c62d978c73a68b9b1ce34c0b",
+    "hash": "d3ce1511b308c475d5ab11a9bf262978",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -167,7 +167,7 @@
         },
         {
             "name": "justinrainbow/json-schema",
-            "version": "1.3.6",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/justinrainbow/json-schema.git",
@@ -297,9 +297,9 @@
 
     ],
     "minimum-stability": "stable",
-    "stability-flags": [
-
-    ],
+    "stability-flags": {
+        "justinrainbow/json-schema": 20
+    },
     "platform": [
 
     ],

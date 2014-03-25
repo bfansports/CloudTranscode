@@ -1,7 +1,7 @@
 {
     "id": "http://sport-archive.com/input-schema/output/video",
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "SA transcode output specification",
+    "title": "CT transcode output specification",
     "type": "object",
     "properties": {
 	    "type": {

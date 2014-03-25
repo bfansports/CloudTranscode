@@ -14,7 +14,7 @@
 	    "s3_rrs": true,
 	    "s3_encrypt": false,
 	    "preset": "h264_AAC_SD",
-	    "size": "480x270", // Override preset size
+	    "size": "480x270",
 	    "video_codec": "libx264",
 	    "audio_codec": "libfdk_aac",
 	    "video_bitrate": "364k",
@@ -47,7 +47,7 @@
 	    "s3_rrs": false,
 	    "s3_encrypt": true,
 	    "preset": "h264_AAC_HD",
-	    "size": "640x360", // Override preset size
+	    "size": "640x360",
 	    "video_codec": "libx264",
 	    "audio_codec": "libfdk_aac",
 	    "video_bitrate": "800k",

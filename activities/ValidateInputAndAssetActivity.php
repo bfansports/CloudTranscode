@@ -7,29 +7,29 @@
 
 class ValidateInputAndAssetActivity extends BasicActivity
 {
-	// Errors
-	const EXEC_FOR_INFO_FAILED = "EXEC_FOR_INFO_FAILED";
-    
-	// Perform the activity
-	public function do_activity($task)
-	{
+    // Errors
+    const EXEC_FOR_INFO_FAILED = "EXEC_FOR_INFO_FAILED";
+  
+    // Perform the activity
+    public function do_activity($task)
+    {
         // XXX
         // XXX. HERE, Notify validation task starts through SQS !
         // XXX
 
-		// Perfom input validation
-		if (($validation = $this->input_validator($task)) &&
+        // Perfom input validation
+        if (($validation = $this->do_input_validation($task)) &&
             $validation['status'] == "ERROR")
             return $validation;
         $input = $validation['input'];
-        
+    
         // Create a key workflowId:activityId to put in logs
         $this->activityLogKey = $task->get("workflowExecution")['workflowId'] . ":" . $task->get("activityId");
-        
+    
         /**
          * INIT
          */
-        
+    
         // Create TMP storage to put the file to validate. See: ActivityUtils.php
         // XXX cleanup those folders regularly or we'll run out of space !!!
         if (!($localPath = 
@@ -40,12 +40,12 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 "details" => "Unable to create temporary folder to store asset to validate !"
             ];
         $pathToFile = $localPath . $input['input_file'];
-        
+    
         // Get file from S3 or local copy if any
         if (($result = $this->get_file_from_s3($task, $input, $pathToFile))
             && $result["status"] == "ERROR")
             return $result;
-        
+    
         /**
          * PROCESS FILE
          */
@@ -55,7 +55,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         log_out("INFO", basename(__FILE__), 
             "Finding information about input file '$pathToFile' - Type: " . $input['input_type'],
             $this->activityLogKey);
-        
+    
         // Capture input file details about format, duration, size, etc.
         if ($fileDetails = $this->get_file_details($pathToFile, $input['input_type']))
         {
@@ -64,7 +64,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 $fileDetails["status"] == "ERROR")
                 return $fileDetails;
         }
-        
+    
         // XXX
         // XXX. HERE, Notify validation task success through SQS !
         // XXX
@@ -78,15 +78,15 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 "outputs"    => $input['outputs']
             ]
         ];
-        
+    
         return $result;
     }
-    
+  
     // Execute ffmpeg -i to get info about the file
     private function get_file_details($pathToFile, $type)
     {
         $fileDetails = array();
-        
+    
         // Get video information
         if ($type == self::VIDEO)
         {
@@ -100,7 +100,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
                     "error"   => self::EXEC_FOR_INFO_FAILED,
                     "details" => "Unable to get information about the video file '$pathToFile' !"
                 ];
-            
+      
             // Get output
             $ffmpegInfoOut = stream_get_contents($handle);
             if (!$ffmpegInfoOut)
@@ -117,7 +117,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
                     "error"   => self::EXEC_FOR_INFO_FAILED,
                     "details" => "Unable to extract video duration !"
                 ];
-            
+      
             // get Video info
             if (!$this->get_video_info($ffmpegInfoOut, $fileDetails))
                 return [
@@ -125,7 +125,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
                     "error"   => self::EXEC_FOR_INFO_FAILED,
                     "details" => "Unable to find video information !"
                 ];
-            
+      
             // get Audio Info
             if (!$this->get_audio_info($ffmpegInfoOut, $fileDetails))
                 return [
@@ -133,10 +133,10 @@ class ValidateInputAndAssetActivity extends BasicActivity
                     "error"   => self::EXEC_FOR_INFO_FAILED,
                     "details" => "Unable to find audio information !"
                 ];
-            
+      
             fclose($handle);
         }
-        
+    
         return ($fileDetails);
     }
 
@@ -150,14 +150,14 @@ class ValidateInputAndAssetActivity extends BasicActivity
             $fileDetails['size'] = $matches[3];
             $fileDetails['vbitrate'] = $matches[4];
             $fileDetails['fps'] = $matches[5];
-            
+      
             // Calculate ratio
             $sizeSplit = explode("x", $fileDetails['size']);
             $fileDetails['ratio'] = number_format($sizeSplit[0] / $sizeSplit[1], 1);
 
             return true;
         }
-        
+    
         return false;
     }
 
@@ -174,10 +174,10 @@ class ValidateInputAndAssetActivity extends BasicActivity
 
             return true;
         }
-        
+    
         return false;
     }
-    
+  
     // Extract Duration
     private function get_duration($ffmpegInfoOut, &$fileDetails)
     {
@@ -194,5 +194,5 @@ class ValidateInputAndAssetActivity extends BasicActivity
 
         return true;
     }
-    
+  
 }

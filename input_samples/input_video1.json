@@ -39,7 +39,7 @@
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
 	    "preset": "h264_AAC_HD",
-	    "size": "1280x720", // Override preset size
+	    "size": "1280x720",
 	    "thumbnails": {
 		"mode": "snapshot",
 		"output_bucket": "ct-my-bucket-out/thumbs/",

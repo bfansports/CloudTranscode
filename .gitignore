@@ -8,3 +8,6 @@ config/cloudTranscodeConfig.json
 vendor/*
 composer.phar
 composer.lock
+
+# Ignore any build output
+build/*

@@ -23,73 +23,73 @@ function log_out($type, $source, $message, $workflowId = 0)
     if ($workflowId)
         $log .= " [$workflowId]";
 
-	echo "$log $message\n";
+    echo "$log $message\n";
 }
 
 // Initialize the domain. Create it if needed
 function init_domain($domainName)
 {
-	global $swf;
+    global $swf;
 
-	// Get existing domain list
-	try
+    // Get existing domain list
+    try
     {
         $swf->describeDomain(array("name" => $domainName));
         return true;
     } catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-		log_out("INFO", basename(__FILE__), "Domain doesn't exists. Creating it ...");
-	} catch (Exception $e) {
-		log_out("ERROR", basename(__FILE__), "Unable to get domain list ! " . $e->getMessage());
-		return false;
-	}
+        log_out("INFO", basename(__FILE__), "Domain doesn't exists. Creating it ...");
+    } catch (Exception $e) {
+        log_out("ERROR", basename(__FILE__), "Unable to get domain list ! " . $e->getMessage());
+        return false;
+    }
 
-	// Create domain if not existing
-	try 
+    // Create domain if not existing
+    try
     {
         $swf->registerDomain(array(
                 "name"        => $domainName,
                 "description" => "Cloud Transcode Domain",
                 "workflowExecutionRetentionPeriodInDays" => 1
-			));
+            ));
         return true;
     } catch (Exception $e) {
-		log_out("ERROR", basename(__FILE__), "Unable to create the domain !" . $e->getMessage());
-		return false;
-	}
+        log_out("ERROR", basename(__FILE__), "Unable to create the domain !" . $e->getMessage());
+        return false;
+    }
 }
 
 // Init the workflow. Create one if needed
 function init_workflow($params)
 {
-	global $swf;
+    global $swf;
 
-	// Save WF info
-	$workflowType = array(
-		"name"    => $params["name"],
-		"version" => $params["version"]);
+    // Save WF info
+    $workflowType = array(
+        "name"    => $params["name"],
+        "version" => $params["version"]);
 
     // Check if a workflow of this type already exists
-	try {
-		$swf->describeWorkflowType([
+    try {
+        $swf->describeWorkflowType([
                 "domain"       => $params["domain"],
                 "workflowType" => $workflowType
             ]);
-		return true;
-	} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-		log_out("ERROR", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
-	} catch (Exception $e) {
-		log_out("ERROR", basename(__FILE__), "Unable to describe the workflow ! " . $e->getMessage());
-		return false;
-	}
+        return true;
+    } catch (\Aws\Swf\Exception\UnknownResourceException $e) {
+        log_out("ERROR", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
+    } catch (Exception $e) {
+        log_out("ERROR", basename(__FILE__), "Unable to describe the workflow ! " . $e->getMessage());
+        return false;
+    }
 
     // If not registered, we register this type of workflow
-	try {
-		$swf->registerWorkflowType($params);
-		return true;
-	} catch (Exception $e) {
-		log_out("ERROR", basename(__FILE__), "Unable to register new workflow ! " . $e->getMessage());
-		return false;
-	}
+    try {
+        $swf->registerWorkflowType($params);
+        return true;
+    } catch (Exception $e) {
+        log_out("ERROR", basename(__FILE__), "Unable to register new workflow ! " . $e->getMessage());
+        return false;
+    }
 }
 
 

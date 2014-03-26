@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Ceache/CloudTranscode.svg?branch=master)](https://travis-ci.org/Ceache/CloudTranscode)
+
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using FFMpeg and
 Amazon AWS services.

@@ -1,6 +1,10 @@
 .*
+
 # Ignore the local config
 config/awsConfig.json
 config/cloudTranscodeConfig.json
-# Ignore .git from vendor lib
-vendor/justinrainbow/json-schema/.git
+
+# Ignore vendor tree
+vendor/*
+composer.phar
+composer.lock

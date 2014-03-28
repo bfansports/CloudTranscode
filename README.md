@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Ceache/CloudTranscode.svg?branch=master)](https://travis-ci.org/Ceache/CloudTranscode)
+[![Build Status](https://travis-ci.org/sportarchive/CloudTranscode.svg?branch=master)](https://travis-ci.org/sportarchive/CloudTranscode)
 
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using FFMpeg and

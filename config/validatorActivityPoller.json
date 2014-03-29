@@ -1,7 +1,0 @@
-{
-    "activities": 
-    [
-	{ "name": "ValidateInputAndAsset", "version": "v1" },
-	{ "name": "ValidateTrancodedAsset", "version": "v1" }
-    ]
-}

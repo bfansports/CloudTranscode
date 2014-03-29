@@ -1,0 +1,6 @@
+{
+    "activities": 
+    [
+	{ "name": "ValidateInputAndAsset", "version": "v1" }
+    ]
+}

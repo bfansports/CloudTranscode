@@ -2,7 +2,7 @@
 
 $root = realpath(dirname(__FILE__));
 
-require "$root/../Utils.php";
+require "$root/../../Utils.php";
 
 function usage()
 {
@@ -58,8 +58,6 @@ try {
 } 
 catch (Exception $e) {
     $err = "Unable to get '" . $options['bucket'] . "':'" . $options['file'] . "' file from S3 ! " . $e->getMessage();
-    log_out("ERROR", basename(__FILE__), $err);
-    
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
             "msg" => $err ]);

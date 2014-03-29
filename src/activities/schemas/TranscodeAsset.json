@@ -1,0 +1,33 @@
+{
+    "id": "http://sport-archive.com/input-schema#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Schema for TranscodeAsset activity task",
+    "type": "object",
+    "properties": {
+        "input_json": {
+            "description": "Original JSON input submitted to the Workflow",
+            "type": "string"
+        },
+        "input_fileinfo": {
+            "description": "Information about the input file to transcode",
+            "type": "array"
+	    "properties": {
+		
+	    }
+        },
+        "outputs": {
+            "description": "List of all the outputs needed for that job array of max 100 entries",
+            "type": "array",
+            "items": {
+                "$ref": "output/base.json",
+                "oneOf": [                    
+                    { "$ref": "output/video.json" }
+                ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+        }
+    },
+    "required": ["outputs", "input_fileinfo", "input_json"],
+    "additionalProperties": true
+}

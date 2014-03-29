@@ -17,7 +17,7 @@ class WorkflowTracker
         // We keep track of all ongoing workflows in there
         $this->excutionTracker = [];
     }   
-    
+  
     // Register a workflow in the tracker for further use
     // We register the workflow execution and its activity list
     // See Utils.php for activity list
@@ -25,7 +25,7 @@ class WorkflowTracker
     {
         if ($this->is_workflow_tracked($workflowExecution))
             return true;
-        
+    
         log_out("INFO", basename(__FILE__), 
             "Registering workflow '" . $workflowExecution["workflowId"] . "' in the workflow tracker !", 
             $workflowExecution['workflowId']);
@@ -44,30 +44,30 @@ class WorkflowTracker
         // Get the tracker for this workflow
         // &$this-> to get the reference to the object so we can modify its content
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
-        
+    
         // Create an activity snapshot for tracking
         $newActivity = [
             "activityId"   => $event["activityTaskScheduledEventAttributes"]["activityId"],
-		    "activityType" => $event["activityTaskScheduledEventAttributes"]["activityType"],
-		    "scheduledId"  => $event["eventId"],
+            "activityType" => $event["activityTaskScheduledEventAttributes"]["activityType"],
+            "scheduledId"  => $event["eventId"],
             "startedId"    => 0,
             "completedId"  => 0,
         ];
-        
+    
         log_out("INFO", basename(__FILE__), 
-            "Recording scheduled activityId '" . $newActivity['activityId'] . "', activityType '" . $newActivity['activityType'] . "'", 
+            "Recording scheduled activityId '" . $newActivity['activityId'] . "', activityType '" . $newActivity['activityType']['name'] . "'", 
             $workflowExecution['workflowId']);
         // We store that activity in the workflow tracker
         array_push($tracker["ongoingActivities"], $newActivity);
-        
+    
         return $newActivity;
     }
-    
+  
     // Register 
     public function record_activity_started($workflowExecution, $event) 
     {
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
-        
+    
         $scheduledEventId  = $event["activityTaskStartedEventAttributes"]["scheduledEventId"];
         $ongoingActivities = &$tracker["ongoingActivities"];
         foreach ($ongoingActivities as &$activity)
@@ -82,7 +82,7 @@ class WorkflowTracker
                 return $activity;
             }
         }
-        
+    
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled activity that just started ! Something is messed up !", 
             $workflowExecution['workflowId']);
@@ -93,7 +93,7 @@ class WorkflowTracker
     public function record_activity_completed($workflowExecution, $event) 
     {
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
-        
+    
         $scheduledEventId  = $event["activityTaskCompletedEventAttributes"]["scheduledEventId"];
         $startedEventId    = $event["activityTaskCompletedEventAttributes"]["startedEventId"];
         $ongoingActivities = &$tracker["ongoingActivities"];
@@ -111,7 +111,7 @@ class WorkflowTracker
                 return $activity;
             }
         }
-        
+    
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just completed ! Something is messed up !", 
             $workflowExecution['workflowId']);
@@ -122,7 +122,7 @@ class WorkflowTracker
     public function record_activity_timed_out($workflowExecution, $event) 
     {
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
-        
+    
         $scheduledEventId  = $event["activityTaskTimedOutEventAttributes"]["scheduledEventId"];
         $startedEventId    = $event["activityTaskTimedOutEventAttributes"]["startedEventId"];
         $timeoutType       = $event["activityTaskTimedOutEventAttributes"]["timeoutType"];
@@ -140,7 +140,7 @@ class WorkflowTracker
                 return $activity;
             }
         }
-        
+    
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just timed out ! Something is messed up !", 
             $workflowExecution['workflowId']);
@@ -151,9 +151,7 @@ class WorkflowTracker
     public function record_activity_failed($workflowExecution, $event) 
     {
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
-        
-        print_r($event);
-
+    
         $scheduledEventId  = $event["activityTaskFailedEventAttributes"]["scheduledEventId"];
         $startedEventId    = $event["activityTaskFailedEventAttributes"]["startedEventId"];
         $details           = $event["activityTaskFailedEventAttributes"]["details"];
@@ -174,7 +172,7 @@ class WorkflowTracker
                 return $activity;
             }
         }
-        
+    
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just failed ! Something is messed up !", 
             $workflowExecution['workflowId']);
@@ -185,7 +183,7 @@ class WorkflowTracker
     public function are_similar_activities_completed($workflowExecution, $completedActivity)
     {
         $tracker = $this->executionTracker[$workflowExecution["workflowId"]];
-        
+    
         $activityId   = $completedActivity["activityId"];
         $activityType = $completedActivity["activityType"];
         $ongoingActivities = $tracker["ongoingActivities"];
@@ -199,7 +197,7 @@ class WorkflowTracker
         }
         return true;
     }
-    
+  
     // Is the workflow tracked by the tracker ?
     private function is_workflow_tracked($workflowExecution)
     {
@@ -209,7 +207,7 @@ class WorkflowTracker
         return true;
     }
 
-    
+  
     /**
      * TOOLS to get previous, ongoing or next activity from the activityList in JSON config file
      * Used to keep track of what activity comes next
@@ -235,20 +233,20 @@ class WorkflowTracker
         $tracker = $this->executionTracker[$workflowExecution["workflowId"]];
         if (!$tracker["step"])
             return ($tracker["activityList"][$tracker["step"]]);
-        
+    
         return ($tracker["activityList"][$tracker["step"]-1]);
     }
-    
+  
     // Increment step to the next activity
     public function move_to_next_activity($workflowExecution)
     {
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
         if ($tracker["step"] >= count($tracker["activityList"]))
             return false;
-        
+    
         // Increment step
         $tracker["step"] += 1;
-        
+    
         // Return next activity after increment step
         return $tracker["activityList"][$tracker["step"]];
     }

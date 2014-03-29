@@ -1,7 +1,7 @@
 {
     "id": "http://sport-archive.com/input-schema#",
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "CT Task input schema",
+    "title": "Schema for ValidateInputAndAsset activity task",
     "type": "object",
     "properties": {
         "api_key": {
@@ -37,6 +37,6 @@
             "uniqueItems": true
         }
     },
-    "required": ["api_key", "input_type", "input_bucket"],
+    "required": ["api_key", "input_type", "input_bucket", "input_file", "outputs"],
     "additionalProperties": true
 }

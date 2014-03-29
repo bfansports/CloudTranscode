@@ -84,7 +84,7 @@ Class Decider
             return true;
         }
 
-        // Register workflow in tracker.
+        // Register workflow in tracker if not already register
         if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, 
                 $this->activityList))
         {
@@ -156,7 +156,7 @@ function check_input_parameters(&$defaultConfigFile)
 }
 
 // Get config file
-$defaultConfigFile = realpath(dirname(__FILE__)) . "/config/cloudTranscodeConfig.json";
+$defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 check_input_parameters($defaultConfigFile);
 
 $config = json_decode(file_get_contents($defaultConfigFile), true);

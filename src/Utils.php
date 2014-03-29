@@ -2,20 +2,6 @@
 
 $root = realpath(dirname(__FILE__));
 
-// Composer for loading dependices: http://getcomposer.org/
-require "$root/vendor/autoload.php";
-
-// Amazon library
-use Aws\Common\Aws;
-use Aws\Swf\Exception;
-
-// Create AWS SDK instance
-$aws = Aws::factory("$root/config/awsConfig.json");
-// SWF client
-$swf = $aws->get('Swf');
-// SQS Client
-$sqs = $aws->get('Sqs');
-
 // Log to STDOUT
 function log_out($type, $source, $message, $workflowId = 0)
 {
@@ -76,7 +62,7 @@ function init_workflow($params)
             ]);
         return true;
     } catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-        log_out("ERROR", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
+        log_out("INFO", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
     } catch (Exception $e) {
         log_out("ERROR", basename(__FILE__), "Unable to describe the workflow ! " . $e->getMessage());
         return false;
@@ -92,4 +78,36 @@ function init_workflow($params)
     }
 }
 
+// Custom exception class for Cloud Transcode
+class CTException extends Exception
+{
+    public $ref;
+    
+    // Redefine the exception so message isn't optional
+    public function __construct($message, $ref = "", $code = 0, Exception $previous = null) {
+        $this->ref = $ref;
+    
+        // make sure everything is assigned properly
+        parent::__construct($message, $code, $previous);
+    }
+  
+    // custom string representation of object
+    public function __toString() {
+        return __CLASS__ . ": [{$this->ref}]: {$this->message}\n";
+    }
+}
 
+
+// Composer for loading dependices: http://getcomposer.org/
+require "$root/../vendor/autoload.php";
+
+// Amazon library
+use Aws\Common\Aws;
+use Aws\Swf\Exception;
+
+// Create AWS SDK instance
+$aws = Aws::factory("$root/../config/awsConfig.json");
+// SWF client
+$swf = $aws->get('Swf');
+// SQS Client
+$sqs = $aws->get('Sqs');

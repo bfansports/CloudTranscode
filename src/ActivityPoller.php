@@ -12,12 +12,12 @@ require "./activities/BasicActivity.php";
 Class ActivityPoller
 {
     private $domain;
-	private $knownActivities;
-	private $activitiesToHandle;
-	private $activityTaskLists;
-    
+    private $knownActivities;
+    private $activitiesToHandle;
+    private $activityTaskLists;
+  
     const EMPTY_RESULT = "EMPTY_RESULT";
-    
+  
     function __construct($config, $activitiesToHandle)
     {
         global $activities;
@@ -26,7 +26,7 @@ Class ActivityPoller
         $this->knownActivities = $config['cloudTranscode']['activities'];
         $this->activitiesToHandle = $activitiesToHandle["activities"];
         $this->activityTaskLists = [];
-            
+    
         // Init domain. see: Utils.php
         if (!init_domain($this->domain)) 
         {
@@ -58,7 +58,7 @@ Class ActivityPoller
             {
                 log_out("INFO", basename(__FILE__), 
                     "Polling taskList '" . $taskList  . "' ... ");
-                
+        
                 // Call SWF and poll for incoming tasks
                 $activityTask = $swf->pollForActivityTask([
                         "domain"   => $this->domain,
@@ -72,7 +72,7 @@ Class ActivityPoller
             log_out("ERROR", basename(__FILE__), 
                 "Unable to poll activity tasks ! " . $e->getMessage());
         }
-        
+    
         return true;
     }
 
@@ -84,16 +84,17 @@ Class ActivityPoller
         if (!($activityType      = $activityTask->get("activityType")) ||
             !($workflowExecution = $activityTask->get("workflowExecution")))
             return false;
-        
-        
+    
+    
         // Can activity be handled by this poller ?
         if (!($activity = $this->get_activity($activityType))) 
         {
-            log_out("ERROR", basename(__FILE__), "This activity type is unknown ! Skipping ...",
+            log_out("ERROR", basename(__FILE__), 
+                "This activity type is unknown ! Skipping ...",
                 $workflowExecution['workflowId']);
             return false;
         }
-        
+    
         log_out("INFO", basename(__FILE__), 
             "Starting activity: name=" . $activity["name"] . ",version=" . $activity["version"],
             $workflowExecution['workflowId']);
@@ -108,27 +109,20 @@ Class ActivityPoller
         }
 
         // Run activity task
-        $result = $activity["object"]->do_activity($activityTask);
-        
-        // Check activity results
-        if ($result["status"] == "ERROR")
-        {
+        try {
+            $result = $activity["object"]->do_activity($activityTask);
+        } catch (CTException $e) {
             $activity["object"]->activity_failed($activityTask, 
-                $result["error"], $result["details"]);
+                $e->ref, 
+                $e->getMessage());
             return false;
         }
-        if (!isset($result["data"]) || !$result["data"])
-        {
-            $activity["object"]->activity_failed($activityTask, 
-                self::EMPTY_RESULT, "Activity result data is empty !");
-            return false;
-        }
-        
+    
         // Send completion msg
-        $activity["object"]->activity_completed($activityTask, $result["data"]);
+        $activity["object"]->activity_completed($activityTask, $result);
         return true;
     }
-    
+  
     // Register and instantiate activities handlers classes
     private function register_activities()
     {
@@ -148,18 +142,22 @@ Class ActivityPoller
                     $file = dirname(__FILE__) . $activityToHandle["file"];
                     require_once $file;
 
-                    // Instantiate the class
-                    $activityToHandle["object"] = 
-                        new $activityToHandle["class"]([
-                                "domain"  => $this->domain,
-                                "name"    => $activityToHandle["name"],
-                                "version" => $activityToHandle["version"]
-                            ]);
+                    try {
+                        // Instantiate the class
+                        $activityToHandle["object"] = 
+                            new $activityToHandle["class"]([
+                                    "domain"  => $this->domain,
+                                    "name"    => $activityToHandle["name"],
+                                    "version" => $activityToHandle["version"]
+                                ]);
+                    } catch (CTException $e) {
+	    
+                    }
 
                     log_out("INFO", basename(__FILE__), 
                         "Activity handler registered: name=" . $activityToHandle["name"] . ",version=" . $activityToHandle["version"]);
 
-                    // REgister this activity taskList is the global activityTaskLists
+                    // REgister this activity taskList is the activityTaskLists Tracker
                     if (!isset($this->activityTaskLists[$activityToHandle["activityTaskList"]]))
                         $this->activityTaskLists[$activityToHandle["activityTaskList"]] = true;
 
@@ -207,14 +205,14 @@ function check_input_parameters()
     $options = getopt("j:c:h");
     if (!count($options) || isset($options['h']))
         usage();
-    
+  
     if (!isset($options['j']) &&
         !isset($options['c']))
     {
         log_out("ERROR", basename(__FILE__), "You must provide JSON input -c or -j option !");
         usage();
     }
-    
+  
     if (isset($options['j']) &&
         isset($options['c']))
     {
@@ -225,11 +223,11 @@ function check_input_parameters()
     if (isset($options['j']))
         if (!($activities = json_decode($options['j'], true)))
             return false;
-    
+  
     if (isset($options['c']))
         if (!($activities = json_decode(file_get_contents($options['c']), true)))
             return false;
-    
+  
     return $activities;
 }
 
@@ -242,10 +240,10 @@ if (!($activities = check_input_parameters()))
 }
 
 // Get config file
-$config = json_decode(file_get_contents(dirname(__FILE__) . "/config/cloudTranscodeConfig.json"), 
+$config = json_decode(file_get_contents(dirname(__FILE__) . "/../config/cloudTranscodeConfig.json"), 
     true);
 log_out("INFO", basename(__FILE__), 
-    "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
+	"Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
 log_out("INFO", basename(__FILE__), "Clients: ");
 print_r($config['clients']);
 

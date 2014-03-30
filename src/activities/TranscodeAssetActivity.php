@@ -6,9 +6,6 @@
  */
 class TranscodeAssetActivity extends BasicActivity
 {
-    private $inputFile;
-    private $inputJSON;
-
     // Errors
     const EXEC_FAIL       = "EXEC_FAIL";
     const TRANSCODE_FAIL  = "TRANSCODE_FAIL";
@@ -34,17 +31,21 @@ class TranscodeAssetActivity extends BasicActivity
         /**
          * INIT
          */
-        // Referencing input variables
-        $this->inputFileinfo = $input->{"input_fileinfo"}; // Input file details
-        $this->inputJSON     = $input->{"input_json"};     // Original JSON input
+        // $input->{"input_fileinfo"}; // Input file details
+        // $input->{"input_json"};     // Original JSON input
     
-        // Create TMP storage to put the file to validate. See: ActivityUtils.php
-        // XXX cleanup those folders regularly or we'll run out of space !!!
+        // Create TMP storage to put the file to validate.
+        $inputFileInfo = pathinfo($input->{"input_json"}->{'input_file'});
+        $localPath = 
+            $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"],
+                $inputFileInfo['dirname']);
+        $pathToFile = $localPath . $inputFileInfo['basename'];
+        
         $localPath = $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"]);
-        $pathToFile = $localPath . $this->inputJSON['input_file'];
+        $pathToFile = $localPath . $input->{"input_json"}->{'input_file'};
     
         // Get file from S3 or local copy if any
-        $this->get_file_from_s3($task, $this->inputJSON, $pathToFile);
+        $this->get_file_from_s3($task, $input->{"input_json"}, $pathToFile);
     
     
         /**
@@ -52,7 +53,8 @@ class TranscodeAssetActivity extends BasicActivity
          */
         // Setup transcoding command and parameters
         $outputConfig  = $input->{"output"}; // JSON description of the transcode to do
-        $outputPathToFile = $localPath . "transcode/" . $outputConfig->{"file"};
+        print_r($outputConfig);
+        $outputPathToFile = $localPath . "transcode/" . $outputConfig->{"output_file"};
         // Create FFMpeg command
         $ffmpegArgs    = "-i $pathToFile -y -threads 0 -s " . $outputConfig->{'size'} . " -vcodec " . $outputConfig->{'video_codec'} . " -acodec " . $outputConfig->{'audio_codec'} . " -b:v " . $outputConfig->{'video_bitrate'} . " -bufsize " . $outputConfig->{'buffer_size'} . " -b:a " . $outputConfig->{'audio_bitrate'} . " $outputPathToFile";
         $ffmpegCmd     = "ffmpeg $ffmpegArgs";
@@ -65,7 +67,7 @@ class TranscodeAssetActivity extends BasicActivity
             "Start Transcoding Asset '$pathToFile' to '$outputPathToFile' ...",
             $this->activityLogKey);
         log_out("INFO", basename(__FILE__), 
-            "Video duration (sec): " . $this->inputFileinfo->{'duration'},
+            "Video duration (sec): " . $input->{"input_fileinfo"}->{'duration'},
             $this->activityLogKey);
     
         // Command output capture method: pipe STDERR (FFMpeg print out on STDERR)
@@ -99,7 +101,7 @@ class TranscodeAssetActivity extends BasicActivity
             // Get progression and notify SWF with heartbeat
             if ($i == 10) {
                 echo ".\n";
-                $progress = $this->capture_progression($ffmpegOut);
+                $progress = $this->capture_progression($ffmpegOut, $input->{"input_fileinfo"}->{'duration'});
 
                 // XXX
                 // XXX. HERE, Notify task progress through SQS !
@@ -160,14 +162,14 @@ class TranscodeAssetActivity extends BasicActivity
             "status"  => "SUCCESS",
             "details" => $msg,
             "data"    => [
-                "input_json"     => $this->inputJSON,
-                "input_fileinfo" => $this->inputFileinfo
+                "input_json"     => $input->{"input_json"},
+                "input_fileinfo" => $input->{"input_fileinfo"}
             ]
         ];
     }
 
     // REad ffmpeg output and calculate % progress
-    private function capture_progression($out)
+    private function capture_progression($out, $duration)
     {
         // # get the current time
         preg_match_all("/time=(.*?) bitrate/", $out, $matches); 
@@ -186,7 +188,7 @@ class TranscodeAssetActivity extends BasicActivity
         // # finally, progress is easy
         $progress = 0;
         if ($done)
-            $progress = round(($done/$this->inputFileinfo->{"duration"})*100);
+            $progress = round(($done/$duration)*100);
         log_out("INFO", basename(__FILE__), "Progress: $done / $progress%",
             $this->activityLogKey);
 

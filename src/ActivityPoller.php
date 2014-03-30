@@ -16,7 +16,8 @@ Class ActivityPoller
     private $activitiesToHandle;
     private $activityTaskLists;
   
-    const EMPTY_RESULT = "EMPTY_RESULT";
+    const EMPTY_RESULT    = "EMPTY_RESULT";
+    const ACTIVITY_FAILED = "ACTIVITY_FAILED";
   
     function __construct($config, $activitiesToHandle)
     {
@@ -52,40 +53,38 @@ Class ActivityPoller
         global $swf;
 
         // Initiate polling
-        try {
-            // Poll from all the taskList registered for each activities 
-            foreach ($this->activityTaskLists as $taskList => $x)
-            {
-                log_out("INFO", basename(__FILE__), 
-                    "Polling taskList '" . $taskList  . "' ... ");
-        
+       
+        // Poll from all the taskList registered for each activities 
+        foreach ($this->activityTaskLists as $taskList => $x)
+        {
+            log_out("INFO", basename(__FILE__), 
+                "Polling taskList '" . $taskList  . "' ... ");
+            try {
                 // Call SWF and poll for incoming tasks
                 $activityTask = $swf->pollForActivityTask([
                         "domain"   => $this->domain,
                         "taskList" => array("name" => $taskList)
                     ]);
-
-                // Handle and process the new activity task
-                $this->process_activity_task($activityTask);
+            } catch (Exception $e) {
+                log_out("ERROR", basename(__FILE__), 
+                    "Unable to poll activity tasks ! " . $e->getMessage());
             }
-        } catch (Exception $e) {
-            log_out("ERROR", basename(__FILE__), 
-                "Unable to poll activity tasks ! " . $e->getMessage());
+
+            // Handle and process the new activity task
+            $this->process_activity_task($activityTask);
         }
-    
+        
         return true;
     }
 
     // Process the new task using one of the activity handler classes registered
     private function process_activity_task($activityTask)
     {
-        //print_r($activityTask);
         // Get activityType and WorkflowExecution info
         if (!($activityType      = $activityTask->get("activityType")) ||
             !($workflowExecution = $activityTask->get("workflowExecution")))
             return false;
-    
-    
+        
         // Can activity be handled by this poller ?
         if (!($activity = $this->get_activity($activityType))) 
         {
@@ -114,6 +113,11 @@ Class ActivityPoller
         } catch (CTException $e) {
             $activity["object"]->activity_failed($activityTask, 
                 $e->ref, 
+                $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            $activity["object"]->activity_failed($activityTask, 
+                self::ACTIVITY_FAILED, 
                 $e->getMessage());
             return false;
         }

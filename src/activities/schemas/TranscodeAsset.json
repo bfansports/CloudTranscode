@@ -6,28 +6,32 @@
     "properties": {
         "input_json": {
             "description": "Original JSON input submitted to the Workflow",
-            "type": "string"
+            "type": "object"
         },
         "input_fileinfo": {
             "description": "Information about the input file to transcode",
-            "type": "array"
+            "type": "object",
 	    "properties": {
-		
+		"duration": { "type": "number" },
+		"vcodec": { "type": "string" },
+		"color": { "type": "string" },
+		"size": { "type": "string" },
+		"vbitrate": { "type": "string" },
+		"fps": { "type": "string" },
+		"ratio": { "type": "string" },
+		"acodec": { "type": "string" },
+		"freq": { "type": "string" },
+		"mode": { "type": "string" },
+		"abitrate": { "type": "string" }
 	    }
         },
-        "outputs": {
-            "description": "List of all the outputs needed for that job array of max 100 entries",
-            "type": "array",
-            "items": {
-                "$ref": "output/base.json",
-                "oneOf": [                    
-                    { "$ref": "output/video.json" }
-                ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
+        "output": {
+            "$ref": "output/base.json",
+            "oneOf": [                    
+                { "$ref": "output/video.json" }
+            ]
         }
     },
-    "required": ["outputs", "input_fileinfo", "input_json"],
+    "required": ["output", "input_fileinfo", "input_json"],
     "additionalProperties": true
 }

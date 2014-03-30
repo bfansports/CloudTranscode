@@ -152,6 +152,7 @@ class BasicActivity
             log_out("INFO", basename(__FILE__),
                 "Notify SWF activity is completed !",
                 $this->activityLogKey);
+            
             $swf->respondActivityTaskCompleted(array(
                     "taskToken" => $task["taskToken"],
                     "result"    => json_encode($result),
@@ -286,9 +287,11 @@ class BasicActivity
     }
 
     // Create a local TMP folder using the workflowID
-    public function create_tmp_local_storage($workflowId)
+    public function create_tmp_local_storage($workflowId, $extra = null)
     {
         $localPath = "/tmp/CloudTranscode/$workflowId/";
+        if ($extra)
+            $localPath .= "$extra/";
         if (!file_exists("$localPath/transcode/"))
         {
             if (!mkdir("$localPath/transcode/", 0750, true))

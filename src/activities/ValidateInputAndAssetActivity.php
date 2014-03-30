@@ -29,10 +29,12 @@ class ValidateInputAndAssetActivity extends BasicActivity
         /**
          * INIT
          */
-        // Create TMP storage to put the file to validate. See: ActivityUtils.php
-        // XXX cleanup those folders regularly or we'll run out of space !!!
-        $localPath = $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"]);
-        $pathToFile = $localPath . $input->{'input_file'};
+        // Create TMP storage to put the file to validate. 
+        $inputFileInfo = pathinfo($input->{'input_file'});
+        $localPath = 
+            $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"],
+                $inputFileInfo['dirname']);
+        $pathToFile = $localPath . $inputFileInfo['basename'];
     
         // Get file from S3 or local copy if any
         $this->get_file_from_s3($task, $input, $pathToFile);

@@ -1,0 +1,11 @@
+{
+    "name": "System preset: Generic iphone4",
+    "description": "Generic transcoding preset for: iPod touch 5G, 4G, iPad 1G, 2G",
+    "size": "1280x720",
+    "frame_rate": 30,
+    "video_bitrate": "2200k",
+    "audio_bitrate": "160k",
+    "video_codec": "libx264",
+    "audio_codec": "libfdk_aac",
+    "video_codec_options": "MaxReferenceFrames:3,Profile:main,Level:3.1"
+}

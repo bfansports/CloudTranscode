@@ -1,0 +1,11 @@
+{
+    "name": "System preset: Generic 360p 4:3",
+    "description": "Generic 360p 4:3 transcoding preset",
+    "size": "480x360",
+    "frame_rate": 29.97,
+    "video_bitrate": "600k",
+    "audio_bitrate": "128k",
+    "video_codec": "libx264",
+    "audio_codec": "libfdk_aac",
+    "video_codec_options": "MaxReferenceFrames:3,Profile:baseline,Level:3"
+}

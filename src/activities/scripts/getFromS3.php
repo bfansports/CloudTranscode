@@ -54,10 +54,10 @@ try {
 
     // Print JSON error output
     print json_encode([ "status" => "SUCCESS",
-            "msg" => "Download '" . $options['bucket'] . "':'" . $options['file'] . "' successful !" ]);
+            "msg" => "Download '" . $options['bucket'] . "/" . $options['file'] . "' successful !" ]);
 } 
 catch (Exception $e) {
-    $err = "Unable to get '" . $options['bucket'] . "':'" . $options['file'] . "' file from S3 ! " . $e->getMessage();
+    $err = "Unable to get '" . $options['bucket'] . "/" . $options['file'] . "' file from S3 ! " . $e->getMessage();
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
             "msg" => $err ]);

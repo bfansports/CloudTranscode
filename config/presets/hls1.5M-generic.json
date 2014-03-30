@@ -1,0 +1,11 @@
+{
+    "name": "System preset: Generic HLS 1.5M",
+    "description": "Generic transcoding preset for HLS 1.5M",
+    "size": "960x640",
+    "frame_rate": "auto",
+    "video_bitrate": "1372k",
+    "audio_bitrate": "128k",
+    "video_codec": "libx264",
+    "audio_codec": "libfdk_aac",
+    "video_codec_options": "MaxReferenceFrames:3,Profile:main,Level:3.1"
+}

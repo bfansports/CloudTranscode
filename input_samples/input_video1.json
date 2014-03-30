@@ -1,8 +1,8 @@
 {
     "api_key": "1234567890abcdefghijkl",
     "input_type": "VIDEO",
-    "input_bucket": "ct-my-bucket-in/input1/",
-    "input_file": "test1.mp4",
+    "input_bucket": "ct-my-bucket-in",
+    "input_file": "/input1/test1.mp4",
     "job_label": "test1 transcode",
     "outputs": 
     [
@@ -14,7 +14,7 @@
 	    "format": "mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
-	    "preset": "h264_AAC_SD",
+	    "preset": "360p-16.9-generic",
 	    "thumbnails": {
 		"mode": "snapshot",
 		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
@@ -39,8 +39,7 @@
 	    "format": "mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
-	    "preset": "h264_AAC_HD",
-	    "size": "1280x720",
+	    "preset": "720p-generic",
 	    "thumbnails": {
 		"mode": "snapshot",
 		"output_bucket": "ct-my-bucket-out/thumbs/",

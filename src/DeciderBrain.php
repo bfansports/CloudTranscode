@@ -120,7 +120,7 @@ Class DeciderBrain
     private function activity_task_completed($event, $taskToken, $workflowExecution)
     {
         //print_r($event);
-    
+        
         // We get the output of the completed activity
         $activityResult = 
             json_decode($event['activityTaskCompletedEventAttributes']['result']);
@@ -135,17 +135,18 @@ Class DeciderBrain
         if ($activity['activityType']['name'] == self::VALIDATE_INPUT)
         {
             // We get the next activity information
-            $nextActivity = $this->workflowTracker->move_to_next_activity($workflowExecution);
-      
+            $nextActivity = 
+                $this->workflowTracker->move_to_next_activity($workflowExecution);
+            
             // Prepare the data for transcoding activity
             // One input for each transcoding activity
             $nextActivitiesInput = [];
             foreach ($activityResult->{"outputs"} as $output)
             {
                 array_push($nextActivitiesInput, [
-                        "input_json"               => $activityResult->{"input_json"},
-                        "input_file"               => $activityResult->{"input_file"},
-                        "output"                   => $output
+                        "input_json"     => $activityResult->{"input_json"},
+                        "input_fileinfo" => $activityResult->{"input_fileinfo"},
+                        "output"         => $output
                     ]);
             }
       

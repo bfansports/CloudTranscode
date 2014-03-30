@@ -1,0 +1,11 @@
+{
+    "name": "System preset: Generic Apple TV 3G",
+    "description": "Generic transcoding preset for: Apple TV 3G, Roku HD/2 XD",
+    "size": "1920x1080",
+    "frame_rate": 30,
+    "video_bitrate": "5000k",
+    "audio_bitrate": "160k",
+    "video_codec": "libx264",
+    "audio_codec": "libfdk_aac",
+    "video_codec_options": "MaxReferenceFrames:3,Profile:high,Level:4"
+}

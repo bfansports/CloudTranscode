@@ -1,0 +1,11 @@
+{
+    "name": "System preset: Generic 320x240",
+    "description": "Generic 320x240 transcoding preset",
+    "size": "320x240",
+    "frame_rate": 21,
+    "video_bitrate": "300k",
+    "audio_bitrate": "64k",
+    "video_codec": "libx264",
+    "audio_codec": "libfdk_aac",
+    "video_codec_options": "MaxReferenceFrames:3,Profile:baseline,Level:1.3"
+}

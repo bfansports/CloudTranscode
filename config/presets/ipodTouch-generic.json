@@ -1,0 +1,11 @@
+{
+    "name": "System preset: Generic iPod Touch",
+    "description": "Generic transcoding preset for: iPhone 1, 3, iPod classic",
+    "size": "640x480",
+    "frame_rate": 30,
+    "video_bitrate": "1500k",
+    "audio_bitrate": "128k",
+    "video_codec": "libx264",
+    "audio_codec": "libfdk_aac",
+    "video_codec_options": "MaxReferenceFrames:3,Profile:baseline,Level:3"
+}

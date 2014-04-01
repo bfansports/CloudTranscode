@@ -9,6 +9,13 @@ class WorkflowTracker
 {
     private $workflowManager;
     private $excutionTracker;
+    
+    // Activity statuses
+    const SCHEDULED = "SCHEDULED";
+    const STARTED   = "STARTED";
+    const TIMED_OUT = "TIMED_OUT";
+    const FAILED    = "FAILED";
+    const COMPLETED = "COMPLETED";
 
     function __construct($config, $workflowManager)
     {
@@ -52,6 +59,7 @@ class WorkflowTracker
             "scheduledId"  => $event["eventId"],
             "startedId"    => 0,
             "completedId"  => 0,
+            "status"       => self::SCHEDULED
         ];
     
         log_out("INFO", basename(__FILE__), 
@@ -79,6 +87,7 @@ class WorkflowTracker
                     "Recording started activityId '" . $activity['activityId'] . "'.", 
                     $workflowExecution['workflowId']);
                 $activity["startedId"] = $event["eventId"];
+                $activity["status"] = self::STARTED;
                 return $activity;
             }
         }
@@ -108,6 +117,7 @@ class WorkflowTracker
                     $workflowExecution['workflowId']);
                 $activity["completedId"]   = $event["eventId"];
                 $activity["completedTime"] = $event["eventTimestamp"];
+                $activity["status"] = self::COMPLETED;
                 return $activity;
             }
         }
@@ -137,6 +147,7 @@ class WorkflowTracker
                     "Recording timed out activityId '" . $activity['activityId'] . "'.", 
                     $workflowExecution['workflowId']);
                 $activity["timeoutType"] = $timeoutType;
+                $activity["status"] = self::TIMED_OUT;
                 return $activity;
             }
         }
@@ -166,9 +177,9 @@ class WorkflowTracker
                 log_out("INFO", basename(__FILE__), 
                     "Recording failed activityId '" . $activity['activityId'] . "'.", 
                     $workflowExecution['workflowId']);
-                $activity["failed"]  = true;
                 $activity["details"] = $details;
                 $activity["reason"]  = $reason;
+                $activity["status"] = self::FAILED;
                 return $activity;
             }
         }
@@ -187,12 +198,15 @@ class WorkflowTracker
         $activityId   = $completedActivity["activityId"];
         $activityType = $completedActivity["activityType"];
         $ongoingActivities = $tracker["ongoingActivities"];
+        
+        print_r($ongoingActivities);
+
         foreach ($ongoingActivities as $activity)
         {
             // If another activity of the same type is still running
             if ($activity["activityType"]["name"]    == $activityType["name"] &&
                 $activity["activityType"]["version"] == $activityType["version"] &&
-                $activity["completedId"] == 0)
+                ($activity["status"] == "SCHEDULED" || $activity["status"] == "STARTED"))
                 return false;
         }
         return true;

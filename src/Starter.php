@@ -162,10 +162,9 @@ if (!$input)
 }
 else
 {
-    start_workflow($config, $input);
     while (1)
     {
-        $line = readline("Re-submit input [enter]");
+        $line = readline("Submit input [enter]");
 
         // Re-read file in case of change ! :)
         $input = file_get_contents($input_file);

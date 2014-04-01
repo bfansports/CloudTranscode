@@ -200,7 +200,23 @@ class BasicActivity
     
         return true;
     }
+    
+    // Create TMP folder and download file to process
+    public function get_file_to_process($task, $input)
+    {
+        // Create TMP storage to put the file to validate. 
+        $inputFileInfo = pathinfo($input->{'input_file'});
+        $localPath = 
+            $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"],
+                $inputFileInfo['dirname']);
+        $pathToFile = $localPath . $inputFileInfo['basename'];
+    
+        // Get file from S3 or local copy if any
+        $this->get_file_from_s3($task, $input, $pathToFile);
 
+        return $pathToFile;
+    }
+    
     // Get a file from S3 using external script localted in "scripts" folder
     public function get_file_from_s3($task, $input, $pathToFile)
     {
@@ -301,7 +317,6 @@ class BasicActivity
     
         return $localPath;
     }
-
 }
 
 

@@ -8,7 +8,11 @@
             "description": "Original JSON input submitted to the Workflow",
             "type": "object"
         },
-        "input_fileinfo": {
+	"input_asset_type": {
+            "description": "Type of the input asset",
+            "type": "string"
+        },
+        "input_asset_info": {
             "description": "Information about the input file to transcode",
             "type": "object",
 	    "properties": {
@@ -32,6 +36,6 @@
             ]
         }
     },
-    "required": ["output", "input_fileinfo", "input_json"],
+    "required": ["output", "input_asset_type", "input_asset_info", "input_json"],
     "additionalProperties": true
 }

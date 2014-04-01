@@ -144,9 +144,10 @@ Class DeciderBrain
             foreach ($activityResult->{"outputs"} as $output)
             {
                 array_push($nextActivitiesInput, [
-                        "input_json"     => $activityResult->{"input_json"},
-                        "input_fileinfo" => $activityResult->{"input_fileinfo"},
-                        "output"         => $output
+                        "input_json"       => $activityResult->{"input_json"},
+                        "input_asset_type" => $activityResult->{"input_asset_type"},
+                        "input_asset_info" => $activityResult->{"input_asset_info"},
+                        "output"           => $output
                     ]);
             }
       

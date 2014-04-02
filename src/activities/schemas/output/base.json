@@ -4,33 +4,33 @@
     "title": "CT transcode output specification",
     "type": "object",
     "properties": {
-	"output_type": {
-	    "type": "string",
+        "output_type": {
+            "type": "string",
             "enum": [ "VIDEO" ],
             "description": "Type of the file to output VIDEO, AUDIO, DOC, IMG"
-	},
+        },
         "output_label": {
-	    "type": "string",
+            "type": "string",
             "description": "Give a label to your output"
         },
         "output_bucket": {
-	    "type": "string",
+            "type": "string",
             "description": "S3 bucket and path where the output file will be uploaded"
         },
         "output_file": {
-	    "type": "string",
+            "type": "string",
             "description": "Filename where to upload the resulting file"
         },
         "format": {
-	    "type": "string",
+            "type": "string",
             "description": "Provide the type of output file you need your document transcoded to"
         },
         "s3_rrs": {
-	    "type": "boolean",
+            "type": "boolean",
             "description": "Activate reduced redundancy or not in S3 storage"
         },
         "s3_encrypt": {
-	    "type": "boolean",
+            "type": "boolean",
             "description": "Activate backend storage encryption"
         }
     },

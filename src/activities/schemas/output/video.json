@@ -4,71 +4,70 @@
     "title": "CT transcode output specification",
     "type": "object",
     "properties": {
-	"output_type": {
-	    "type": "string",
+        "output_type": {
+            "type": "string",
             "enum": [ "VIDEO" ],
             "description": "Type MUST be 'VIDEO'"
-	},
-	"output_label": {
-	    "type": "string",
+        },
+        "output_label": {
+            "type": "string",
             "description": "Give a label to your output"
         },
         "output_bucket": {
-	    "type": "string",
+            "type": "string",
             "description": "S3 bucket and path where the output file will be uploaded"
         },
         "output_file": {
-	    "type": "string",
+            "type": "string",
             "description": "Filename where to upload the resulting file"
         },
-	"s3_rrs": {
-	    "type": "boolean",
+        "s3_rrs": {
+            "type": "boolean",
             "description": "Activate reduced redundancy or not in S3 storage"
         },
         "s3_encrypt": {
-	    "type": "boolean",
+            "type": "boolean",
             "description": "Activate backend storage encryption"
         },
         "format": {
-	    "type": "string",
+            "type": "string",
             "enum": [ "mp4", "avi", "mov", "3gp", "3gpp" ],
             "description": "Provide the type of output file you need your document transcoded to"
         },
-        
         "preset": {
-	    "type": "string",
+            "type": "string",
             "description": "Preset to use to transcode the file"
         },
         "size": {
-	    "type": "string",
+            "type": "string",
             "description": "original video/picture size"
         },
         "video_codec": {
-	    "type": "string",
+            "type": "string",
             "description": "Override the video codec used by codec"
         },
         "audio_codec": {
-	    "type": "string",
+            "type": "string",
             "description": "Override the audio codec used by preset"
         },
         "video_bitrate": {
-	    "type": "string",
+            "type": "string",
             "description": "Override default preset bitrate for video"
         },
         "audio_bitrate": {
-	    "type": "string",
+            "type": "string",
             "description": "Override default preset bitrate for audio"
         },
         "frame_rate": {
-	    "type": "string",
+            "type": "string",
             "description": "Override default preset frame rate"
         },
         "watermark": {
-	    "$ref": "#/definitions/watermark",
+            "$ref": "#/definitions/watermark",
             "description": "Provide watermark information if any"
         },
         "thumbnails": {
-	    "$ref": "#/definitions/thumbnails",
+            "$ref": "#/definitions/thumbnails",
             "description": "Provide thumbnails information is needed"
         }
     },
@@ -85,11 +84,11 @@
                     "description": "Type of thumbnails generation needed"
                 },
                 "label": {
-        	    "type": "string",
+                    "type": "string",
                     "description": "file label to use for your thumbnails. We will append sequence number"
                 },
                 "output_bucket": {
-        	    "type": "string",
+                    "type": "string",
                     "description": "S3 bucket and path where the output file will be uploaded"
                 },
                 "interval": {
@@ -98,11 +97,11 @@
                     "description": "Override default interval in seconds"
                 },
                 "s3_rrs": {
-        	    "type": "boolean",
+                    "type": "boolean",
                     "description": "Activate reduced redundancy or not in S3 storage"
                 },
                 "s3_encrypt": {
-        	    "type": "boolean",
+                    "type": "boolean",
                     "description": "Activate backend storage encryption"
                 },
                 "size": {

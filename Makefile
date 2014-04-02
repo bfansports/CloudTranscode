@@ -1,7 +1,7 @@
 COMPOSER = ./composer.phar
 COMPOSER_CONF = ./composer.json
 
-.PHONY: all
+.PHONY: all vendor
 
 all: vendor
 
@@ -11,3 +11,4 @@ $(COMPOSER):
 vendor: $(COMPOSER) $(COMPOSER_CONF)
 	$(COMPOSER) self-update
 	$(COMPOSER) install --dev
+	$(COMPOSER) update

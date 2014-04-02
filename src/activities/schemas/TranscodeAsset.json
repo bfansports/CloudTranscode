@@ -8,26 +8,26 @@
             "description": "Original JSON input submitted to the Workflow",
             "type": "object"
         },
-	"input_asset_type": {
+        "input_asset_type": {
             "description": "Type of the input asset",
             "type": "string"
         },
         "input_asset_info": {
             "description": "Information about the input file to transcode",
             "type": "object",
-	    "properties": {
-		"duration": { "type": "number" },
-		"vcodec": { "type": "string" },
-		"color": { "type": "string" },
-		"size": { "type": "string" },
-		"vbitrate": { "type": "string" },
-		"fps": { "type": "string" },
-		"ratio": { "type": "string" },
-		"acodec": { "type": "string" },
-		"freq": { "type": "string" },
-		"mode": { "type": "string" },
-		"abitrate": { "type": "string" }
-	    }
+            "properties": {
+                "duration": { "type": "number" },
+                "vcodec": { "type": "string" },
+                "color": { "type": "string" },
+                "size": { "type": "string" },
+                "vbitrate": { "type": "string" },
+                "fps": { "type": "string" },
+                "ratio": { "type": "string" },
+                "acodec": { "type": "string" },
+                "freq": { "type": "string" },
+                "mode": { "type": "string" },
+                "abitrate": { "type": "string" }
+            }
         },
         "output": {
             "$ref": "output/base.json",

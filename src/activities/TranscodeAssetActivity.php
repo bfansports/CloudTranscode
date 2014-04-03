@@ -38,8 +38,6 @@ class TranscodeAssetActivity extends BasicActivity
         case self::VIDEO:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
             $videoTranscoder = new VideoTranscoder($this->activityLogKey);
-
-            print_r($input);
             
             // Perform transcoding
             $videoTranscoder->transcode_asset($pathToFile,

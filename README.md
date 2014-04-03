@@ -32,3 +32,4 @@ Simply type "make" in the top level directory of the project. It will fetch PHP
 composer and download all dependencies.
 
 Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transcode-Installation-Deployment-8zAu2d03Zxr
+

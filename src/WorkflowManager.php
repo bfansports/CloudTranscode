@@ -129,13 +129,13 @@ class WorkflowManager
 		global $swf;
 
 		try {
-			$history = $swf->getWorkflowExecutionHistory([
+            $history = $swf->getWorkflowExecutionHistory([
                     "domain" => $this->domain,
                     "execution" => $workflowExecution
                 ]);
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage());
-			return false;
+            log_out("ERROR", basename(__FILE__), "Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage());
+            return false;
 		} catch (Exception $e) {
 			log_out("ERROR", basename(__FILE__), "Unable to get workflow history ! " . $e->getMessage());
 			return false;

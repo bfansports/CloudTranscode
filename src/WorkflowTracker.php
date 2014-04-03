@@ -49,7 +49,7 @@ class WorkflowTracker
     public function record_activity_scheduled($workflowExecution, $event) 
     {
         // Get the tracker for this workflow
-        // &$this-> to get the reference to the object so we can modify its content
+        // &$this-> to get the object so we can modify its content
         $tracker = &$this->executionTracker[$workflowExecution["workflowId"]];
     
         // Create an activity snapshot for tracking
@@ -199,8 +199,6 @@ class WorkflowTracker
         $activityType = $completedActivity["activityType"];
         $ongoingActivities = $tracker["ongoingActivities"];
         
-        print_r($ongoingActivities);
-
         foreach ($ongoingActivities as $activity)
         {
             // If another activity of the same type is still running

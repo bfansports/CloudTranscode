@@ -5,7 +5,10 @@
     },
 
     "require-dev": {
-        "phpunit/phpunit": "3.7.*"
+        "phpunit/phpunit": "3.7.*",
+        "squizlabs/php_codesniffer": "2.0.*@dev",
+        "sebastian/phpcpd": "2.0.*@dev",
+        "phploc/phploc": "2.0.*@dev",
+        "pdepend/pdepend": "2.0.0.*@dev"
     }
 }
-

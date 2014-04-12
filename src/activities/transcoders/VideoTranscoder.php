@@ -7,8 +7,15 @@ class VideoTranscoder extends BasicTranscoder
     const GET_VIDEO_INFO_FAILED = "GET_VIDEO_INFO_FAILED";
     const GET_AUDIO_INFO_FAILED = "GET_AUDIO_INFO_FAILED";
     const GET_DURATION_FAILED   = "GET_DURATION_FAILED";
+    const NO_OUTPUT             = "NO_OUTPUT";
+    const NO_PRESET             = "NO_PRESET";
     const BAD_PRESETS_DIR       = "BAD_PRESETS_DIR";
     const UNKNOWN_PRESET        = "UNKNOWN_PRESET";
+    const OPEN_PRESET_FAILED    = "OPEN_PRESET_FAILED";
+    const BAD_PRESET_FORMAT     = "BAD_PRESET_FORMAT";
+    const RATIO_ERROR           = "RATIO_ERROR";
+    const ENLARGEMENT_ERROR     = "ENLARGEMENT_ERROR";
+    
     // Error Transcoder
     const EXEC_FAIL       = "EXEC_FAIL";
     const TRANSCODE_FAIL  = "TRANSCODE_FAIL";
@@ -51,18 +58,111 @@ class VideoTranscoder extends BasicTranscoder
         return ($assetInfo);
     }
 
-    public function transcode_asset($pathToFile, $inputAssetInfo, $outputDetails, $task)
+    // Generate FFmpeg command for output transcoding
+    private function generate_ffmpeg_cmd($pathToInputFile,
+        $inputAssetInfo, $outputDetails)
     {
-        // Setup transcoding command and parameters
-        $outputPathToFile = $pathToFile . "transcode/" . $outputDetails->{"output_file"};
-        // Create FFMpeg command
-        $ffmpegArgs =  "-i $pathToFile -y -threads 0 -s " . $outputDetails->{'size'};
-        $ffmpegArgs .= " -vcodec " . $outputDetails->{'video_codec'};
-        $ffmpegArgs .= " -acodec " . $outputDetails->{'audio_codec'};
-        $ffmpegArgs .= " -b:v " . $outputDetails->{'video_bitrate'};
-        $ffmpegArgs .= " -bufsize " . $outputDetails->{'buffer_size'};
-        $ffmpegArgs .= " -b:a " . $outputDetails->{'audio_bitrate'};
-        $ffmpegCmd  = "ffmpeg $ffmpegArgs $outputPathToFile";
+        // Generate TMP path to output file 
+        $pathToOuputFile = $pathToInputFile . "transcode/" . $outputDetails->{"output_file"};
+        
+        $size = $this->get_video_size($inputAssetInfo, $outputDetails);
+        
+        $videoCodec = $outputDetails->{'preset_values'}->{'video_codec'};
+        if (isset($outputDetails->{'video_codec'}))
+            $videoCodec = $outputDetails->{'video_codec'};
+        
+        $audioCodec = $outputDetails->{'preset_values'}->{'audio_codec'};
+        if (isset($outputDetails->{'audio_codec'}))
+            $audioCodec = $outputDetails->{'audio_codec'};
+
+        $videoBitrate = $outputDetails->{'preset_values'}->{'video_bitrate'};
+        if (isset($outputDetails->{'video_bitrate'}))
+            $videoBitrate = $outputDetails->{'video_bitrate'};
+        
+        $audioBitrate = $outputDetails->{'preset_values'}->{'audio_bitrate'};
+        if (isset($outputDetails->{'audio_bitrate'}))
+            $audioBitrate = $outputDetails->{'audio_bitrate'};
+
+        $frameRate = $outputDetails->{'preset_values'}->{'frame_rate'};
+        if (isset($outputDetails->{'frame_rate'}))
+            $frameRate = $outputDetails->{'frame_rate'};
+        
+        if (isset($outputDetails->{'preset_values'}->{'video_codec_options'}))
+            $formattedOptions = 
+                $this->get_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
+
+        // Create FFMpeg arguments
+        $ffmpegArgs =  "-i $pathToFile -y -threads 0 -s $size";
+        $ffmpegArgs .= " -vcodec $videoCodec";
+        $ffmpegArgs .= " -acodec $audioCodec";
+        $ffmpegArgs .= " -b:v $videoBitrate";
+        $ffmpegArgs .= " -b:a $audioBitrate";
+        $ffmpegArgs .= " -r $frameRate";
+        $ffmpegArgs .= " $formattedOptions";
+        
+        // Final command
+        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOuputFile";
+        
+        return ($ffmpegCmd);
+    }
+
+    // Get Video codec options and format the options properly for ffmpeg
+    private function get_video_codec_options($videoCodecOptions)
+    {
+        $formattedOptions = "";
+        $options = explode(",", $videoCodecOptions);
+        foreach ($options as $option)
+        {
+            $keyVal = explode("=", $option);
+            if ($keyVal[0] === 'Profile')
+                $formattedOptions .= " -profile:v ".$keyVal[1];
+            else if ($keyVal[0] === 'Level')
+                $formattedOptions .= " -level ".$keyVal[1];
+            else if ($keyVal[0] === 'MaxReferenceFrames')
+                $formattedOptions .= " -refs ".$keyVal[1];
+        }
+
+        return ($formattedOptions);
+    }
+
+    // Verify Ratio and Size of output file to ensure it respect restrictions
+    // Return the ouput video size
+    private function get_video_size($inputAssetInfo, $outputDetails)
+    {
+        // Handle video size
+        $size = $outputDetails->{'preset_values'}->{'size'};
+        if (isset($outputDetails->{'size'}))
+            $size = $outputDetails->{'size'};
+        // Ratio check
+        if (!isset($outputDetails->{'keep_ratio'}) || 
+            $outputDetails->{'keep_ratio'} == 'true') {
+            $outputRatio = floatval($this->get_ratio($size));
+            $inputRatio = floatval($inputAssetInfo->{'ratio'});
+            if ($outputRatio != $inputRatio)
+                throw new CTException("Output video ratio is different from input video: input_ratio: '$inputRatio' / output_ratio: '$outputRatio'. 'keep_ratio' option is enabled (default). Disable it to allow ratio change.",
+                    self::RATIO_ERROR);
+        }
+        // Enlargement check
+        if (!isset($outputDetails->{'no_enlarge'}) || 
+            $outputDetails->{'no_enlarge'} == 'true') {
+            $inputSize = $inputAssetInfo->{'size'};
+            $inputSizeSplit = explode("x", $inputSize);
+            $ouputSizeSplit = explode("x", $size);
+            if (intval($ouputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
+                intval($ouputSizeSplit[1]) > intval($inputSizeSplit[1]))
+                throw new CTException("Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.",
+                    self::ENLARGEMENT_ERROR);
+        }
+
+        return ($size);
+    }
+
+    // Start FFmpeg for output transcoding
+    public function transcode_asset($pathToInputFile, $inputAssetInfo, 
+        $outputDetails, $task)
+    {
+        $ffmpegCmd = $this->generate_ffmpeg_cmd($pathToInputFile,
+            $inputAssetInfo, $outputDetails);
         
         // Print info
         log_out("INFO", basename(__FILE__), 
@@ -82,11 +182,11 @@ class VideoTranscoder extends BasicTranscoder
         // Start execution
         if (!($process = proc_open($ffmpegCmd, $descriptorSpecs, $pipes)))
             throw new CTException("Unable to execute command:\n$ffmpegCmd\n",
-			    self::EXEC_FAIL);
+                self::EXEC_FAIL);
         // Is resource valid ?
         if (!is_resource($process))
             throw new CTException("Process execution has failed:\n$ffmpegCmd\n",
-			    self::EXEC_FAIL);
+                self::EXEC_FAIL);
 
         // XXX
         // XXX. HERE, Notify task start through SQS !
@@ -107,7 +207,7 @@ class VideoTranscoder extends BasicTranscoder
             if ($i == 10) {
                 echo ".\n";
                 $progress = $this->capture_progression($ffmpegOut, 
-                   $inputAssetInfo->{'duration'});
+                    $inputAssetInfo->{'duration'});
 
                 // XXX
                 // XXX. HERE, Notify task progress through SQS !
@@ -139,7 +239,7 @@ class VideoTranscoder extends BasicTranscoder
         // Test if we have an output file !
         if (!file_exists($outputPathToFile) || !filesize($outputPathToFile))
             throw new CTException("Output file $outputPathToFile hasn't been created successfully or is empty !",
-			    self::TRANSCODE_FAIL);
+                self::TRANSCODE_FAIL);
     
         // No error. Transcode successful
         log_out("INFO", basename(__FILE__), 
@@ -167,8 +267,13 @@ class VideoTranscoder extends BasicTranscoder
             $this->activityLogKey);
     }
 
+    // Check if the preset exists
     public function validate_preset($output)
     {
+        if (!isset($output->{"preset"}))
+            throw new CTException("No preset selected for output !",
+                self::BAD_PRESETS_DIR);
+
         $preset = $output->{"preset"};
         $presetPath = __DIR__ . '/../../../config/presets/';
         if (!($files = scandir($presetPath)))
@@ -187,6 +292,31 @@ class VideoTranscoder extends BasicTranscoder
         
         throw new CTException("Unkown preset file '$preset' !",
             self::UNKNOWN_PRESET);
+    }
+
+    // Combine preset and custom output settings to generate output settings
+    public function get_preset_values($output_wanted)
+    {
+        if (!$output_wanted)
+            throw new CTException("No output data provided to transcoder !",
+                self::NO_OUTPUT);
+
+        if (!isset($output_wanted->{"preset"}))
+            throw new CTException("No preset selected for output !",
+                self::BAD_PRESETS_DIR);
+        
+        $preset = $output_wanted->{"preset"};
+        $presetPath = __DIR__ . '/../../../config/presets/';
+
+        if (!($presetContent = file_get_contents($presetPath.$preset.".json")))
+            throw new CTException("Can't open preset file !",
+                self::OPEN_PRESET_FAILED);
+        
+        if (!($decodedPreset = json_decode($presetContent)))
+            throw new CTException("Bad preset JSON format !",
+                self::BAD_PRESET_FORMAT);
+        
+        return ($decodedPreset);
     }
 
     // REad ffmpeg output and calculate % progress
@@ -228,14 +358,19 @@ class VideoTranscoder extends BasicTranscoder
             $assetInfo['vbitrate'] = $matches[4];
             $assetInfo['fps'] = $matches[5];
       
-            // Calculate ratio
-            $sizeSplit = explode("x", $assetInfo['size']);
-            $assetInfo['ratio'] = number_format($sizeSplit[0] / $sizeSplit[1], 1);
-
+            $assetInfo['ratio'] = $this->get_ratio($assetInfo['size']);
+                
             return true;
         }
     
         return false;
+    }
+    
+    private function get_ratio($size)
+    {
+        // Calculate ratio
+        $sizeSplit = explode("x", $size);
+        return (number_format($sizeSplit[0] / $sizeSplit[1], 1));
     }
     
     // Extract audio info

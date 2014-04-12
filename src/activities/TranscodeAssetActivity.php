@@ -39,6 +39,10 @@ class TranscodeAssetActivity extends BasicActivity
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
             $videoTranscoder = new VideoTranscoder($this->activityLogKey);
             
+            // Check preset file, read its content and add it to ouput 
+            $input->{'output'}->{'preset_values'} = 
+                $videoTranscoder->get_preset_values($input->{'output'});
+                
             // Perform transcoding
             $videoTranscoder->transcode_asset($pathToFile,
                 $input->{'input_asset_info'}, 

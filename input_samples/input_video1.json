@@ -14,7 +14,7 @@
 	    "format": "mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
-	    "preset": "360p-16.9-generic",
+	    "preset": "360p-4.3-generic",
 	    "thumbnails": {
 		"mode": "snapshot",
 		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
@@ -34,15 +34,16 @@
 	{
 	    "output_type": "VIDEO",
 	    "output_label": "HD test1 output",
-	    "output_bucket": "ct-my-bucket-out/output/",
+	    "output_bucket": "ct-my-bucket-out/output1/",
 	    "output_file": "test1_hd.mp4",
 	    "format": "mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
-	    "preset": "720p-generic",
+	    "preset": "480p-4.3-generic",
+	    "no_enlarge": false,
 	    "thumbnails": {
 		"mode": "snapshot",
-		"output_bucket": "ct-my-bucket-out/thumbs/",
+		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
 		"label": "test1HD",
 		"s3_rrs": true,
 		"size": "64x48"

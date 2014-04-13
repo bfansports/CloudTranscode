@@ -22,16 +22,16 @@ class VideoTranscoder extends BasicTranscoder
     const S3_UPLOAD_FAIL  = "S3_UPLOAD_FAIL";
     const TMP_FOLDER_FAIL = "TMP_FOLDER_FAIL";
     
-    public function get_asset_info($pathToFile)
+    public function get_asset_info($pathToInputFile)
     {
         $assetInfo = array();
         
         log_out("INFO", basename(__FILE__), 
-            "Running FFMPEG validation test on '" . $pathToFile . "'",
+            "Running FFMPEG validation test on '" . $pathToInputFile . "'",
             $this->activityLogKey);
         // Execute FFMpeg
-        if (!($handle = popen("ffmpeg -i $pathToFile 2>&1", 'r')))
-            throw new CTException("Unable to execute FFMpeg to get information about '$pathToFile' !",
+        if (!($handle = popen("ffmpeg -i $pathToInputFile 2>&1", 'r')))
+            throw new CTException("Unable to execute FFMpeg to get information about '$pathToInputFile' !",
                 self::EXEC_VALIDATE_FAILED);
       
         // Get output
@@ -60,10 +60,11 @@ class VideoTranscoder extends BasicTranscoder
 
     // Generate FFmpeg command for output transcoding
     private function generate_ffmpeg_cmd($pathToInputFile,
-        $inputAssetInfo, $outputDetails)
+        $inputAssetInfo, &$outputDetails)
     {
-        // Generate TMP path to output file 
-        $pathToOuputFile = $pathToInputFile . "transcode/" . $outputDetails->{"output_file"};
+        $inputFileInfo = pathinfo($pathToInputFile);
+        // TMP path to output file 
+        $pathToOutputFile = $outputDetails->{'path_to_output_file'} = $inputFileInfo['dirname'] . "/transcode/" . $outputDetails->{"output_file"};
         
         $size = $this->get_video_size($inputAssetInfo, $outputDetails);
         
@@ -92,7 +93,7 @@ class VideoTranscoder extends BasicTranscoder
                 $this->get_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
 
         // Create FFMpeg arguments
-        $ffmpegArgs =  "-i $pathToFile -y -threads 0 -s $size";
+        $ffmpegArgs =  "-i $pathToInputFile -y -threads 0 -s $size";
         $ffmpegArgs .= " -vcodec $videoCodec";
         $ffmpegArgs .= " -acodec $audioCodec";
         $ffmpegArgs .= " -b:v $videoBitrate";
@@ -101,7 +102,7 @@ class VideoTranscoder extends BasicTranscoder
         $ffmpegArgs .= " $formattedOptions";
         
         // Final command
-        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOuputFile";
+        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFile";
         
         return ($ffmpegCmd);
     }
@@ -126,7 +127,7 @@ class VideoTranscoder extends BasicTranscoder
     }
 
     // Verify Ratio and Size of output file to ensure it respect restrictions
-    // Return the ouput video size
+    // Return the output video size
     private function get_video_size($inputAssetInfo, $outputDetails)
     {
         // Handle video size
@@ -147,9 +148,9 @@ class VideoTranscoder extends BasicTranscoder
             $outputDetails->{'no_enlarge'} == 'true') {
             $inputSize = $inputAssetInfo->{'size'};
             $inputSizeSplit = explode("x", $inputSize);
-            $ouputSizeSplit = explode("x", $size);
-            if (intval($ouputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
-                intval($ouputSizeSplit[1]) > intval($inputSizeSplit[1]))
+            $outputSizeSplit = explode("x", $size);
+            if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
+                intval($outputSizeSplit[1]) > intval($inputSizeSplit[1]))
                 throw new CTException("Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.",
                     self::ENLARGEMENT_ERROR);
         }
@@ -159,17 +160,19 @@ class VideoTranscoder extends BasicTranscoder
 
     // Start FFmpeg for output transcoding
     public function transcode_asset($pathToInputFile, $inputAssetInfo, 
-        $outputDetails, $task)
+        $outputDetails, $task, $activityObj)
     {
         $ffmpegCmd = $this->generate_ffmpeg_cmd($pathToInputFile,
             $inputAssetInfo, $outputDetails);
+
+        $pathToOutputFile = $outputDetails->{'path_to_output_file'};
         
         // Print info
         log_out("INFO", basename(__FILE__), 
             "FFMPEG CMD:\n$ffmpegCmd\n",
             $this->activityLogKey);
         log_out("INFO", basename(__FILE__), 
-            "Start Transcoding Asset '$pathToFile' to '$outputPathToFile' ...",
+            "Start Transcoding Asset '$pathToInputFile' to '$pathToOutputFile' ...",
             $this->activityLogKey);
         log_out("INFO", basename(__FILE__), 
             "Video duration (sec): " . $inputAssetInfo->{'duration'},
@@ -214,9 +217,8 @@ class VideoTranscoder extends BasicTranscoder
                 // XXX
 
                 // Notify SWF that we are still running !
-                if (!$this->send_heartbeat($task))
-                    throw new CTException("Heartbeat failed !",
-                        self::HEARTBEAT_FAILED);
+                call_user_func(array($activityObj,
+                        "send_heartbeat"), $task);
                 
                 $i = 0;
             }
@@ -237,34 +239,16 @@ class VideoTranscoder extends BasicTranscoder
         proc_close($process);
 
         // Test if we have an output file !
-        if (!file_exists($outputPathToFile) || !filesize($outputPathToFile))
-            throw new CTException("Output file $outputPathToFile hasn't been created successfully or is empty !",
+        if (!file_exists($pathToOutputFile) || !filesize($pathToOutputFile))
+            throw new CTException("Output file $pathToOutputFile hasn't been created successfully or is empty !",
                 self::TRANSCODE_FAIL);
     
         // No error. Transcode successful
         log_out("INFO", basename(__FILE__), 
             "Transcoding successfull !",
             $this->activityLogKey);
-
-        // XXX
-        // XXX. HERE, Notify upload starting through SQS !
-        // XXX
-    
-        // Sanitize output bucket "/"
-        $outputBucket = str_replace("//","/",
-            $outputDetails->{"output_bucket"}."/".$task["workflowExecution"]["workflowId"]);
-    
-        log_out("INFO", basename(__FILE__), 
-            "Start uploading '$outputPathToFile' to S3 bucket '$outputBucket' ...",
-            $this->activityLogKey);
-        // Send output file to S3 bucket
-        $this->put_file_into_s3($task, $outputBucket, 
-            $outputDetails->{'output_file'}, $pathToFile);
         
-        // Return success !
-        log_out("INFO", basename(__FILE__), 
-            "'$pathToFile' successfully transcoded and uploaded into S3 bucket '$outputBucket' !",
-            $this->activityLogKey);
+        return ($pathToOutputFile);
     }
 
     // Check if the preset exists

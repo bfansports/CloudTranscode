@@ -21,6 +21,11 @@
             "type": "string",
             "description": "Filename where to upload the resulting file"
         },
+        "format": {
+            "type": "string",
+            "enum": [ "mp4", "avi", "mov", "3gp", "3gpp" ],
+            "description": "Provide the type of output file you need your document transcoded to"
+        },
         "s3_rrs": {
             "type": "boolean",
             "description": "Activate reduced redundancy or not in S3 storage"
@@ -28,11 +33,6 @@
         "s3_encrypt": {
             "type": "boolean",
             "description": "Activate backend storage encryption"
-        },
-        "format": {
-            "type": "string",
-            "enum": [ "mp4", "avi", "mov", "3gp", "3gpp" ],
-            "description": "Provide the type of output file you need your document transcoded to"
         },
         "preset": {
             "type": "string",
@@ -61,6 +61,14 @@
         "frame_rate": {
             "type": "string",
             "description": "Override default preset frame rate"
+        },
+	"keep_ratio": {
+            "type": "boolean",
+            "description": "Keep the video ratio. If true and ratio change, the transcode will fail."
+        },
+        "no_enlarge": {
+            "type": "boolean",
+            "description": "If size provided is bigger than original the transcode will fail."
         },
         "watermark": {
             "$ref": "#/definitions/watermark",

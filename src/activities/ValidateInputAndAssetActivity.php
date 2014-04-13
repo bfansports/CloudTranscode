@@ -27,7 +27,6 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Create TMP folder and download the input file
         $pathToFile = $this->get_file_to_process($task, $input);
         
-
         /**
          * PROCESS FILE
          */

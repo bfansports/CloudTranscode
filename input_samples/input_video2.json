@@ -1,10 +1,11 @@
 {
     "api_key": "1234567890abcdefghijkl",
     "input_type": "VIDEO",
-    "input_bucket": "ct-my-bucket-in/input2/",
-    "input_file": "test2.mp4",
+    "input_bucket": "ct-my-bucket-in",
+    "input_file": "/input2/test2.mp4",
     "job_label": "test2 transcode",
-    "outputs": [
+    "outputs": 
+    [
 	{
 	    "output_type": "VIDEO",
 	    "output_label": "SD smartphone test2 output",
@@ -21,7 +22,7 @@
 		"size": "64x48",
 		"interval": 5,
 		"s3_rrs": false,
-		"s3_encrypt": false,
+		"s3_encrypt": false
 	    },
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in/watermark/",

@@ -103,7 +103,7 @@ Class Decider
     private function decision_task_event_handler($decisionTask, $workflowExecution)
     {
         global $swf;
-
+        
         // Get list of all events in WF history
         $events = $decisionTask->get("events");
 

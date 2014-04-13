@@ -6,12 +6,12 @@ require "$root/../../Utils.php";
 
 function usage()
 {
-    echo("Usage: php ". basename(__FILE__) . " [-h] [--no_redundant::] [--encrypt::] --bucket <s3 bucket> --file <filename> --from <filepath>\n");
+    echo("Usage: php ". basename(__FILE__) . " [-h] [--rrs::] [--encrypt::] --bucket <s3 bucket> --file <filename> --from <filepath>\n");
     echo("--help, -h: Print this help\n");
     echo("--bucket <s3 bucket>: Name of the S3 bucket\n");
-    echo("--file <filename>: Name of the file in the S3 bucket. You can override local filename.\n");
+    echo("--file <filename>: Name of the file to create in bucket. You can override local filename.\n");
     echo("--from <filepath>: Full path to file to send to S3\n");
-    echo("--no_redundant: Activate type of storage in S3: REDUCED_REDUNDANCY\n");
+    echo("--rrs: Activate type of storage in S3: REDUCED_REDUNDANCY\n");
     echo("--encrypt: Activate Server encryption: AES256\n\n");
     exit(0);
 }
@@ -38,7 +38,7 @@ $options = getopt("h", [
         "from:", 
         "force::", 
         "help::", 
-        "no_redundant::", 
+        "rrs::", 
         "encrypt::"]);
 check_input_parameters($options);
 
@@ -52,7 +52,7 @@ try {
     );
 
     // StorageClass and Encryption ?
-    if (isset($options['no_redundant']))
+    if (isset($options['rrs']))
         $params['StorageClass'] = 'REDUCED_REDUNDANCY';
     if (isset($options['encrypt']))
         $params['ServerSideEncryption'] = 'AES256';

@@ -189,16 +189,13 @@ class BasicActivity
                 log_out("WARNING", basename(__FILE__), 
                     "Cancel has been requested for this task '" . $task->get("activityId") . "' ! Killing task ...",
                     $this->activityLogKey);
-                return false;
+                throw new CTException("Heartbeat failed !",
+                    self::HEARTBEAT_FAILED);
             }
         } catch (Exception $e) {
-            log_out("ERROR", basename(__FILE__), 
-                "Unable to send heartbeat ! " . $e->getMessage(),
-                $this->activityLogKey);
-            return false;
+            throw new CTException("Heartbeat failed !",
+                self::HEARTBEAT_FAILED);
         }
-    
-        return true;
     }
     
     // Create TMP folder and download file to process
@@ -209,41 +206,45 @@ class BasicActivity
         $localPath = 
             $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"],
                 $inputFileInfo['dirname']);
-        $pathToFile = $localPath . $inputFileInfo['basename'];
+        $pathToInputFile = $localPath . $inputFileInfo['basename'];
     
         // Get file from S3 or local copy if any
-        $this->get_file_from_s3($task, $input, $pathToFile);
+        $this->get_file_from_s3($task, $input, $pathToInputFile);
 
-        return $pathToFile;
+        return $pathToInputFile;
     }
     
     // Get a file from S3 using external script localted in "scripts" folder
-    public function get_file_from_s3($task, $input, $pathToFile)
+    public function get_file_from_s3($task, $input, $pathToInputFile)
     {
         log_out("INFO", 
             basename(__FILE__), 
-            "Downloading '" . $input->{'input_bucket'} . "/" . $input->{'input_file'}  . "' to '$pathToFile' ...",
+            "Downloading '" . $input->{'input_bucket'} . "/" . $input->{'input_file'}  . "' to '$pathToInputFile' ...",
             $this->activityLogKey);
     
         $cmd = "php " . $this->root . "/" . self::GET_FROM_S3 . " --bucket " . $input->{'input_bucket'};
         $cmd .= " --file " . $input->{'input_file'};
-        $cmd .= " --to " . $pathToFile;
+        $cmd .= " --to " . $pathToInputFile;
     
         // HAndle execution
         $this->handle_s3_ops($task, $cmd);
     }
 
     // Get a file from S3 using external script localted in "scripts" folder
-    public function put_file_into_s3($task, $bucket, $file, $pathToFile)
+    public function put_file_into_s3($task, $bucket, $filename, 
+        $pathToFileToSend, $options)
     {
         log_out("INFO", basename(__FILE__), 
-            "Uploading '" . $pathToFile . "' into '" . $bucket . "/" . $file  . "' ...",
+            "Uploading '" . $pathToFileToSend . "' into '" . $bucket . "/" . $filename  . "' ...",
             $this->activityLogKey);
     
-        $cmd = "php " . $this->root . "/../scripts/" . self::PUT_IN_S3 . " --bucket $bucket";
-        $cmd .= " --file $file";
-        $cmd .= " --from " . $pathToFile;
-        $cmd .= " --no_redundant --encrypt";
+        $cmd = "php " . $this->root . "/" . self::PUT_IN_S3 . " --bucket $bucket";
+        $cmd .= " --file $filename";
+        $cmd .= " --from " . $pathToFileToSend;
+        if ($options['rrs'])
+            $cmd .= " --rrs";
+        if ($options['encrypt'])
+            $cmd .= " --encrypt";
     
         // HAndle execution
         $this->handle_s3_ops($task, $cmd);
@@ -270,13 +271,16 @@ class BasicActivity
             $out    = fread($pipes[1], 8192);  
             $outErr = fread($pipes[2], 8192); 
 
-            if (!$this->send_heartbeat($task))
-                throw new CTException("Heartbeat failed !",
-                    self::HEARTBEAT_FAILED);
+            // Tell SWF we alive !
+            $this->send_heartbeat($task);
       
             // Get latest status
             $procStatus = proc_get_status($process);
-
+            
+            // XXX
+            // XXX. HERE, Notify upload progress through SQS !
+            // XXX
+            
             sleep(5);
         }
 

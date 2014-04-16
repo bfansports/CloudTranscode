@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../../S3Utils.php';
+
 class VideoTranscoder extends BasicTranscoder
 {
     // Errors Validator
@@ -63,8 +65,9 @@ class VideoTranscoder extends BasicTranscoder
         $inputAssetInfo, &$outputDetails)
     {
         $inputFileInfo = pathinfo($pathToInputFile);
+        $ouputFileInfo = pathinfo($outputDetails->{"output_file"});
         // TMP path to output file 
-        $pathToOutputFile = $outputDetails->{'path_to_output_file'} = $inputFileInfo['dirname'] . "/transcode/" . $outputDetails->{"output_file"};
+        $pathToOutputFile = $outputDetails->{'path_to_output_file'} = $inputFileInfo['dirname'] . "/transcode/" . $ouputFileInfo['basename'];
         
         $size = $this->get_video_size($inputAssetInfo, $outputDetails);
         
@@ -92,19 +95,50 @@ class VideoTranscoder extends BasicTranscoder
             $formattedOptions = 
                 $this->get_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
 
+        if (isset($outputDetails->{'watermark'}) && $outputDetails->{'watermark'})
+            $watermarkOptions = 
+                $this->get_watermark_options($pathToInputFile,
+                    $outputDetails->{'watermark'});
+        
         // Create FFMpeg arguments
-        $ffmpegArgs =  "-i $pathToInputFile -y -threads 0 -s $size";
+        $ffmpegArgs =  " -i $pathToInputFile -y -threads 0";
+        $ffmpegArgs .= " -s $size";
         $ffmpegArgs .= " -vcodec $videoCodec";
         $ffmpegArgs .= " -acodec $audioCodec";
         $ffmpegArgs .= " -b:v $videoBitrate";
         $ffmpegArgs .= " -b:a $audioBitrate";
         $ffmpegArgs .= " -r $frameRate";
         $ffmpegArgs .= " $formattedOptions";
+        $ffmpegArgs .= " $watermarkOptions";
         
         // Final command
         $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFile";
         
         return ($ffmpegCmd);
+    }
+
+    // Get watermark info to generate overlay options for ffmpeg
+    private function get_watermark_options($pathToVideo,
+        $watermarkOptions)
+    {
+        // Get info about the video in order to save the watermark in same location
+        $videoFileInfo = pathinfo($pathToVideo);
+        $watermarkFileInfo = pathinfo($watermarkOptions->{'input_file'});
+        $watermarkPath = $videoFileInfo['dirname']."/".$watermarkFileInfo['basename'];
+        
+        // Get watermark image from S3
+        $s3Utils = new S3Utils();
+        $s3Output = $s3Utils->get_file_from_s3($watermarkOptions->{'input_bucket'}, 
+            $watermarkOptions->{'input_file'},
+            $watermarkPath);
+        log_out("INFO", basename(__FILE__), 
+            $s3Output['msg'],
+            $this->activityLogKey);
+
+        // Format options for FFMpeg
+        // XXX Work on watermark position !
+        $formattedOptions = "-vf \"movie=$watermarkPath [wm]; [in][wm] overlay=10:10 [out]\"";
+        return ($formattedOptions);
     }
 
     // Get Video codec options and format the options properly for ffmpeg

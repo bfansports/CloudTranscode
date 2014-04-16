@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/transcoders/BasicTranscoder.php';
+require_once __DIR__ . '/transcoders/BasicTranscoder.php';
 
 /**
  * This class handle the transcoding activity
@@ -24,7 +24,7 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Create TMP folder and download the input file
         $pathToInputFile = $this->get_file_to_process($task, $input->{'input_json'});
-
+        
         
         /**
          * TRANSCODE INPUT FILE
@@ -67,29 +67,34 @@ class TranscodeAssetActivity extends BasicActivity
         // XXX. HERE, Notify upload starting through SQS !
         // XXX
 
-        // Sanitize output bucket "/"
-        $outputBucket = str_replace("//","/",
-            $input->{'output'}->{"output_bucket"}."/".$task["workflowExecution"]["workflowId"]);
-            
-        log_out("INFO", basename(__FILE__), 
-            "Start uploading '$pathToOutputFile' to S3 bucket '$outputBucket' ...",
-            $this->activityLogKey);
-
+        
+        
         // Prepare S3 options
         $options = array("rrs" => false, "encrypt" => false);
         if (isset($input->{'output'}->{'s3_rrs'}) &&
-                $input->{'output'}->{'s3_rrs'} == true)
+            $input->{'output'}->{'s3_rrs'} == true)
             $options['rrs'] = true;
         if (isset($input->{'output'}->{'s3_encrypt'}) &&
-                $input->{'output'}->{'s3_encrypt'} == true)
+            $input->{'output'}->{'s3_encrypt'} == true)
             $options['encrypt'] = true;
+        
+        // Sanitize output bucket path "/"
+        $outputBucket = str_replace("//","/",
+            $input->{'output'}->{"output_bucket"}."/".$task["workflowExecution"]["workflowId"]);
 
         // Send output file to S3 bucket
-        $this->put_file_into_s3($task, $outputBucket, 
+        $s3Utils = new S3Utils();
+        log_out("INFO", basename(__FILE__), 
+            "Uploading '" . $pathToOutputFile . "' into '" . $outputBucket . "/" . $input->{'output'}->{'output_file'}  . "' ...",
+            $this->activityLogKey);
+        $s3Output = $s3Utils->put_file_into_s3($outputBucket, 
             $input->{'output'}->{'output_file'}, $pathToOutputFile,
-            $options);
+            $options, array($this, "s3_put_processing_callback"), $task);
         
-        // Return success !
+        log_out("INFO", basename(__FILE__), 
+            $s3Output['msg'],
+            $this->activityLogKey);
+        
         log_out("INFO", basename(__FILE__), 
             "Output file successfully uploaded into S3 bucket '$outputBucket' !",
             $this->activityLogKey);

@@ -2,7 +2,7 @@
 
 $root = realpath(dirname(__FILE__));
 
-require "$root/../../Utils.php";
+require "$root/../Utils.php";
 
 function usage()
 {
@@ -38,7 +38,7 @@ if (!isset($options['force']) &&
     filesize($options['to']))
 {
     print json_encode([ "status" => "SUCCESS",
-            "msg" => "Using local copy: '" . $options['to']  . "'" ]);
+            "msg" => "[".__FILE__."] Using local copy: '" . $options['to']  . "'" ]);
     return;
 }
 
@@ -54,11 +54,11 @@ try {
 
     // Print JSON error output
     print json_encode([ "status" => "SUCCESS",
-            "msg" => "Download '" . $options['bucket'] . "/" . $options['file'] . "' successful !" ]);
+            "msg" => "[".__FILE__."] Download '" . $options['bucket'] . "/" . $options['file'] . "' successful !" ]);
 } 
 catch (Exception $e) {
     $err = "Unable to get '" . $options['bucket'] . "/" . $options['file'] . "' file from S3 ! " . $e->getMessage();
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
-            "msg" => $err ]);
+            "msg" => "[".__FILE__."] $err" ]);
 }

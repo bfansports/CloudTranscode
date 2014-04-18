@@ -1,8 +1,6 @@
 <?php
 
-$root = realpath(dirname(__FILE__));
-
-require "$root/../../Utils.php";
+require __DIR__ . "/../utils/Utils.php";
 
 function usage()
 {
@@ -46,9 +44,9 @@ try {
     // Get S3 client
     $s3 = $aws->get('S3');
     $params = array(
-        'Bucket'               => $options['bucket'],
-        'Key'                  => $options['file'],
-        'SourceFile'           => $options['from'],
+        'Bucket'     => $options['bucket'],
+        'Key'        => $options['file'],
+        'SourceFile' => $options['from'],
     );
 
     // StorageClass and Encryption ?
@@ -57,18 +55,17 @@ try {
     if (isset($options['encrypt']))
         $params['ServerSideEncryption'] = 'AES256';
     
-
     // Upload and Save file to S3
     $s3->putObject($params); 
     
     // Print JSON error output
     print json_encode([ "status" => "SUCCESS",
-            "msg" => "Upload '" . $options['from'] . "' to '" . $options['bucket'] . "/" . $options['file']  . "' successful !" ]);
+            "msg" => "[".__FILE__."] Upload '" . $options['from'] . "' to '" . $options['bucket'] . "/" . $options['file']  . "' successful !" ]);
 } 
 catch (Exception $e) {
     $err = "Unable to put file '" . $options['from']  . "' into S3: '" . $options['bucket'] . "/" . $options['file']  . "'! " . $e->getMessage();
     
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
-            "msg" => $err ]);
+            "msg" => "[".__FILE__."] $err" ]);
 }

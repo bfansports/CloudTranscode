@@ -4,31 +4,26 @@
  * This class serves as a skeleton for classes implementing actual activity
  */
 
-require 'InputValidator.php';
+require __DIR__ . '../../utils/S3Utils.php';
+require __DIR__ . '/InputValidator.php';
 
 class BasicActivity
 {
     private   $activityType; // Type of activity
     private   $activityResult; // Contain activity result output
-    protected $activityLogKey; // Create a key workflowId:activityId to put in logs
     private   $root; // This file location
+    public    $activityLogKey; // Create a key workflowId:activityId to put in logs
   
     // Constants
     const NO_INPUT             = "NO_INPUT";
     const NO_WF_EXECUTION      = "NO_WF_EXECUTION";
     const ACTIVITY_TASK_EMPTY  = "ACTIVITY_TASK_EMPTY";
     const HEARTBEAT_FAILED     = "HEARTBEAT_FAILED";
-    const NO_OUTPUT_DATA       = "NO_OUTPUT_DATA";
     const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
-    const S3_OPS_FAILED        = "S3_OPS_FAILED";
     const NO_ACTIVITY_NAME     = "NO_ACTIVITY_NAME";
     const NO_ACTIVITY_VERSION  = "NO_ACTIVITY_VERSION";
     const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
-  
-    // External Scripts
-    const GET_FROM_S3 = "scripts/getFromS3.php";
-    const PUT_IN_S3   = "scripts/putInS3.php";
-
+    
     // File types
     const VIDEO = "VIDEO";
     const AUDIO = "AUDIO";
@@ -206,106 +201,51 @@ class BasicActivity
         $localPath = 
             $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"],
                 $inputFileInfo['dirname']);
-        $pathToInputFile = $localPath . $inputFileInfo['basename'];
-    
+        $saveFileTo = $localPath . $inputFileInfo['basename'];
+        
         // Get file from S3 or local copy if any
-        $this->get_file_from_s3($task, $input, $pathToInputFile);
-
-        return $pathToInputFile;
-    }
-    
-    // Get a file from S3 using external script localted in "scripts" folder
-    public function get_file_from_s3($task, $input, $pathToInputFile)
-    {
+        $s3Utils = new S3Utils();
         log_out("INFO", 
             basename(__FILE__), 
-            "Downloading '" . $input->{'input_bucket'} . "/" . $input->{'input_file'}  . "' to '$pathToInputFile' ...",
+            "Downloading '" . $input->{'input_bucket'} . "/" . $input->{'input_file'}  . "' to '$saveFileTo' ...",
             $this->activityLogKey);
-    
-        $cmd = "php " . $this->root . "/" . self::GET_FROM_S3 . " --bucket " . $input->{'input_bucket'};
-        $cmd .= " --file " . $input->{'input_file'};
-        $cmd .= " --to " . $pathToInputFile;
-    
-        // HAndle execution
-        $this->handle_s3_ops($task, $cmd);
-    }
-
-    // Get a file from S3 using external script localted in "scripts" folder
-    public function put_file_into_s3($task, $bucket, $filename, 
-        $pathToFileToSend, $options)
-    {
+        $s3Output = $s3Utils->get_file_from_s3($input->{'input_bucket'}, 
+            $input->{'input_file'}, $saveFileTo,
+            array($this, "s3_get_processing_callback"), $task);
+        
         log_out("INFO", basename(__FILE__), 
-            "Uploading '" . $pathToFileToSend . "' into '" . $bucket . "/" . $filename  . "' ...",
+            $s3Output['msg'],
             $this->activityLogKey);
-    
-        $cmd = "php " . $this->root . "/" . self::PUT_IN_S3 . " --bucket $bucket";
-        $cmd .= " --file $filename";
-        $cmd .= " --from " . $pathToFileToSend;
-        if ($options['rrs'])
-            $cmd .= " --rrs";
-        if ($options['encrypt'])
-            $cmd .= " --encrypt";
-    
-        // HAndle execution
-        $this->handle_s3_ops($task, $cmd);
-    }
-
-    // Execute S3 $cmd and capture output
-    private function handle_s3_ops($task, $cmd)
-    {
-        // Command output capture method
-        $descriptorSpecs = array(  
-            1 => array("pipe", "w"),
-            2 => array("pipe", "w") 
-        );
-        log_out("INFO", basename(__FILE__), "Executing: $cmd");
-        if (!($process = proc_open($cmd, $descriptorSpecs, $pipes)))
-            throw new CTException("Unable to execute command:\n$cmd\n",
-			    self::S3_OPS_FAILED);
-    
-        // While process running, we send heartbeats
-        $procStatus = proc_get_status($process);
-        while ($procStatus['running']) 
-        {
-            // REad prog output
-            $out    = fread($pipes[1], 8192);  
-            $outErr = fread($pipes[2], 8192); 
-
-            // Tell SWF we alive !
-            $this->send_heartbeat($task);
-      
-            // Get latest status
-            $procStatus = proc_get_status($process);
-            
-            // XXX
-            // XXX. HERE, Notify upload progress through SQS !
-            // XXX
-            
-            sleep(5);
-        }
-
-        if ($outErr)
-            throw new CTException($outErr,
-			    self::S3_OPS_FAILED);
-
-        if (!$out)
-            throw new CTException("Script '".self::PUT_FROM_S3."' didn't return any data !",
-			    self::NO_OUTPUT_DATA);
-    
-        if (!($decoded = json_decode($out, true)))
-            throw new CTException($out,
-			    self::S3_OPS_FAILED);
-    
-        if ($decoded["status"] == "ERROR")
-            throw new CTException($decoded["msg"],
-			    self::S3_OPS_FAILED);
-    
-        // SUCCESS
+        
         log_out("INFO", basename(__FILE__), 
-            $decoded["msg"],
+            "Input file successfully downloaded into local TMP folder '$saveFileTo' !",
             $this->activityLogKey);
+        
+        return $saveFileTo;
+    }
+    
+    // Called from S3Utils while GET from S3 is in progress
+    public function s3_get_processing_callback($task)
+    {
+        // Tell SWF we alive !
+        $this->send_heartbeat($task);
+
+        // XXX
+        // Send SQS notification of GET progress
+        // XXX
     }
 
+    // Called from S3Utils while PUT to S3 is in progress
+    public function s3_put_processing_callback($task)
+    {
+        // Tell SWF we alive !
+        $this->send_heartbeat($task);
+
+        // XXX
+        // Send SQS notification of PUT progress
+        // XXX
+    }
+        
     // Create a local TMP folder using the workflowID
     public function create_tmp_local_storage($workflowId, $extra = null)
     {

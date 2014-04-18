@@ -134,6 +134,10 @@ Class DeciderBrain
         // We completed 'ValidateInputAndAsset' activity
         if ($activity['activityType']['name'] == self::VALIDATE_INPUT)
         {
+            // XXX
+            // Send message through SQS to tell activity validate completed
+            // XXX
+            
             // We get the next activity information
             $nextActivity = 
                 $this->workflowTracker->move_to_next_activity($workflowExecution);
@@ -161,7 +165,8 @@ Class DeciderBrain
         else if ($activity['activityType']['name'] == self::TRANSCODE_ASSET)
         {
             // XXX
-            // Send message through SQS to tell activity transcode complete
+            // Send message through SQS to tell activity transcode completed
+            // XXX
 
             return $this->transcode_asset_completed($event, $taskToken, 
                 $workflowExecution, $activity, $activityResult);

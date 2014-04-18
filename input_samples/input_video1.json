@@ -9,7 +9,7 @@
 	{
 	    "output_type": "VIDEO",
 	    "output_label": "SD test1 output",
-	    "output_bucket": "ct-my-bucket-out/output1/",
+	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "test1_sd.mp4",
 	    "format": "mp4",
 	    "s3_rrs": true,
@@ -23,10 +23,10 @@
 		"size": "64x48"
 	    },
 	    "watermark": {
-		"input_bucket": "ct-my-bucket-in/watermark/",
-		"input_file": "watermark.png",
-		"size": "48x48",
-		"opacity": 0.6,
+		"input_bucket": "ct-my-bucket-in",
+		"input_file": "/watermark/logo_SA.png",
+		"size": "75.2x28.4",
+		"opacity": 2,
 		"x": "20",
 		"y": "20"
 	    }
@@ -34,7 +34,7 @@
 	{
 	    "output_type": "VIDEO",
 	    "output_label": "HD test1 output",
-	    "output_bucket": "ct-my-bucket-out/output1/",
+	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "test1_hd.mp4",
 	    "format": "mp4",
 	    "s3_rrs": true,
@@ -46,13 +46,13 @@
 		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
 		"label": "test1HD",
 		"s3_rrs": true,
-		"size": "64x48"
+		"size": "94x35.5"
 	    },
 	    "watermark": {
-		"input_bucket": "ct-my-bucket-in/watermark/",
-		"input_file": "watermark.png",
-		"size": "48x48",
-		"opacity": 0.6,
+		"input_bucket": "ct-my-bucket-in",
+		"input_file": "/watermark/logo_SA.png",
+		"size": "75.2x28.4",
+		"opacity": 2,
 		"x": "20",
 		"y": "20"
 	    }

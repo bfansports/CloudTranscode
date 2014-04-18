@@ -1,7 +1,5 @@
 <?php
 
-$root = realpath(dirname(__FILE__));
-
 // Log to STDOUT
 function log_out($type, $source, $message, $workflowId = 0)
 {
@@ -99,14 +97,14 @@ class CTException extends Exception
 
 
 // Composer for loading dependices: http://getcomposer.org/
-require "$root/../vendor/autoload.php";
+require __DIR__ . "/../../vendor/autoload.php";
 
 // Amazon library
 use Aws\Common\Aws;
 use Aws\Swf\Exception;
 
 // Create AWS SDK instance
-$aws = Aws::factory("$root/../config/awsConfig.json");
+$aws = Aws::factory(__DIR__ . "/../../config/awsConfig.json");
 // SWF client
 $swf = $aws->get('Swf');
 // SQS Client

@@ -6,6 +6,6 @@
     "video_bitrate": "5400k",
     "audio_bitrate": "160k",
     "video_codec": "libx264",
-    "audio_codec": "libfdk_aac",,
+    "audio_codec": "libfdk_aac",
     "video_codec_options": "MaxReferenceFrames:3,Profile:baseline,Level:4"
 }

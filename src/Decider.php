@@ -8,10 +8,10 @@
  * Using the workflow history, it makes decisions
  */
 
-require 'Utils.php';
-require 'WorkflowTracker.php';
-require 'WorkflowManager.php';
-require 'DeciderBrain.php';
+require __DIR__ . '/utils/Utils.php';
+require __DIR__ . '/WorkflowTracker.php';
+require __DIR__ . '/WorkflowManager.php';
+require __DIR__ . '/DeciderBrain.php';
 
 Class Decider
 {

@@ -6,8 +6,8 @@
  * We do transcoding
  */
 
-require "Utils.php";
-require "./activities/BasicActivity.php";
+require __DIR__ . "/utils/Utils.php";
+require __DIR__ . "/activities/BasicActivity.php";
 
 Class ActivityPoller
 {

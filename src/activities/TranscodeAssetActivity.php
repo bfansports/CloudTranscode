@@ -25,7 +25,6 @@ class TranscodeAssetActivity extends BasicActivity
         // Create TMP folder and download the input file
         $pathToInputFile = $this->get_file_to_process($task, $input->{'input_json'});
         
-        
         /**
          * TRANSCODE INPUT FILE
          */
@@ -37,7 +36,7 @@ class TranscodeAssetActivity extends BasicActivity
         {
         case self::VIDEO:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
-            $videoTranscoder = new VideoTranscoder($this->activityLogKey);
+            $videoTranscoder = new VideoTranscoder($this, $task);
             
             // Check preset file, read its content and add it to ouput 
             $input->{'output'}->{'preset_values'} = $videoTranscoder->get_preset_values($input->{'output'});
@@ -46,8 +45,7 @@ class TranscodeAssetActivity extends BasicActivity
             $pathToOutputFile = $videoTranscoder->transcode_asset($pathToInputFile,
                 $input->{'input_asset_info'}, 
                 $input->{'output'},
-                $task,
-                $this);            
+                $task);            
             break;
         case self::IMAGE:
                 
@@ -66,8 +64,6 @@ class TranscodeAssetActivity extends BasicActivity
         // XXX
         // XXX. HERE, Notify upload starting through SQS !
         // XXX
-
-        
         
         // Prepare S3 options
         $options = array("rrs" => false, "encrypt" => false);
@@ -93,10 +89,6 @@ class TranscodeAssetActivity extends BasicActivity
         
         log_out("INFO", basename(__FILE__), 
             $s3Output['msg'],
-            $this->activityLogKey);
-        
-        log_out("INFO", basename(__FILE__), 
-            "Output file successfully uploaded into S3 bucket '$outputBucket' !",
             $this->activityLogKey);
     }
 }

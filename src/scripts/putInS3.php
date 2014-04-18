@@ -1,8 +1,6 @@
 <?php
 
-$root = realpath(dirname(__FILE__));
-
-require "$root/../Utils.php";
+require __DIR__ . "/../utils/Utils.php";
 
 function usage()
 {
@@ -57,7 +55,6 @@ try {
     if (isset($options['encrypt']))
         $params['ServerSideEncryption'] = 'AES256';
     
-
     // Upload and Save file to S3
     $s3->putObject($params); 
     

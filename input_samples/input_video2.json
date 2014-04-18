@@ -15,6 +15,7 @@
 	    "s3_rrs": true,
 	    "s3_encrypt": false,
 	    "preset": "480p-16.9-generic",
+	    "no_enlarge": false,
 	    "thumbnails": {
 		"mode": "interval",
 		"output_bucket": "ct-my-bucket-out/output2/thumbs/",
@@ -25,10 +26,10 @@
 		"s3_encrypt": false
 	    },
 	    "watermark": {
-		"input_bucket": "ct-my-bucket-in/watermark/",
-		"input_file": "watermark.png",
-		"size": "48x48",
-		"opacity": 0.6,
+		"input_bucket": "ct-my-bucket-in",
+		"input_file": "/watermark/logo_SA.png",
+		"size": "75.2x28.4",
+		"opacity": 2,
 		"x": "20",
 		"y": "20"
 	    }
@@ -42,6 +43,7 @@
 	    "s3_rrs": false,
 	    "s3_encrypt": true,
 	    "preset": "1080p-generic",
+	    "no_enlarge": false,
 	    "thumbnails": {
 		"mode": "snapshot",
 		"output_bucket": "ct-my-bucket-out/output2/thumbs/",
@@ -50,10 +52,10 @@
 		"size": "64x48"
 	    },
 	    "watermark": {
-		"input_bucket": "ct-my-bucket-in/watermark/",
-		"input_file": "watermark.png",
-		"size": "48x48",
-		"opacity": 0.6,
+		"input_bucket": "ct-my-bucket-in",
+		"input_file": "/watermark/logo_SA.png",
+		"size": "75.2x28.4",
+		"opacity": 2,
 		"x": "20",
 		"y": "20"
 	    }

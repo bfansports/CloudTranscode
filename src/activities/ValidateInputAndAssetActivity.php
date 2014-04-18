@@ -42,12 +42,13 @@ class ValidateInputAndAssetActivity extends BasicActivity
         {
         case self::VIDEO:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
-            $videoTranscoder = new VideoTranscoder($this->activityLogKey);
             
-            // Validate all outputs preset
+            // Initiate transcoder obj
+            $videoTranscoder = new VideoTranscoder($this, $task);
+            // Validate all outputs presets before checking input
             foreach ($input->{'outputs'} as $ouput)
                 $videoTranscoder->validate_preset($ouput);
-            
+            // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($pathToFile);
             break;
         case self::IMAGE:

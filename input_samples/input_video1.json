@@ -25,8 +25,8 @@
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in",
 		"input_file": "/watermark/logo_SA.png",
-		"size": "48x48",
-		"opacity": 0.6,
+		"size": "75.2x28.4",
+		"opacity": 2,
 		"x": "20",
 		"y": "20"
 	    }
@@ -46,13 +46,13 @@
 		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
 		"label": "test1HD",
 		"s3_rrs": true,
-		"size": "64x48"
+		"size": "94x35.5"
 	    },
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in",
 		"input_file": "/watermark/logo_SA.png",
-		"size": "48x48",
-		"opacity": 0.6,
+		"size": "75.2x28.4",
+		"opacity": 2,
 		"x": "20",
 		"y": "20"
 	    }

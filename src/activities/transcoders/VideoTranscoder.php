@@ -1,10 +1,18 @@
 <?php
 
-require_once __DIR__ . '/../../S3Utils.php';
+require_once __DIR__ . '/../../utils/S3Utils.php';
+require_once __DIR__ . '/../../utils/CommandExecuter.php';
+
+/**
+ * This class handled Video transcoding
+ * Here we have function to validate and extract info from input videos
+ * We also have code to transcode and generate output videos
+ * We use FFmpeg and Convert to transcode and manipulate videos and images (watermark)
+ */
 
 class VideoTranscoder extends BasicTranscoder
 {
-    // Errors Validator
+    // Errors
     const EXEC_VALIDATE_FAILED  = "EXEC_VALIDATE_FAILED";
     const GET_VIDEO_INFO_FAILED = "GET_VIDEO_INFO_FAILED";
     const GET_AUDIO_INFO_FAILED = "GET_AUDIO_INFO_FAILED";
@@ -17,51 +25,17 @@ class VideoTranscoder extends BasicTranscoder
     const BAD_PRESET_FORMAT     = "BAD_PRESET_FORMAT";
     const RATIO_ERROR           = "RATIO_ERROR";
     const ENLARGEMENT_ERROR     = "ENLARGEMENT_ERROR";
+    const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
     
-    // Error Transcoder
-    const EXEC_FAIL       = "EXEC_FAIL";
-    const TRANSCODE_FAIL  = "TRANSCODE_FAIL";
-    const S3_UPLOAD_FAIL  = "S3_UPLOAD_FAIL";
-    const TMP_FOLDER_FAIL = "TMP_FOLDER_FAIL";
     
-    public function get_asset_info($pathToInputFile)
-    {
-        $assetInfo = array();
-        
-        log_out("INFO", basename(__FILE__), 
-            "Running FFMPEG validation test on '" . $pathToInputFile . "'",
-            $this->activityLogKey);
-        // Execute FFMpeg
-        if (!($handle = popen("ffmpeg -i $pathToInputFile 2>&1", 'r')))
-            throw new CTException("Unable to execute FFMpeg to get information about '$pathToInputFile' !",
-                self::EXEC_VALIDATE_FAILED);
-      
-        // Get output
-        if (!($ffmpegInfoOut = stream_get_contents($handle)))
-            throw new CTException("Unable to read FFMpeg output !",
-                self::EXEC_VALIDATE_FAILED);
-        fclose($handle);
-
-        // get Duration
-        if (!$this->get_duration($ffmpegInfoOut, $assetInfo))
-            throw new CTException("Unable to extract video duration !",
-                self::GET_DURATION_FAILED);
-      
-        // get Video info
-        if (!$this->get_video_info($ffmpegInfoOut, $assetInfo))
-            throw new CTException("Unable to find video information !",
-                self::GET_VIDEO_INFO_FAILED);
-      
-        // get Audio Info
-        if (!$this->get_audio_info($ffmpegInfoOut, $assetInfo))
-            throw new CTException("Unable to find audio information !",
-                self::GET_AUDIO_INFO_FAILED);
-
-        return ($assetInfo);
-    }
+    
+    /***********************
+     * TRANSCODE INPUT VIDEO
+     * Below is the code used to transcode videos based on the JSON format
+     */
 
     // Generate FFmpeg command for output transcoding
-    private function generate_ffmpeg_cmd($pathToInputFile,
+    private function craft_ffmpeg_cmd($pathToInputFile,
         $inputAssetInfo, &$outputDetails)
     {
         $inputFileInfo = pathinfo($pathToInputFile);
@@ -69,7 +43,7 @@ class VideoTranscoder extends BasicTranscoder
         // TMP path to output file 
         $pathToOutputFile = $outputDetails->{'path_to_output_file'} = $inputFileInfo['dirname'] . "/transcode/" . $ouputFileInfo['basename'];
         
-        $size = $this->get_video_size($inputAssetInfo, $outputDetails);
+        $size = $this->set_output_video_size($inputAssetInfo, $outputDetails);
         
         $videoCodec = $outputDetails->{'preset_values'}->{'video_codec'};
         if (isset($outputDetails->{'video_codec'}))
@@ -93,7 +67,7 @@ class VideoTranscoder extends BasicTranscoder
         
         if (isset($outputDetails->{'preset_values'}->{'video_codec_options'}))
             $formattedOptions = 
-                $this->get_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
+                $this->set_output_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
 
         if (isset($outputDetails->{'watermark'}) && $outputDetails->{'watermark'})
             $watermarkOptions = 
@@ -135,14 +109,26 @@ class VideoTranscoder extends BasicTranscoder
             $s3Output['msg'],
             $this->activityLogKey);
 
+        // Transform watermark for opacity
+        $convertCmd = "convert $watermarkPath -channel A -evaluate Divide " . $watermarkOptions->{'opacity'} . " $watermarkPath";
+        $out = $this->executer->execute($convertCmd, 1, 
+            array(1 => array("pipe", "w"), 2 => array("pipe", "w")),
+            false, false, 
+            false, 1);
+        
         // Format options for FFMpeg
         // XXX Work on watermark position !
-        $formattedOptions = "-vf \"movie=$watermarkPath [wm]; [in][wm] overlay=10:10 [out]\"";
+        $size = explode("x", $watermarkOptions->{'size'});
+        $width = $size[0];
+        $height = $size[1];
+        $formattedOptions = "-vf \"movie=$watermarkPath, scale=$width:$height [wm]; [in][wm] overlay=10:10 [out]\"";
         return ($formattedOptions);
     }
 
+   
+
     // Get Video codec options and format the options properly for ffmpeg
-    private function get_video_codec_options($videoCodecOptions)
+    private function set_output_video_codec_options($videoCodecOptions)
     {
         $formattedOptions = "";
         $options = explode(",", $videoCodecOptions);
@@ -162,7 +148,7 @@ class VideoTranscoder extends BasicTranscoder
 
     // Verify Ratio and Size of output file to ensure it respect restrictions
     // Return the output video size
-    private function get_video_size($inputAssetInfo, $outputDetails)
+    private function set_output_video_size($inputAssetInfo, $outputDetails)
     {
         // Handle video size
         $size = $outputDetails->{'preset_values'}->{'size'};
@@ -194,14 +180,15 @@ class VideoTranscoder extends BasicTranscoder
 
     // Start FFmpeg for output transcoding
     public function transcode_asset($pathToInputFile, $inputAssetInfo, 
-        $outputDetails, $task, $activityObj)
+        $outputDetails)
     {
-        $ffmpegCmd = $this->generate_ffmpeg_cmd($pathToInputFile,
+        // Get formatted FFMpeg CMD
+        $ffmpegCmd = $this->craft_ffmpeg_cmd($pathToInputFile,
             $inputAssetInfo, $outputDetails);
 
+        // Path where output file will be stored temporarly
         $pathToOutputFile = $outputDetails->{'path_to_output_file'};
         
-        // Print info
         log_out("INFO", basename(__FILE__), 
             "FFMPEG CMD:\n$ffmpegCmd\n",
             $this->activityLogKey);
@@ -212,66 +199,16 @@ class VideoTranscoder extends BasicTranscoder
             "Video duration (sec): " . $inputAssetInfo->{'duration'},
             $this->activityLogKey);
     
-        // Command output capture method: pipe STDERR (FFMpeg print out on STDERR)
-        $descriptorSpecs = array(  
-            2 => array("pipe", "w") 
-        );
-        // Start execution
-        if (!($process = proc_open($ffmpegCmd, $descriptorSpecs, $pipes)))
-            throw new CTException("Unable to execute command:\n$ffmpegCmd\n",
-                self::EXEC_FAIL);
-        // Is resource valid ?
-        if (!is_resource($process))
-            throw new CTException("Process execution has failed:\n$ffmpegCmd\n",
-                self::EXEC_FAIL);
-
-        // XXX
-        // XXX. HERE, Notify task start through SQS !
-        // XXX
-
-        // While process running, we read output
-        $ffmpegOut = "";
-        $i = 0;
-        $procStatus = proc_get_status($process);
-        while ($procStatus['running']) {
-            // REad prog output
-            $out = fread($pipes[2], 8192);
-
-            # Concat out
-            $ffmpegOut .= $out;
-
-            // Get progression and notify SWF with heartbeat
-            if ($i == 10) {
-                echo ".\n";
-                $progress = $this->capture_progression($ffmpegOut, 
-                    $inputAssetInfo->{'duration'});
-
-                // XXX
-                // XXX. HERE, Notify task progress through SQS !
-                // XXX
-
-                // Notify SWF that we are still running !
-                call_user_func(array($activityObj,
-                        "send_heartbeat"), $task);
-                
-                $i = 0;
-            }
-      
-            // Get latest status
-            $procStatus = proc_get_status($process);
-            
-            // Print progression
-            echo ".";
-            flush();
-            
-            $i++;
-            sleep(1);
-        }
-        echo "\n";
-    
-        // FFMPEG process is over
-        proc_close($process);
-
+        // Use executer to start FFMpeg command
+        // Use 'capture_progression' function as callback
+        // Pass 'video_duration' as parameter
+        // Sleep 1sec between turns and callback every 10 turns
+        $out = $this->executer->execute($ffmpegCmd, 1, 
+            array(2 => array("pipe", "w")),
+            array($this, "capture_progression"), 
+            $inputAssetInfo->{'duration'}, 
+            true, 10);
+        
         // Test if we have an output file !
         if (!file_exists($pathToOutputFile) || !filesize($pathToOutputFile))
             throw new CTException("Output file $pathToOutputFile hasn't been created successfully or is empty !",
@@ -284,32 +221,37 @@ class VideoTranscoder extends BasicTranscoder
         
         return ($pathToOutputFile);
     }
-
-    // Check if the preset exists
-    public function validate_preset($output)
+    
+    // REad ffmpeg output and calculate % progress
+    // This is a callback called from 'CommandExecuter.php'
+    // $out and $outErr contain FFmpeg output
+    public function capture_progression($duration, $out, $outErr)
     {
-        if (!isset($output->{"preset"}))
-            throw new CTException("No preset selected for output !",
-                self::BAD_PRESETS_DIR);
+        // We also call a callback here ... the 'send_hearbeat' function from the origin activity
+        // This way we notify SWF that we are alive !
+        call_user_func(array($this->activityObj, 'send_heartbeat'), 
+            $this->task);
 
-        $preset = $output->{"preset"};
-        $presetPath = __DIR__ . '/../../../config/presets/';
-        if (!($files = scandir($presetPath)))
-            throw new CTException("Unable to open preset directory '$presetPath' !",
-                self::BAD_PRESETS_DIR);
-        
-        foreach ($files as $presetFile)
-        {
-            if ($presetFile === '.' || $presetFile === '..') { continue; }
-            if (is_file("$presetPath/$presetFile"))
-            {
-                if ($preset === pathinfo($presetFile)["filename"])
-                    return true;
-            }
-        }
-        
-        throw new CTException("Unkown preset file '$preset' !",
-            self::UNKNOWN_PRESET);
+        // # get the current time
+        preg_match_all("/time=(.*?) bitrate/", $outErr, $matches); 
+
+        $last = array_pop($matches);
+        // # this is needed if there is more than one match
+        if (is_array($last))
+            $last = array_pop($last);
+
+        // Perform Time transformation to get seconds
+        $ar = array_reverse(explode(":", $last));
+        $done = floatval($ar[0]);
+        if (!empty($ar[1])) $done += intval($ar[1]) * 60;
+        if (!empty($ar[2])) $done += intval($ar[2]) * 60 * 60;
+
+        // # finally, progress is easy
+        $progress = 0;
+        if ($done)
+            $progress = round(($done/$duration)*100);
+        log_out("INFO", basename(__FILE__), "Progress: $done / $progress%",
+            $this->activityLogKey);
     }
 
     // Combine preset and custom output settings to generate output settings
@@ -336,34 +278,82 @@ class VideoTranscoder extends BasicTranscoder
         
         return ($decodedPreset);
     }
-
-    // REad ffmpeg output and calculate % progress
-    private function capture_progression($ffmpegOut, $duration)
+    
+    // Check if the preset exists
+    public function validate_preset($output)
     {
-        // # get the current time
-        preg_match_all("/time=(.*?) bitrate/", $ffmpegOut, $matches); 
+        if (!isset($output->{"preset"}))
+            throw new CTException("No preset selected for output !",
+                self::BAD_PRESETS_DIR);
 
-        $last = array_pop($matches);
-        // # this is needed if there is more than one match
-        if (is_array($last))
-            $last = array_pop($last);
-
-        // Perform Time transformation to get seconds
-        $ar = array_reverse(explode(":", $last));
-        $done = floatval($ar[0]);
-        if (!empty($ar[1])) $done += intval($ar[1]) * 60;
-        if (!empty($ar[2])) $done += intval($ar[2]) * 60 * 60;
-
-        // # finally, progress is easy
-        $progress = 0;
-        if ($done)
-            $progress = round(($done/$duration)*100);
-        log_out("INFO", basename(__FILE__), "Progress: $done / $progress%",
-            $this->activityLogKey);
-
-        return ($progress);
+        $preset = $output->{"preset"};
+        $presetPath = __DIR__ . '/../../../config/presets/';
+        if (!($files = scandir($presetPath)))
+            throw new CTException("Unable to open preset directory '$presetPath' !",
+                self::BAD_PRESETS_DIR);
+        
+        foreach ($files as $presetFile)
+        {
+            if ($presetFile === '.' || $presetFile === '..') { continue; }
+            if (is_file("$presetPath/$presetFile"))
+            {
+                if ($preset === pathinfo($presetFile)["filename"])
+                    return true;
+            }
+        }
+        
+        throw new CTException("Unkown preset file '$preset' !",
+            self::UNKNOWN_PRESET);
     }
     
+
+
+
+
+
+    
+    /**************************************
+     * GET VIDEO INFORMATION AND VALIDATION
+     * The methods below are used by the ValidationActivity
+     * We capture as much info as possible on the input video
+     */
+
+    // Execute FFMpeg to get video information
+    public function get_asset_info($pathToInputFile)
+    {
+        $assetInfo = array();
+        
+        // Execute FFMpeg to validate and get information about input video
+        $out = $this->executer->execute("ffmpeg -i $pathToInputFile", 1, 
+            array(2 => array("pipe", "w")),
+            false, false, 
+            false, 1);
+        
+        if (!$out['outErr'] && !$out['out'])
+            throw new CTException("Unable to execute FFMpeg to get information about '$pathToInputFile'! FFMpeg didn't return anything!",
+                self::EXEC_VALIDATE_FAILED);
+        
+        // FFmpeg writes on STDERR ...
+        $ffmpegInfoOut = $out['outErr'];
+        
+        // get Duration
+        if (!$this->get_duration($ffmpegInfoOut, $assetInfo))
+            throw new CTException("Unable to extract video duration !",
+                self::GET_DURATION_FAILED);
+      
+        // get Video info
+        if (!$this->get_video_info($ffmpegInfoOut, $assetInfo))
+            throw new CTException("Unable to find video information !",
+                self::GET_VIDEO_INFO_FAILED);
+      
+        // get Audio Info
+        if (!$this->get_audio_info($ffmpegInfoOut, $assetInfo))
+            throw new CTException("Unable to find audio information !",
+                self::GET_AUDIO_INFO_FAILED);
+
+        return ($assetInfo);
+    }
+
     // Extract video info
     private function get_video_info($ffmpegInfoOut, &$assetInfo)
     {
@@ -384,6 +374,7 @@ class VideoTranscoder extends BasicTranscoder
         return false;
     }
     
+    // Calculate ratio based on the size provided
     private function get_ratio($size)
     {
         // Calculate ratio

@@ -1,8 +1,6 @@
 <?php
 
-$root = realpath(dirname(__FILE__));
-
-require "$root/../Utils.php";
+require __DIR__ . "/../utils/Utils.php";
 
 function usage()
 {
@@ -39,7 +37,7 @@ if (!isset($options['force']) &&
 {
     print json_encode([ "status" => "SUCCESS",
             "msg" => "[".__FILE__."] Using local copy: '" . $options['to']  . "'" ]);
-    return;
+    exit(0);
 }
 
 try {

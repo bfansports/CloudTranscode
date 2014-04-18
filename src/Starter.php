@@ -5,7 +5,7 @@
  * It opens the JSON input and starts a new Workflow with it
  */
 
-require 'Utils.php';
+require __DIR__ . '/utils/Utils.php';
 
 $input_file = "";
 

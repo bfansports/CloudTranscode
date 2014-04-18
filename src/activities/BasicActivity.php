@@ -4,15 +4,15 @@
  * This class serves as a skeleton for classes implementing actual activity
  */
 
-require 'S3Utils.php';
-require 'InputValidator.php';
+require __DIR__ . '../../utils/S3Utils.php';
+require __DIR__ . '/InputValidator.php';
 
 class BasicActivity
 {
     private   $activityType; // Type of activity
     private   $activityResult; // Contain activity result output
-    protected $activityLogKey; // Create a key workflowId:activityId to put in logs
     private   $root; // This file location
+    public    $activityLogKey; // Create a key workflowId:activityId to put in logs
   
     // Constants
     const NO_INPUT             = "NO_INPUT";

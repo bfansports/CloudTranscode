@@ -9,7 +9,7 @@
 require __DIR__ . "/utils/Utils.php";
 require __DIR__ . "/activities/BasicActivity.php";
 
-Class ActivityPoller
+class ActivityPoller
 {
     private $domain;
     private $knownActivities;

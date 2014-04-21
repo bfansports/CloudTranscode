@@ -1,13 +1,13 @@
 {
     "id": "http://sport-archive.com/input-schema/output/video",
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "CT transcode output specification",
+    "title": "CT transcode output specification for videos",
     "type": "object",
     "properties": {
-        "output_type": {
+	"output_type": {
             "type": "string",
-            "enum": [ "VIDEO" ],
-            "description": "Type MUST be 'VIDEO'"
+            "value": "VIDEO",
+            "description": "Type of the file to output"
         },
         "output_label": {
             "type": "string",
@@ -20,11 +20,6 @@
         "output_file": {
             "type": "string",
             "description": "Filename where to upload the resulting file"
-        },
-        "format": {
-            "type": "string",
-            "enum": [ "mp4", "avi", "mov", "3gp", "3gpp" ],
-            "description": "Provide the type of output file you need your document transcoded to"
         },
         "s3_rrs": {
             "type": "boolean",
@@ -73,53 +68,12 @@
         "watermark": {
             "$ref": "#/definitions/watermark",
             "description": "Provide watermark information if any"
-        },
-        "thumbnails": {
-            "$ref": "#/definitions/thumbnails",
-            "description": "Provide thumbnails information is needed"
         }
     },
-    "required": ["output_type", "output_bucket", "output_file", "preset"],
+    "required": ["preset"],
     "additionalProperties": false,
-    
+
     "definitions": {
-        "thumbnails": {
-            "type": "object",
-            "properties": {
-                "mode": {
-                    "type": "string",
-                    "enum": ["snapshot", "interval"],
-                    "description": "Type of thumbnails generation needed"
-                },
-                "label": {
-                    "type": "string",
-                    "description": "file label to use for your thumbnails. We will append sequence number"
-                },
-                "output_bucket": {
-                    "type": "string",
-                    "description": "S3 bucket and path where the output file will be uploaded"
-                },
-                "interval": {
-                    "type": "integer",
-                    "minValue": 0,
-                    "description": "Override default interval in seconds"
-                },
-                "s3_rrs": {
-                    "type": "boolean",
-                    "description": "Activate reduced redundancy or not in S3 storage"
-                },
-                "s3_encrypt": {
-                    "type": "boolean",
-                    "description": "Activate backend storage encryption"
-                },
-                "size": {
-                    "type": "string",
-                    "description": "Size of the thumbnails"
-                }
-            },
-            "required": ["output_bucket", "label", "size"],
-            "additionalProperties": false
-        },
         "watermark": {
             "input_butcket": {
                 "type": "string",

@@ -13,7 +13,7 @@ require __DIR__ . '/WorkflowTracker.php';
 require __DIR__ . '/WorkflowManager.php';
 require __DIR__ . '/DeciderBrain.php';
 
-Class Decider
+class Decider
 {
     private $domain;
     private $decisionTaskList;
@@ -27,22 +27,26 @@ Class Decider
   
     function __construct($config)
     {
-        $this->domain = $config['cloudTranscode']['workflow']['domain'];
+        $this->domain           = $config['cloudTranscode']['workflow']['domain'];
         $this->decisionTaskList = array("name" => $config['cloudTranscode']['workflow']['decisionTaskList']);
-        $this->activityList = $config['cloudTranscode']['activities'];
+        $this->activityList     = $config['cloudTranscode']['activities'];
     
         // Init domain. see: Utils.php
         if (!init_domain($this->domain))
         {
-            log_out("ERROR", 
-                basename(__FILE__), "Unable to init the domain !");
+            log_out(
+                "ERROR", 
+                basename(__FILE__), "Unable to init the domain !"
+            );
             exit(1);
         }
         // Init workflow. see: Utils.php
         if (!init_workflow($config['cloudTranscode']['workflow']))
         {
-            log_out("ERROR", 
-                basename(__FILE__), "Unable to init the workflow !");
+            log_out(
+                "ERROR", 
+                basename(__FILE__), "Unable to init the workflow !"
+            );
             exit(1);
         }
 
@@ -58,18 +62,23 @@ Class Decider
         // This is where the decisions are made and new activity initiated
         $this->deciderBrain = new DeciderBrain($config, $this->workflowTracker, 
             $this->workflowManager);
-    }	
+    }
 
     // Poll for decision tasks
     public function poll_for_decisions()
     {
         global $swf;
-        global $activities; // From Utils.php
+        global $activities; 
 
         try {
             // Poll decision task
-            log_out("INFO", basename(__FILE__), "Polling ...");
-            $decisionTask = $swf->pollForDecisionTask(array(
+            log_out(
+                "INFO", 
+                basename(__FILE__), 
+                "Polling ..."
+            );
+            $decisionTask = $swf->pollForDecisionTask(
+                array(
                     "domain"   => $this->domain,
                     "taskList" => $this->decisionTaskList,
                 ));
@@ -79,7 +88,9 @@ Class Decider
                 return true;
 
         } catch (Exception $e) {
-            log_out("ERROR", basename(__FILE__), 
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
                 "Unable to pull jobs for decision ! " . $e->getMessage());
             return true;
         }
@@ -88,8 +99,11 @@ Class Decider
         if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, 
                 $this->activityList))
         {
-            log_out("ERROR", basename(__FILE__), 
-                "Unable to register the workflow in tracker ! Can't process decision task !");
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to register the workflow in tracker ! Can't process decision task !"
+            );
             return false; 
         }
     
@@ -120,8 +134,11 @@ Class Decider
         {
             // We ask the brain to make a decision
             // We pass all events, new events, and this event
-            $this->deciderBrain->handle_event($event, $decisionTask["taskToken"], 
-                $workflowExecution);
+            $this->deciderBrain->handle_event(
+                $event, 
+                $decisionTask["taskToken"], 
+                $workflowExecution
+            );
         }
     }
 }
@@ -149,8 +166,11 @@ function check_input_parameters(&$defaultConfigFile)
   
     if (isset($options['c']))
     {
-        log_out("INFO", 
-            basename(__FILE__), "Custom config file: '" . $options['c'] . "'");
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Custom config file: '" . $options['c'] . "'"
+        );
         $defaultConfigFile = $options['c'];
     }
 }
@@ -160,10 +180,16 @@ $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeCon
 check_input_parameters($defaultConfigFile);
 
 $config = json_decode(file_get_contents($defaultConfigFile), true);
-log_out("INFO", 
-	basename(__FILE__), "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
-log_out("INFO", 
-	basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'");
+log_out(
+    "INFO", 
+	basename(__FILE__), 
+    "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'"
+);
+log_out(
+    "INFO", 
+	basename(__FILE__), 
+    "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'"
+);
 log_out("INFO", basename(__FILE__), "Clients: ");
 print_r($config['clients']);
 
@@ -171,12 +197,20 @@ print_r($config['clients']);
 $decider = new Decider($config);
 
 // Start polling loop
-log_out("INFO", basename(__FILE__), "Starting decision tasks polling");
+log_out(
+    "INFO", 
+    basename(__FILE__), 
+    "Starting decision tasks polling"
+);
 while (1)
 {
     if (!$decider->poll_for_decisions())
     {
-        log_out("INFO", basename(__FILE__), "Polling for decisions over! Exiting ...");
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Polling for decisions over! Exiting ..."
+        );
         exit(1);
     }
 } 

@@ -30,7 +30,8 @@
             "items": {
                 "$ref": "output/base.json",
                 "oneOf": [                    
-                    { "$ref": "output/video.json" }
+                    { "$ref": "output/video.json" },
+		    { "$ref": "output/thumb.json" }
                 ]
             },
             "minItems": 1,

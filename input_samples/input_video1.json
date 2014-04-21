@@ -11,24 +11,16 @@
 	    "output_label": "SD test1 output",
 	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "test1_sd.mp4",
-	    "format": "mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
 	    "preset": "360p-4.3-generic",
-	    "thumbnails": {
-		"mode": "snapshot",
-		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
-		"label": "test1SD",
-		"s3_rrs": true,
-		"size": "64x48"
-	    },
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in",
 		"input_file": "/watermark/logo_SA.png",
 		"size": "75.2x28.4",
-		"opacity": 2,
-		"x": "20",
-		"y": "20"
+		"opacity": 0.2,
+		"x": -20,
+		"y": -20
 	    }
 	},
 	{
@@ -36,26 +28,27 @@
 	    "output_label": "HD test1 output",
 	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "test1_hd.mp4",
-	    "format": "mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
 	    "preset": "480p-4.3-generic",
 	    "no_enlarge": false,
-	    "thumbnails": {
-		"mode": "snapshot",
-		"output_bucket": "ct-my-bucket-out/output1/thumbs/",
-		"label": "test1HD",
-		"s3_rrs": true,
-		"size": "94x35.5"
-	    },
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in",
 		"input_file": "/watermark/logo_SA.png",
 		"size": "75.2x28.4",
-		"opacity": 2,
-		"x": "20",
-		"y": "20"
+		"opacity": 0.2,
+		"x": 20,
+		"y": -20
 	    }
+	},
+	{
+	    "output_type": "THUMB",
+	    "mode": "snapshot",
+	    "output_bucket": "ct-my-bucket-out",
+	    "output_file": "/output1/thumbs/test1_thumb.png",
+	    "s3_rrs": true,
+	    "size": "160x120",
+	    "snapshot_sec": 5
 	}
     ]
 }

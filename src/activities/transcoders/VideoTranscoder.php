@@ -26,6 +26,7 @@ class VideoTranscoder extends BasicTranscoder
     const RATIO_ERROR           = "RATIO_ERROR";
     const ENLARGEMENT_ERROR     = "ENLARGEMENT_ERROR";
     const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
+    const WATERMARK_ERROR       = "WATERMARK_ERROR";
     
     
     
@@ -99,6 +100,7 @@ class VideoTranscoder extends BasicTranscoder
         $videoFileInfo = pathinfo($pathToVideo);
         $watermarkFileInfo = pathinfo($watermarkOptions->{'input_file'});
         $watermarkPath = $videoFileInfo['dirname']."/".$watermarkFileInfo['basename'];
+        $newWatermarkPath = $videoFileInfo['dirname']."/new-".$watermarkFileInfo['basename'];
         
         // Get watermark image from S3
         $s3Utils = new S3Utils();
@@ -110,22 +112,43 @@ class VideoTranscoder extends BasicTranscoder
             $this->activityLogKey);
 
         // Transform watermark for opacity
-        $convertCmd = "convert $watermarkPath -channel A -evaluate Divide " . $watermarkOptions->{'opacity'} . " $watermarkPath";
+        $convertCmd = "convert $watermarkPath -channel A -evaluate Divide " . $watermarkOptions->{'opacity'} . " $newWatermarkPath";
         $out = $this->executer->execute($convertCmd, 1, 
             array(1 => array("pipe", "w"), 2 => array("pipe", "w")),
             false, false, 
             false, 1);
+        if (isset($out['outErr']) && $out['outErr'] != "" &&
+            (!file_exists($newWatermarkPath) || !filesize($newWatermarkPath)))
+            throw new CTException(
+                "Error transforming watermark file '$watermarkPath'!",
+                self::WATERMARK_ERROR);
         
         // Format options for FFMpeg
         // XXX Work on watermark position !
-        $size = explode("x", $watermarkOptions->{'size'});
+        $size = explode('x', $watermarkOptions->{'size'});
         $width = $size[0];
         $height = $size[1];
-        $formattedOptions = "-vf \"movie=$watermarkPath, scale=$width:$height [wm]; [in][wm] overlay=10:10 [out]\"";
+        $positions = $this->get_watermark_position($watermarkOptions);
+        $formattedOptions = "-vf \"movie=$newWatermarkPath, scale=$width:$height [wm]; [in][wm] overlay=" . $positions['x'] . ':' . $positions['y'] . " [out]\"";
         return ($formattedOptions);
     }
 
-   
+    // Generate the command line option to position the watermark
+    private function get_watermark_position($watermarkOptions)
+    {
+        $positions = array('x' => 0, 'y' => 0);
+        
+        if ($watermarkOptions->{'x'} >= 0)
+            $positions['x'] = $watermarkOptions->{'x'};
+        if ($watermarkOptions->{'y'} >= 0)
+            $positions['y'] = $watermarkOptions->{'y'};
+        if ($watermarkOptions->{'x'} < 0)
+            $positions['x'] = 'main_w-overlay_w' . $watermarkOptions->{'x'};
+        if ($watermarkOptions->{'y'} < 0)
+            $positions['y'] = 'main_h-overlay_h' . $watermarkOptions->{'y'};
+
+        return ($positions);
+    }
 
     // Get Video codec options and format the options properly for ffmpeg
     private function set_output_video_codec_options($videoCodecOptions)
@@ -160,8 +183,10 @@ class VideoTranscoder extends BasicTranscoder
             $outputRatio = floatval($this->get_ratio($size));
             $inputRatio = floatval($inputAssetInfo->{'ratio'});
             if ($outputRatio != $inputRatio)
-                throw new CTException("Output video ratio is different from input video: input_ratio: '$inputRatio' / output_ratio: '$outputRatio'. 'keep_ratio' option is enabled (default). Disable it to allow ratio change.",
-                    self::RATIO_ERROR);
+                throw new CTException(
+                    "Output video ratio is different from input video: input_ratio: '$inputRatio' / output_ratio: '$outputRatio'. 'keep_ratio' option is enabled (default). Disable it to allow ratio change.",
+                    self::RATIO_ERROR
+                );
         }
         // Enlargement check
         if (!isset($outputDetails->{'no_enlarge'}) || 
@@ -171,8 +196,10 @@ class VideoTranscoder extends BasicTranscoder
             $outputSizeSplit = explode("x", $size);
             if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
                 intval($outputSizeSplit[1]) > intval($inputSizeSplit[1]))
-                throw new CTException("Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.",
-                    self::ENLARGEMENT_ERROR);
+                throw new CTException(
+                    "Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.",
+                    self::ENLARGEMENT_ERROR
+                );
         }
 
         return ($size);
@@ -189,35 +216,53 @@ class VideoTranscoder extends BasicTranscoder
         // Path where output file will be stored temporarly
         $pathToOutputFile = $outputDetails->{'path_to_output_file'};
         
-        log_out("INFO", basename(__FILE__), 
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
             "FFMPEG CMD:\n$ffmpegCmd\n",
-            $this->activityLogKey);
-        log_out("INFO", basename(__FILE__), 
+            $this->activityLogKey
+        );
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
             "Start Transcoding Asset '$pathToInputFile' to '$pathToOutputFile' ...",
-            $this->activityLogKey);
-        log_out("INFO", basename(__FILE__), 
+            $this->activityLogKey
+        );
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
             "Video duration (sec): " . $inputAssetInfo->{'duration'},
-            $this->activityLogKey);
+            $this->activityLogKey
+        );
     
         // Use executer to start FFMpeg command
         // Use 'capture_progression' function as callback
         // Pass 'video_duration' as parameter
         // Sleep 1sec between turns and callback every 10 turns
-        $out = $this->executer->execute($ffmpegCmd, 1, 
+        $out = $this->executer->execute(
+            $ffmpegCmd, 
+            1, 
             array(2 => array("pipe", "w")),
             array($this, "capture_progression"), 
             $inputAssetInfo->{'duration'}, 
-            true, 10);
+            true, 
+            10
+        );
         
         // Test if we have an output file !
         if (!file_exists($pathToOutputFile) || !filesize($pathToOutputFile))
-            throw new CTException("Output file $pathToOutputFile hasn't been created successfully or is empty !",
-                self::TRANSCODE_FAIL);
+            throw new CTException(
+                "Output file $pathToOutputFile hasn't been created successfully or is empty !",
+                self::TRANSCODE_FAIL
+            );
     
         // No error. Transcode successful
-        log_out("INFO", basename(__FILE__), 
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
             "Transcoding successfull !",
-            $this->activityLogKey);
+            $this->activityLogKey
+        );
         
         return ($pathToOutputFile);
     }
@@ -250,8 +295,12 @@ class VideoTranscoder extends BasicTranscoder
         $progress = 0;
         if ($done)
             $progress = round(($done/$duration)*100);
-        log_out("INFO", basename(__FILE__), "Progress: $done / $progress%",
-            $this->activityLogKey);
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Progress: $done / $progress%",
+            $this->activityLogKey
+        );
     }
 
     // Combine preset and custom output settings to generate output settings

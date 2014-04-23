@@ -93,8 +93,9 @@ class WorkflowTracker
         }
     
         log_out("ERROR", basename(__FILE__), 
-            "Can't find the scheduled activity that just started ! Something is messed up !", 
+            "Can't find the scheduled activity that just started! Something is messed up!", 
             $workflowExecution['workflowId']);
+        //print_r($event);
         return false;
     }
 
@@ -125,6 +126,7 @@ class WorkflowTracker
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just completed ! Something is messed up !", 
             $workflowExecution['workflowId']);
+        //print_r($event);
         return false;
     }
 
@@ -155,6 +157,7 @@ class WorkflowTracker
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just timed out ! Something is messed up !", 
             $workflowExecution['workflowId']);
+        //print_r($event);
         return false;
     }
 
@@ -187,6 +190,7 @@ class WorkflowTracker
         log_out("ERROR", basename(__FILE__), 
             "Can't find the scheduled/started ID related to this activity that just failed ! Something is messed up !", 
             $workflowExecution['workflowId']);
+        //print_r($event);
         return false;
     }
 

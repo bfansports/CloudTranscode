@@ -186,7 +186,7 @@ class VideoTranscoder extends BasicTranscoder
                 
             $time = gmdate("H:i:s", $snapshot_sec) . ".000";
             $pathToOutputFiles .= "/" . $outputFileInfo['basename'];
-            $frameOptions = " -vframes 1 -ss $time $pathToOutputFiles";
+            $frameOptions = " -ss $time -vframes 1";
         }
         else if ($outputDetails->{'mode'} == 'intervals')
         {
@@ -195,15 +195,15 @@ class VideoTranscoder extends BasicTranscoder
                 $outputDetails->{'intervals'} > 0)
                 $intervals = $outputDetails->{'intervals'};
             
-            $pathToOutputFiles .= "/" . $outputFileInfo['basename'] . "%06d." 
+            $pathToOutputFiles .= "/" . $outputFileInfo['filename'] . "%06d." 
                 . $outputFileInfo['extension'];
-            $frameOptions = " -vf fps=fps=1/$intervals $pathToOutputFiles";
+            $frameOptions = " -vf fps=fps=1/$intervals";
         }
 
         // Create FFMpeg arguments
-        $ffmpegArgs =  " -i $pathToInputFile -y -threads 0 -f image2";
+        $ffmpegArgs =  " -i $pathToInputFile -y -threads 0";
         $ffmpegArgs .= " -s " . $outputDetails->{'size'};
-        $ffmpegArgs .= " $frameOptions";
+        $ffmpegArgs .= " $frameOptions -f image2 -q:v 8";
 
         // Final command
         $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFiles";

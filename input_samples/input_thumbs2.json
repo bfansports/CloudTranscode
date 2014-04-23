@@ -2,17 +2,18 @@
     "api_key": "1234567890abcdefghijkl",
     "input_type": "VIDEO",
     "input_bucket": "ct-my-bucket-in",
-    "input_file": "/input1/test1.mp4",
-    "job_label": "test1 thumbnails",
+    "input_file": "/input2/test2.mp4",
+    "job_label": "test2 thumbnails",
     "outputs": [
 	{
 	    "output_type": "THUMB",
-	    "mode": "snapshot",
+	    "mode": "intervals",
 	    "output_bucket": "ct-my-bucket-out",
-	    "output_file": "/output1/thumbs/test1_thumb.jpg",
+	    "output_file": "/output1/thumbs_interval/test1_thumb.png",
 	    "s3_rrs": true,
+	    "s3_encrypt": true,
 	    "size": "160x120",
-	    "snapshot_sec": 5
+	    "intervals": 5
 	}
     ]
 }

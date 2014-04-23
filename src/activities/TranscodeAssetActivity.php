@@ -64,7 +64,9 @@ class TranscodeAssetActivity extends BasicActivity
         // Create TMP folder for output files
         $outputFileInfo = pathinfo($input->{'output'}->{'output_file'});
         $input->{'output'}->{'output_file_info'} = $outputFileInfo;
-        $pathToOutputFiles = $tmpPathInput . "/output/" . $outputFileInfo['dirname'];
+        $pathToOutputFiles = $tmpPathInput . "/output/" 
+            . $task['activityId']
+            . "/" . $outputFileInfo['dirname'];
         if (!file_exists($pathToOutputFiles))
             if (!mkdir($pathToOutputFiles, 0750, true))
                 throw new CTException(
@@ -120,12 +122,12 @@ class TranscodeAssetActivity extends BasicActivity
         // XXX
         
         
-        // Sanitize output bucket path "/"
-        $s3Bucket = 
-            str_replace("//", "/", $input->{'output'}->{"output_bucket"});
         // XXX: Add tmp workflowID to output bucket to seperate upload
         // XXX: For testing only !
         $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
+        
+        // Sanitize output bucket path "/"
+        $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
         
         // Prepare S3 options
         $options = array("rrs" => false, "encrypt" => false);

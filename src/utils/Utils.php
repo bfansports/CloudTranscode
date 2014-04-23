@@ -10,6 +10,19 @@ function log_out($type, $source, $message, $workflowId = 0)
     echo "$log $message\n";
 }
 
+// Check if directory is empty
+function is_dir_empty($dir) {
+    if (!is_readable($dir)) 
+        return false; 
+    $handle = opendir($dir);
+    while (false !== ($entry = readdir($handle))) {
+        if ($entry != "." && $entry != "..") {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Initialize the domain. Create it if needed
 function init_domain($domainName)
 {
@@ -21,9 +34,17 @@ function init_domain($domainName)
         $swf->describeDomain(array("name" => $domainName));
         return true;
     } catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-        log_out("INFO", basename(__FILE__), "Domain doesn't exists. Creating it ...");
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Domain doesn't exists. Creating it ..."
+        );
     } catch (Exception $e) {
-        log_out("ERROR", basename(__FILE__), "Unable to get domain list ! " . $e->getMessage());
+        log_out(
+            "ERROR", 
+            basename(__FILE__), 
+            "Unable to get domain list ! " . $e->getMessage()
+        );
         return false;
     }
 
@@ -37,7 +58,11 @@ function init_domain($domainName)
             ));
         return true;
     } catch (Exception $e) {
-        log_out("ERROR", basename(__FILE__), "Unable to create the domain !" . $e->getMessage());
+        log_out(
+            "ERROR", 
+            basename(__FILE__), 
+            "Unable to create the domain !" . $e->getMessage()
+        );
         return false;
     }
 }
@@ -60,9 +85,17 @@ function init_workflow($params)
             ]);
         return true;
     } catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-        log_out("INFO", basename(__FILE__), "Workflow doesn't exists. Creating it ...");
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Workflow doesn't exists. Creating it ..."
+        );
     } catch (Exception $e) {
-        log_out("ERROR", basename(__FILE__), "Unable to describe the workflow ! " . $e->getMessage());
+        log_out(
+            "ERROR", 
+            basename(__FILE__), 
+            "Unable to describe the workflow ! " . $e->getMessage()
+        );
         return false;
     }
 
@@ -71,7 +104,11 @@ function init_workflow($params)
         $swf->registerWorkflowType($params);
         return true;
     } catch (Exception $e) {
-        log_out("ERROR", basename(__FILE__), "Unable to register new workflow ! " . $e->getMessage());
+        log_out(
+            "ERROR", 
+            basename(__FILE__), 
+            "Unable to register new workflow ! " . $e->getMessage()
+        );
         return false;
     }
 }
@@ -109,3 +146,10 @@ $aws = Aws::factory(__DIR__ . "/../../config/awsConfig.json");
 $swf = $aws->get('Swf');
 // SQS Client
 $sqs = $aws->get('Sqs');
+
+// File types 
+define('VIDEO', 'VIDEO');
+define('AUDIO', 'AUDIO');
+define('IMAGE', 'IMAGE');
+define('DOC'  , 'DOC');
+define('THUMB', 'THUMB');

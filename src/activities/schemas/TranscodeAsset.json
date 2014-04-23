@@ -10,7 +10,8 @@
         },
         "input_asset_type": {
             "description": "Type of the input asset",
-            "type": "string"
+            "type": "string",
+	    "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ]
         },
         "input_asset_info": {
             "description": "Information about the input file to transcode",
@@ -32,7 +33,8 @@
         "output": {
             "$ref": "output/base.json",
             "oneOf": [                    
-                { "$ref": "output/video.json" }
+                { "$ref": "output/video.json" },
+		{ "$ref": "output/thumb.json" }
             ]
         }
     },

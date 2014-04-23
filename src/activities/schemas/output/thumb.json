@@ -11,7 +11,7 @@
         },
 	"mode": {
             "type": "string",
-            "enum": ["snapshot", "interval"],
+            "enum": ["snapshot", "intervals"],
             "description": "Type of thumbnails generation needed"
         },
         "output_bucket": {
@@ -22,7 +22,7 @@
             "type": "string",
             "description": "basename for the thumbnails to generate. We will appen sequence number if the 'interval' mode is selected"
         },
-        "interval": {
+        "intervals": {
             "type": "integer",
             "minValue": 1,
             "description": "Override default interval in seconds"

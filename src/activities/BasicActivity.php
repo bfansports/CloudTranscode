@@ -24,12 +24,8 @@ class BasicActivity
     const NO_ACTIVITY_VERSION  = "NO_ACTIVITY_VERSION";
     const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
     
-    // File types
-    const VIDEO = "VIDEO";
-    const AUDIO = "AUDIO";
-    const IMAGE = "IMAGE";
-    const DOC   = "DOC";
-  
+    const TMP_FOLDER           = "/tmp/CloudTranscode/";
+    
     function __construct($params)
     {
         if (!isset($params["name"]) || !$params["name"])
@@ -91,7 +87,10 @@ class BasicActivity
     }
 
     // Perform JSON input validation
-    public function do_input_validation($task, $taskType)
+    public function do_input_validation($task, 
+        $taskType, 
+        $callback = false, 
+        $callbackParams = false)
     {
         // Check Task integrity
         $input = $this->check_task_basics($task);
@@ -100,6 +99,9 @@ class BasicActivity
         $validator = new InputValidator();
         $decoded = $validator->decode_json_format($input);
         $validator->validate_input($decoded, $taskType);
+
+        if (isset($callback) && $callback)
+            call_user_func($callback, $decoded, $callbackParams);
     
         return ($decoded);
     }
@@ -194,15 +196,8 @@ class BasicActivity
     }
     
     // Create TMP folder and download file to process
-    public function get_file_to_process($task, $input)
-    {
-        // Create TMP storage to put the file to validate. 
-        $inputFileInfo = pathinfo($input->{'input_file'});
-        $localPath = 
-            $this->create_tmp_local_storage($task["workflowExecution"]["workflowId"],
-                $inputFileInfo['dirname']);
-        $saveFileTo = $localPath . $inputFileInfo['basename'];
-        
+    public function get_file_to_process($task, $input, $saveFileTo)
+    {        
         // Get file from S3 or local copy if any
         $s3Utils = new S3Utils();
         log_out("INFO", 
@@ -244,22 +239,6 @@ class BasicActivity
         // XXX
         // Send SQS notification of PUT progress
         // XXX
-    }
-        
-    // Create a local TMP folder using the workflowID
-    public function create_tmp_local_storage($workflowId, $extra = null)
-    {
-        $localPath = "/tmp/CloudTranscode/$workflowId/";
-        if ($extra)
-            $localPath .= "$extra/";
-        if (!file_exists("$localPath/transcode/"))
-        {
-            if (!mkdir("$localPath/transcode/", 0750, true))
-                throw new CTException("Unable to create temporary folder '$localPath/transcode/' !",
-                    self::TMP_FOLDER_FAIL);
-        }
-    
-        return $localPath;
     }
 }
 

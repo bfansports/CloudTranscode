@@ -12,8 +12,11 @@ class S3Utils
     const PUT_IN_S3   = "/../scripts/putInS3.php";
     
     // Get a file from S3 using external script localted in "scripts" folder
-    public function get_file_from_s3($bucket, $filename, $saveFileTo,
-        $callback = false, $callbackParams = false)
+    public function get_file_from_s3($bucket, 
+        $filename, 
+        $saveFileTo,
+        $callback = false, 
+        $callbackParams = false)
     {   
         $cmd = "php " . __DIR__ . self::GET_FROM_S3;
         $cmd .= " --bucket $bucket";
@@ -26,9 +29,12 @@ class S3Utils
     }
 
     // Get a file from S3 using external script localted in "scripts" folder
-    public function put_file_into_s3($bucket, $filename, 
-        $pathToFileToSend, $options, 
-        $callback = false, $callbackParams = false)
+    public function put_file_into_s3($bucket, 
+        $filename, 
+        $pathToFileToSend, 
+        $options, 
+        $callback = false, 
+        $callbackParams = false)
     {
         $cmd = "php " . __DIR__ . self::PUT_IN_S3;
         $cmd .= " --bucket $bucket";

@@ -7,59 +7,18 @@
         "job_label": "test1 transcode",
         "outputs": [
             {
-                "output_type": "VIDEO",
-                "output_label": "SD test1 output",
-                "output_bucket": "ct-my-bucket-out/output1/",
-                "output_file": "test1_sd.mp4",
-                "format": "mp4",
-                "s3_rrs": true,
-                "s3_encrypt": true,
-                "preset": "h264_AAC_SD",
-                "thumbnails": {
-                    "mode": "snapshot",
-                    "output_bucket": "ct-my-bucket-out/output1/thumbs/",
-                    "label": "test1SD",
-                    "s3_rrs": true,
-                    "size": "64x48"
-                },
-                "watermark": {
-                    "input_bucket": "ct-my-bucket-in/watermark/",
-                    "input_file": "watermark.png",
-                    "size": "48x48",
-                    "opacity": 0.6,
-                    "x": "20",
-                    "y": "20"
-                }
-            },
-            {
-                "output_type": "VIDEO",
-                "output_label": "HD test1 output",
-                "output_bucket": "ct-my-bucket-out/output/",
-                "output_file": "test1_hd.mp4",
-                "format": "mp4",
-                "s3_rrs": true,
-                "s3_encrypt": true,
-                "preset": "h264_AAC_HD",
-                "size": "1280x720",
-                "thumbnails": {
-                    "mode": "snapshot",
-                    "output_bucket": "ct-my-bucket-out/thumbs/",
-                    "label": "test1HD",
-                    "s3_rrs": true,
-                    "size": "64x48"
-                },
-                "watermark": {
-                    "input_bucket": "ct-my-bucket-in/watermark/",
-                    "input_file": "watermark.png",
-                    "size": "48x48",
-                    "opacity": 0.6,
-                    "x": "20",
-                    "y": "20"
-                }
-            }
+		"output_type": "THUMB",
+		"mode": "snapshot",
+		"output_bucket": "ct-my-bucket-out",
+		"output_file": "/output1/thumbs/test1_thumb.png",
+		"s3_rrs": true,
+		"size": "160x120",
+		"snapshot_sec": 5
+	    }
         ]
     },
-    "input_fileinfo": {
+    "input_asset_type": "VIDEO",
+    "input_asset_info": {
         "duration": 25.05,
         "vcodec": "h264",
         "color": "yuv420p",
@@ -73,29 +32,12 @@
         "abitrate": "72 kb/s"
     },
     "output": {
-        "output_type": "VIDEO",
-        "output_label": "HD test1 output",
-        "output_bucket": "ct-my-bucket-out/output/",
-        "output_file": "test1_hd.mp4",
-        "format": "mp4",
-        "s3_rrs": true,
-        "s3_encrypt": true,
-        "preset": "h264_AAC_HD",
-        "size": "1280x720",
-        "thumbnails": {
-            "mode": "snapshot",
-            "output_bucket": "ct-my-bucket-out/thumbs/",
-            "label": "test1HD",
-            "s3_rrs": true,
-            "size": "64x48"
-        },
-        "watermark": {
-            "input_bucket": "ct-my-bucket-in/watermark/",
-            "input_file": "watermark.png",
-            "size": "48x48",
-            "opacity": 0.6,
-            "x": "20",
-            "y": "20"
-        }
+        "output_type": "THUMB",
+	"mode": "snapshot",
+	"output_bucket": "ct-my-bucket-out",
+	"output_file": "/output1/thumbs/test1_thumb.png",
+	"s3_rrs": true,
+	"size": "160x120",
+	"snapshot_sec": 5
     }
 }

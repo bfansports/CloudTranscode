@@ -9,6 +9,7 @@
             "type": "string"
         },
         "input_type": {
+            "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ],
             "description": "Type of the input file to transcode: VIDEO, AUDIO, DOC, IMG",
             "type": "string"
         },

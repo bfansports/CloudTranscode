@@ -24,40 +24,70 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Perfom input validation
         $input = $this->do_input_validation($task, $activityType["name"]);
         
-        // Create TMP folder and download the input file
-        $pathToFile = $this->get_file_to_process($task, $input);
+        log_out(
+            "INFO", 
+            basename(__FILE__), "Preparing Asset validation ...",
+            $this->activityLogKey
+        );
+
+        // Create TMP storage to store input file to transcode 
+        $inputFileInfo = pathinfo($input->{'input_file'});
+        // Use workflowID to generate a unique TMP folder localy.
+        $tmpPathInput = self::TMP_FOLDER 
+            . $task["workflowExecution"]["workflowId"] . "/" 
+            . $inputFileInfo['dirname'];
+        if (!file_exists($tmpPathInput))
+            if (!mkdir($tmpPathInput, 0750, true))
+                throw new CTException(
+                    "Unable to create temporary folder '$tmpPathInput' !",
+                    self::TMP_FOLDER_FAIL
+                );
+
+        // Download input file and store it in TMP folder
+        $saveFileTo = $tmpPathInput . "/" . $inputFileInfo['basename'];
+        $pathToInputFile = 
+            $this->get_file_to_process(
+                $task, 
+                $input,
+                $saveFileTo
+            );
         
         /**
          * PROCESS FILE
          */
-        log_out("INFO", basename(__FILE__), "Starting Asset validation ...",
-            $this->activityLogKey);
-        log_out("INFO", basename(__FILE__), 
-            "Gathering information about input file '$pathToFile' - Type: " . $input->{'input_type'},
-            $this->activityLogKey);
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Gathering information about input file '$pathToInputFile' - Type: " 
+            . $input->{'input_type'},
+            $this->activityLogKey
+        );
         
         // Load the right transcoder base on input_type
         // Get asset detailed info
         switch ($input->{'input_type'}) 
         {
-        case self::VIDEO:
+        case VIDEO:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
             
             // Initiate transcoder obj
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Validate all outputs presets before checking input
-            foreach ($input->{'outputs'} as $ouput)
-                $videoTranscoder->validate_preset($ouput);
+            foreach ($input->{'outputs'} as $output) {
+                // Presets are only for VIDEO
+                if ($output->{'output_type'} == VIDEO)
+                    $videoTranscoder->validate_preset($output);
+            }
             // Get input video information
-            $assetInfo = $videoTranscoder->get_asset_info($pathToFile);
+            $assetInfo = $videoTranscoder->get_asset_info($pathToInputFile);
             break;
-        case self::IMAGE:
+        case IMAGE:
                 
             break;
-        case self::AUDIO:
+        case AUDIO:
                 
             break;
-        case self::DOC:
+        case DOC:
                 
             break;
         }

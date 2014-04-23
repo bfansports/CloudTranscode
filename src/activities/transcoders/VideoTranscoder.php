@@ -28,6 +28,8 @@ class VideoTranscoder extends BasicTranscoder
     const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
     const WATERMARK_ERROR       = "WATERMARK_ERROR";
     
+    const SNAPSHOT_SEC_DEFAULT  = 0;
+    const INTERVALS_DEFAULT     = 10;
     
     
     /***********************
@@ -35,15 +37,87 @@ class VideoTranscoder extends BasicTranscoder
      * Below is the code used to transcode videos based on the JSON format
      */
 
-    // Generate FFmpeg command for output transcoding
-    private function craft_ffmpeg_cmd($pathToInputFile,
-        $inputAssetInfo, &$outputDetails)
+    // Start FFmpeg for output transcoding
+    public function transcode_asset(
+        $pathToInputFile, 
+        $pathToOutputFiles,
+        $inputAssetInfo, 
+        $outputDetails)
     {
-        $inputFileInfo = pathinfo($pathToInputFile);
-        $ouputFileInfo = pathinfo($outputDetails->{"output_file"});
-        // TMP path to output file 
-        $pathToOutputFile = $outputDetails->{'path_to_output_file'} = $inputFileInfo['dirname'] . "/transcode/" . $ouputFileInfo['basename'];
+        // Generate formatted FFMpeg CMD for VIDEO or THUMB output
+        if ($outputDetails->{'output_type'} == VIDEO)
+            $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
+                $pathToInputFile,
+                $pathToOutputFiles,
+                $inputAssetInfo, 
+                $outputDetails
+            ); 
+        else if ($outputDetails->{'output_type'} == THUMB)
+            $ffmpegCmd = $this->craft_ffmpeg_cmd_thumb(
+                $pathToInputFile,
+                $pathToOutputFiles,
+                $inputAssetInfo, 
+                $outputDetails
+            );
         
+        /* log_out( */
+        /*     "INFO",  */
+        /*     basename(__FILE__),  */
+        /*     "FFMPEG CMD:\n$ffmpegCmd\n", */
+        /*     $this->activityLogKey */
+        /* ); */
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Start Transcoding Asset '$pathToInputFile' ...",
+            $this->activityLogKey
+        );
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Video duration (sec): " . $inputAssetInfo->{'duration'},
+            $this->activityLogKey
+        );
+    
+        // Use executer to start FFMpeg command
+        // Use 'capture_progression' function as callback
+        // Pass video 'duration' as parameter
+        // Sleep 1sec between turns and callback every 10 turns
+        // Output progression logs (true)
+        $out = $this->executer->execute(
+            $ffmpegCmd, 
+            1, 
+            array(2 => array("pipe", "w")),
+            array($this, "capture_progression"), 
+            $inputAssetInfo->{'duration'}, 
+            true, 
+            10
+        );
+        
+        // Test if we have an output file !
+        if (!file_exists($pathToOutputFiles) || is_dir_empty($pathToOutputFiles))
+            throw new CTException(
+                "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
+                self::TRANSCODE_FAIL
+            );
+    
+        // No error. Transcode successful
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Transcoding successfull !",
+            $this->activityLogKey
+        );
+    }
+
+    // Generate FFmpeg command for video transcoding
+    private function craft_ffmpeg_cmd_video(
+        $pathToInputFile,
+        $pathToOutputFiles,
+        $inputAssetInfo, 
+        $outputDetails)
+    {
+        // Check if a size is provided to override preset size
         $size = $this->set_output_video_size($inputAssetInfo, $outputDetails);
         
         $videoCodec = $outputDetails->{'preset_values'}->{'video_codec'};
@@ -69,7 +143,8 @@ class VideoTranscoder extends BasicTranscoder
         if (isset($outputDetails->{'preset_values'}->{'video_codec_options'}))
             $formattedOptions = 
                 $this->set_output_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
-
+        
+        // Process options for watermark
         if (isset($outputDetails->{'watermark'}) && $outputDetails->{'watermark'})
             $watermarkOptions = 
                 $this->get_watermark_options($pathToInputFile,
@@ -86,14 +161,59 @@ class VideoTranscoder extends BasicTranscoder
         $ffmpegArgs .= " $formattedOptions";
         $ffmpegArgs .= " $watermarkOptions";
         
+        // Append output filename to path
+        $pathToOutputFiles .= "/" . $outputDetails->{'output_file_info'}['basename'];
         // Final command
-        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFile";
+        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFiles";
+            
+        return ($ffmpegCmd);
+    }
+    
+    // Craft FFMpeg command to generate thumbnails
+    private function craft_ffmpeg_cmd_thumb(
+        $pathToInputFile,
+        $pathToOutputFiles,
+        $inputAssetInfo, 
+        $outputDetails)
+    {
+        $outputFileInfo = pathinfo($outputDetails->{'output_file'});
+        if ($outputDetails->{'mode'} == 'snapshot')
+        {
+            $snapshot_sec = self::SNAPSHOT_SEC_DEFAULT;
+            if (isset($outputDetails->{'snapshot_sec'}) &&
+                $outputDetails->{'snapshot_sec'} > 0)
+                $snapshot_sec = $outputDetails->{'snapshot_sec'};
+                
+            $time = gmdate("H:i:s", $snapshot_sec) . ".000";
+            $pathToOutputFiles .= "/" . $outputFileInfo['basename'];
+            $frameOptions = " -vframes 1 -ss $time $pathToOutputFiles";
+        }
+        else if ($outputDetails->{'mode'} == 'intervals')
+        {
+            $intervals = self::INTERVALS_DEFAULT;
+            if (isset($outputDetails->{'intervals'}) &&
+                $outputDetails->{'intervals'} > 0)
+                $intervals = $outputDetails->{'intervals'};
+            
+            $pathToOutputFiles .= "/" . $outputFileInfo['basename'] . "%06d." 
+                . $outputFileInfo['extension'];
+            $frameOptions = " -vf fps=fps=1/$intervals $pathToOutputFiles";
+        }
+
+        // Create FFMpeg arguments
+        $ffmpegArgs =  " -i $pathToInputFile -y -threads 0 -f image2";
+        $ffmpegArgs .= " -s " . $outputDetails->{'size'};
+        $ffmpegArgs .= " $frameOptions";
+
+        // Final command
+        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFiles";
         
         return ($ffmpegCmd);
     }
 
     // Get watermark info to generate overlay options for ffmpeg
-    private function get_watermark_options($pathToVideo,
+    private function get_watermark_options(
+        $pathToVideo,
         $watermarkOptions)
     {
         // Get info about the video in order to save the watermark in same location
@@ -112,7 +232,7 @@ class VideoTranscoder extends BasicTranscoder
             $this->activityLogKey);
 
         // Transform watermark for opacity
-        $convertCmd = "convert $watermarkPath -channel A -evaluate Divide " . $watermarkOptions->{'opacity'} . " $newWatermarkPath";
+        $convertCmd = "convert $watermarkPath -alpha on -channel A -evaluate Multiply " . $watermarkOptions->{'opacity'} . " +channel $newWatermarkPath";
         $out = $this->executer->execute($convertCmd, 1, 
             array(1 => array("pipe", "w"), 2 => array("pipe", "w")),
             false, false, 
@@ -203,68 +323,6 @@ class VideoTranscoder extends BasicTranscoder
         }
 
         return ($size);
-    }
-
-    // Start FFmpeg for output transcoding
-    public function transcode_asset($pathToInputFile, $inputAssetInfo, 
-        $outputDetails)
-    {
-        // Get formatted FFMpeg CMD
-        $ffmpegCmd = $this->craft_ffmpeg_cmd($pathToInputFile,
-            $inputAssetInfo, $outputDetails);
-
-        // Path where output file will be stored temporarly
-        $pathToOutputFile = $outputDetails->{'path_to_output_file'};
-        
-        log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "FFMPEG CMD:\n$ffmpegCmd\n",
-            $this->activityLogKey
-        );
-        log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "Start Transcoding Asset '$pathToInputFile' to '$pathToOutputFile' ...",
-            $this->activityLogKey
-        );
-        log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "Video duration (sec): " . $inputAssetInfo->{'duration'},
-            $this->activityLogKey
-        );
-    
-        // Use executer to start FFMpeg command
-        // Use 'capture_progression' function as callback
-        // Pass 'video_duration' as parameter
-        // Sleep 1sec between turns and callback every 10 turns
-        $out = $this->executer->execute(
-            $ffmpegCmd, 
-            1, 
-            array(2 => array("pipe", "w")),
-            array($this, "capture_progression"), 
-            $inputAssetInfo->{'duration'}, 
-            true, 
-            10
-        );
-        
-        // Test if we have an output file !
-        if (!file_exists($pathToOutputFile) || !filesize($pathToOutputFile))
-            throw new CTException(
-                "Output file $pathToOutputFile hasn't been created successfully or is empty !",
-                self::TRANSCODE_FAIL
-            );
-    
-        // No error. Transcode successful
-        log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "Transcoding successfull !",
-            $this->activityLogKey
-        );
-        
-        return ($pathToOutputFile);
     }
     
     // REad ffmpeg output and calculate % progress

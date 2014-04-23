@@ -9,8 +9,8 @@
 	{
 	    "output_type": "VIDEO",
 	    "output_label": "SD smartphone test2 output",
-	    "output_bucket": "ct-my-bucket-out/output2/",
-	    "output_file": "test2_sd_phone.mp4",
+	    "output_bucket": "ct-my-bucket-out",
+	    "output_file": "/output2/test2_sd_phone.mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": false,
 	    "preset": "480p-16.9-generic",
@@ -27,8 +27,8 @@
 	{
 	    "output_type": "VIDEO",
 	    "output_label": "HD smartphone test2 output",
-	    "output_bucket": "ct-my-bucket-out/output2/",
-	    "output_file": "test2_hd_phone.mp4",
+	    "output_bucket": "ct-my-bucket-out",
+	    "output_file": "/output2/test2_hd_phone.mp4",
 	    "s3_rrs": false,
 	    "s3_encrypt": true,
 	    "preset": "1080p-generic",
@@ -44,12 +44,12 @@
 	},
 	{
 	    "output_type": "THUMB",
-	    "mode": "interval",
+	    "mode": "intervals",
 	    "output_bucket": "ct-my-bucket-out",
-	    "output_file": "/output2/thumbs/test2_thumb.png",
+	    "output_file": "/output2/thumbs/test2_thumb.jpg",
 	    "s3_rrs": true,
 	    "size": "160x120",
-	    "interval": 5
+	    "intervals": 5
 	}
     ]
 }

@@ -6,7 +6,8 @@
     "properties": {
         "api_key": {
             "description": "API for your Cloud Transcode account",
-            "type": "string"
+            "type": "string",
+	    "maxLength": 256
         },
         "input_type": {
             "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ],
@@ -15,15 +16,21 @@
         },
         "input_bucket": {
             "description": "S3 bucket where the file is located",
-            "type": "string"
+            "type": "string",
+	    "pattern": "^[0-9a-z\\.\\-]+$",
+	    "minLength": 3,
+	    "maxLength": 63
         },
         "input_file": {
             "description": "Path to the file to process",
-            "type": "string"
+            "type": "string",
+	    "minLength": 1,
+	    "maxLength": 1024
         },
         "job_label": {
             "description": "Name to your job",
-            "type": "string"
+            "type": "string",
+	    "maxLength": 256
         },
         "outputs": {
             "description": "List of all the outputs needed for that job array of max 100 entries",

@@ -16,11 +16,16 @@
         },
         "output_bucket": {
             "type": "string",
-            "description": "S3 bucket and path where the thumbnails will be uploaded"
+            "description": "S3 bucket and path where the thumbnails will be uploaded",
+	    "pattern": "^[0-9a-z\\.\\-]+$",
+	    "minLength": 3,
+	    "maxLength": 63
         },
         "output_file": {
             "type": "string",
-            "description": "basename for the thumbnails to generate. We will appen sequence number if the 'interval' mode is selected"
+            "description": "basename for the thumbnails to generate. We will appen sequence number if the 'interval' mode is selected",
+	    "minLength": 1,
+	    "maxLength": 1024
         },
         "intervals": {
             "type": "integer",

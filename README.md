@@ -18,9 +18,9 @@ services needed: Amnazon SWF, SQS and S3.
 It means that you can have a local, hybrid or full cloud setup using Amazon Ec2
 instance, it's up to you.
 
-# Transcoding currently supported
+# Transcoding supported
 
-- Video to Video transcoding. One video IN, many videos OUT. Any format and codec supported by ffmpeg.
+- Video to Video transcoding: One video IN, many videos OUT. Any format and codec supported by ffmpeg.
 - Video to Thumbnails transcoding: Snapshot at certain time in video or intervals snapshot every N seconds.
 - Watermark integration in video: Take image IN and position it on top of the video. Custom position and transparency.
 

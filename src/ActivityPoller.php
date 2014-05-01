@@ -11,6 +11,7 @@ require __DIR__ . "/activities/BasicActivity.php";
 
 class ActivityPoller
 {
+    private $debug;
     private $domain;
     private $knownActivities;
     private $activitiesToHandle;
@@ -22,7 +23,9 @@ class ActivityPoller
     function __construct($config, $activitiesToHandle)
     {
         global $activities;
+        global $debug;
 
+        $this->debug  = $debug;
         $this->domain = $config['cloudTranscode']['workflow']['domain'];
         $this->knownActivities = $config['cloudTranscode']['activities'];
         $this->activitiesToHandle = $activitiesToHandle["activities"];
@@ -30,19 +33,11 @@ class ActivityPoller
     
         // Init domain. see: Utils.php
         if (!init_domain($this->domain)) 
-        {
-            log_out("ERROR", basename(__FILE__), 
-                "Unable to init domain !");
-            exit(1);
-        }
+            throw new Exception("Unable to init the domain !\n");
 
         // Check and load activities to handle
         if (!$this->register_activities())
-        {
-            log_out("ERROR", basename(__FILE__), 
-                "No activity registered ! Exiting ...");
-            exit(1);
-        }
+            throw new Exception("No activity class registered! Exiting ...");
     }	
 
     // We poll for new activities
@@ -57,8 +52,13 @@ class ActivityPoller
         // Poll from all the taskList registered for each activities 
         foreach ($this->activityTaskLists as $taskList => $x)
         {
-            log_out("INFO", basename(__FILE__), 
-                "Polling taskList '" . $taskList  . "' ... ");
+            if ($this->debug)
+                log_out(
+                    "INFO", 
+                    basename(__FILE__), 
+                    "Polling activity taskList '" . $taskList  . "' ... "
+                );
+            
             try {
                 // Call SWF and poll for incoming tasks
                 $activityTask = $swf->pollForActivityTask([
@@ -66,8 +66,11 @@ class ActivityPoller
                         "taskList" => array("name" => $taskList)
                     ]);
             } catch (Exception $e) {
-                log_out("ERROR", basename(__FILE__), 
-                    "Unable to poll activity tasks ! " . $e->getMessage());
+                log_out(
+                    "ERROR", 
+                    basename(__FILE__), 
+                    "Unable to poll activity tasks! " . $e->getMessage()
+                );
             }
 
             // Handle and process the new activity task
@@ -155,11 +158,16 @@ class ActivityPoller
                                     "version" => $activityToHandle["version"]
                                 ]);
                     } catch (CTException $e) {
-	    
+                        throw new Exception("Unable to load and register activity class '" 
+                            . $activityToHandle["class"] . "'. Abording ...");
                     }
 
-                    log_out("INFO", basename(__FILE__), 
-                        "Activity handler registered: name=" . $activityToHandle["name"] . ",version=" . $activityToHandle["version"]);
+                    log_out("INFO", 
+                        basename(__FILE__), 
+                        "Activity handler registered: name=" 
+                        . $activityToHandle["name"] . ",version=" 
+                        . $activityToHandle["version"]
+                    );
 
                     // REgister this activity taskList is the activityTaskLists Tracker
                     if (!isset($this->activityTaskLists[$activityToHandle["activityTaskList"]]))
@@ -179,7 +187,7 @@ class ActivityPoller
     {
         foreach ($this->activitiesToHandle as $activityToHandle)
         {
-            if ($activityToHandle["name"] == $activityType["name"] &&
+            if ($activityToHandle["name"]    == $activityType["name"] &&
                 $activityToHandle["version"] == $activityType["version"])
                 return $activityToHandle;
         }
@@ -194,73 +202,98 @@ class ActivityPoller
  * POLLER START
  */
 
-function usage()
+$debug = false;
+
+function usage($defaultConfigFile)
 {
-    echo("Usage: php ". basename(__FILE__) . " [-h] -j '{inline JSON input}' -c <path to JSON config file>\n");
+    echo("Usage: php ". basename(__FILE__) . " [-h] [-d] [-c <path to JSON config file>] -j '{inline JSON listing activities to handle}' -a <path to JSON config file listing activities to handle>\n");
     echo("-h: Print this help\n");
-    echo("-c <file path>: Specify the path to JSON config file containing the list of activities this ActivityPoller can handle\n");
+    echo("-d: Debug mode\n");
+    echo("-c <file path>: Optional parameter to override the default configuration file: '$defaultConfigFile'.\n");
+    echo("-a <file path>: Specify the path to JSON config file containing the list of activities this ActivityPoller can handle. (see: config/\n");
     echo("-j '{JSON}': Specify JSON config as text inline.\n");
     exit(0);
 }
 
-function check_input_parameters()
+function check_input_parameters(&$defaultConfigFile)
 {
+    global $debug;
+
     // Handle input parameters
-    $options = getopt("j:c:h");
+    $options = getopt("j:c:a:hd");
     if (!count($options) || isset($options['h']))
-        usage();
+        usage($defaultConfigFile);
+
+    if (isset($options['d']))
+        $debug = true;
   
     if (!isset($options['j']) &&
-        !isset($options['c']))
+        !isset($options['a']))
     {
-        log_out("ERROR", basename(__FILE__), "You must provide JSON input -c or -j option !");
-        usage();
+        log_out("ERROR", basename(__FILE__), "You must provide JSON input containing the list of activities this ActivityPoller can handle. Use -a or -j option!");
+        usage($defaultConfigFile);
     }
   
     if (isset($options['j']) &&
-        isset($options['c']))
+        isset($options['a']))
     {
-        log_out("ERROR", basename(__FILE__), "Provide only one config. Both -c or -j option are provided !");
-        usage();
+        log_out("ERROR", basename(__FILE__), "Provide only one JSON input listing of activities this ActivityPoller can handle. Can't provide both -a or -j options!");
+        usage($defaultConfigFile);
     }
 
     if (isset($options['j']))
         if (!($activities = json_decode($options['j'], true)))
-            return false;
-  
+            throw new Exception("JSON provide as part of -j option is invalid!");
+    
+    if (isset($options['a']))
+        if (!($activities = json_decode(file_get_contents($options['a']), true)))
+            throw new Exception("JSON provide as part of -a option is invalid!");
+
     if (isset($options['c']))
-        if (!($activities = json_decode(file_get_contents($options['c']), true)))
-            return false;
+    {
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Custom config file provided: '" . $options['c'] . "'"
+        );
+        $defaultConfigFile = $options['c'];
+    }
   
     return $activities;
 }
 
-// Check input parameters
-if (!($activities = check_input_parameters()))
-{
-    log_out("ERROR", basename(__FILE__), 
-        "Invalid JSON configuration !");
-    exit(1);
-}
+
 
 // Get config file
-$config = json_decode(file_get_contents(dirname(__FILE__) . "/../config/cloudTranscodeConfig.json"), 
-    true);
-log_out("INFO", basename(__FILE__), 
-	"Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
-log_out("INFO", basename(__FILE__), "Clients: ");
-print_r($config['clients']);
+$defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
+// Check input parameters
+$activities = check_input_parameters($defaultConfigFile);
+$config     = json_decode(file_get_contents($defaultConfigFile), true);
+log_out(
+    "INFO", 
+    basename(__FILE__), 
+	"Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'"
+);
+log_out("INFO", basename(__FILE__), $config['clients']);
 
 // Instantiate AcivityPoller
 $activityPoller = new ActivityPoller($config, $activities);
 
 // Start polling loop
-log_out("INFO", basename(__FILE__), "Starting activity tasks polling");
+log_out(
+    "INFO", 
+    basename(__FILE__), 
+    "Starting activity tasks polling"
+);
 while (1)
 {
     if (!$activityPoller->poll_for_activities())
     {
-        log_out("INFO", basename(__FILE__), "Polling for activities finished !");
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Polling for activities finished !"
+        );
         exit(1);
     }
 

@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema#",
+    "id": "http://sport-archive.com/input-schema/ValidateInputAsset#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schema for ValidateInputAndAsset activity task",
     "type": "object",
@@ -7,6 +7,7 @@
         "api_key": {
             "description": "API for your Cloud Transcode account",
             "type": "string",
+	    "pattern": "^.+$",
 	    "maxLength": 256
         },
         "input_type": {
@@ -24,11 +25,13 @@
         "input_file": {
             "description": "Path to the file to process",
             "type": "string",
+	    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
 	    "minLength": 1,
 	    "maxLength": 1024
         },
         "job_label": {
             "description": "Name to your job",
+	    "pattern": "^.+$",
             "type": "string",
 	    "maxLength": 256
         },

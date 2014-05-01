@@ -3,11 +3,44 @@
 // Log to STDOUT
 function log_out($type, $source, $message, $workflowId = 0)
 {
-    $log = time() . " [$type] [$source]";
-    if ($workflowId)
-        $log .= " [$workflowId]";
+    global $argv;
 
-    echo "$log $message\n";
+    $log = [
+        "time" => time(),
+        "source" => $source,
+        "type" => $type,
+        "message" => $message
+    ];
+    
+    if ($workflowId)
+        $log["workflowId"] = $workflowId;
+    
+    if (!openlog ($argv[0], LOG_CONS|LOG_PID, LOG_LOCAL1))
+        throw new CTException("Unable to connect to Syslog!", 
+            "OPENLOG_ERROR");
+    
+    switch ($type)
+    {
+    case "INFO":
+        $priority = LOG_INFO;
+        break;
+    case "ERROR":
+        $priority = LOG_ERR;
+        break;
+    case "WARNING":
+        $priority = LOG_WARNING;
+        break;
+    case "DEBUG":
+        $priority = LOG_DEBUG;
+        break;
+    default:
+        throw new CTException("Unable to connect to Syslog!", 
+            "LOG_TYPE_ERROR");
+    }
+    
+    $out = json_encode($log);
+    echo("$out\n");
+    syslog($priority, $out);
 }
 
 // Check if directory is empty

@@ -121,13 +121,11 @@ class TranscodeAssetActivity extends BasicActivity
         // XXX. HERE, Notify upload starting through SQS !
         // XXX
         
-        
+        // Sanitize output bucket path "/"
+        $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
         // XXX: Add tmp workflowID to output bucket to seperate upload
         // XXX: For testing only !
         $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
-        
-        // Sanitize output bucket path "/"
-        $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
         
         // Prepare S3 options
         $options = array("rrs" => false, "encrypt" => false);

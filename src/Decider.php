@@ -15,6 +15,7 @@ require __DIR__ . '/DeciderBrain.php';
 
 class Decider
 {
+    private $debug;
     private $domain;
     private $decisionTaskList;
     private $activityList;
@@ -27,28 +28,20 @@ class Decider
   
     function __construct($config)
     {
+        global $debug;
+        
+        $this->debug  = $debug;
         $this->domain           = $config['cloudTranscode']['workflow']['domain'];
         $this->decisionTaskList = array("name" => $config['cloudTranscode']['workflow']['decisionTaskList']);
         $this->activityList     = $config['cloudTranscode']['activities'];
     
         // Init domain. see: Utils.php
         if (!init_domain($this->domain))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), "Unable to init the domain !"
-            );
-            exit(1);
-        }
+            throw new Exception("Unable to init the domain !\n");
+        
         // Init workflow. see: Utils.php
         if (!init_workflow($config['cloudTranscode']['workflow']))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), "Unable to init the workflow !"
-            );
-            exit(1);
-        }
+            throw new Exception("Unable to init the workflow !\n");
 
         // Instantiate manager
         // Used to perform actions on the workflow. Toolbox.
@@ -60,8 +53,11 @@ class Decider
     
         // Instantiate DeciderBrain
         // This is where the decisions are made and new activity initiated
-        $this->deciderBrain = new DeciderBrain($config, $this->workflowTracker, 
-            $this->workflowManager);
+        $this->deciderBrain = new DeciderBrain(
+            $config, 
+            $this->workflowTracker, 
+            $this->workflowManager
+        );
     }
 
     // Poll for decision tasks
@@ -70,13 +66,15 @@ class Decider
         global $swf;
         global $activities; 
 
-        try {
-            // Poll decision task
+        if ($this->debug)
             log_out(
                 "INFO", 
                 basename(__FILE__), 
-                "Polling ..."
+                "Polling decision taskList ..."
             );
+
+        try {
+            // Poll decision task
             $decisionTask = $swf->pollForDecisionTask(
                 array(
                     "domain"   => $this->domain,
@@ -147,29 +145,35 @@ class Decider
  * DECIDER START
  */
 
-
+$debug = false;
 
 function usage($defaultConfigFile)
 {
     echo("Usage: php ". basename(__FILE__) . " [-h] [-c <path to JSON config file>]\n");
     echo("-h: Print this help\n");
+    echo("-d: Debug mode\n");
     echo("-c <file path>: Optional parameter to override the default configuration file: '$defaultConfigFile'.\n");
     exit(0);
 }
 
 function check_input_parameters(&$defaultConfigFile)
 {
+    global $debug;
+    
     // Handle input parameters
-    $options = getopt("c:h");
+    $options = getopt("c:hd");
     if (isset($options['h']))
         usage($defaultConfigFile);
+    
+    if (isset($options['d']))
+        $debug = true;
   
     if (isset($options['c']))
     {
         log_out(
             "INFO", 
             basename(__FILE__), 
-            "Custom config file: '" . $options['c'] . "'"
+            "Custom config file provided: '" . $options['c'] . "'"
         );
         $defaultConfigFile = $options['c'];
     }
@@ -178,7 +182,6 @@ function check_input_parameters(&$defaultConfigFile)
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 check_input_parameters($defaultConfigFile);
-
 $config = json_decode(file_get_contents($defaultConfigFile), true);
 log_out(
     "INFO", 
@@ -190,8 +193,7 @@ log_out(
 	basename(__FILE__), 
     "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'"
 );
-log_out("INFO", basename(__FILE__), "Clients: ");
-print_r($config['clients']);
+log_out("INFO", basename(__FILE__), $config['clients']);
 
 // Start decider
 $decider = new Decider($config);

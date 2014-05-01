@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema#",
+    "id": "http://sport-archive.com/input-schema/TranscodeAsset#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schema for TranscodeAsset activity task",
     "type": "object",

@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema/output/video",
+    "id": "http://sport-archive.com/input-schema/output/video#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "CT transcode output specification for videos",
     "type": "object",
@@ -23,6 +23,7 @@
         "output_file": {
             "type": "string",
             "description": "Filename where to upload the resulting file",
+	    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
 	    "minLength": 1,
 	    "maxLength": 1024
         },
@@ -40,7 +41,8 @@
         },
         "size": {
             "type": "string",
-            "description": "original video/picture size"
+	    "pattern": "^[0-9]+x[0-9]+$",
+            "description": "original video/picture size ([width]x[height])"
         },
         "video_codec": {
             "type": "string",
@@ -52,14 +54,16 @@
         },
         "video_bitrate": {
             "type": "string",
-            "description": "Override default preset bitrate for video"
+	    "pattern": "^[0-9]+k$",
+            "description": "Override default preset bitrate for video. In Kbits/s."
         },
         "audio_bitrate": {
             "type": "string",
-            "description": "Override default preset bitrate for audio"
+	    "pattern": "^[0-9]+k$",
+            "description": "Override default preset bitrate for audio. In Kbits/s."
         },
         "frame_rate": {
-            "type": "string",
+            "type": "number",
             "description": "Override default preset frame rate"
         },
 	"keep_ratio": {
@@ -69,43 +73,8 @@
         "no_enlarge": {
             "type": "boolean",
             "description": "If size provided is bigger than original the transcode will fail."
-        },
-        "watermark": {
-            "$ref": "#/definitions/watermark",
-            "description": "Provide watermark information if any"
         }
     },
     "required": ["preset"],
-    "additionalProperties": false,
-
-    "definitions": {
-        "watermark": {
-            "input_butcket": {
-                "type": "string",
-                "description": "Bucket name and path where the watermark is located"
-            },
-            "input_file": {
-                "type": "string",
-                "description": "Filename of the file containing the watermark"
-            },
-            "size": {
-                "type": "string",
-                "description": "Size of the watermark in the video result"
-            }, 
-            "opacity": {
-                "type": "float",
-                "description": "Change the default watermark opacity"
-            },
-            "x": {
-                "type": "integer",
-                "description": "Change the watermark position. In pixels"
-            },
-            "y": {
-                "type": "integer",
-                "description": "Change the watermark position. In pixels"
-            },
-            "required": ["input_bucket", "input_file"],
-            "additionalProperties": false
-        }
-    }
+    "additionalProperties": true
 }

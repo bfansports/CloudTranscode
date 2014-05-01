@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema/output/base",
+    "id": "http://sport-archive.com/input-schema/output/base#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "CT transcode output specification",
     "type": "object",
@@ -19,6 +19,7 @@
         "output_file": {
             "type": "string",
             "description": "Filename where to upload the resulting file",
+	    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
 	    "minLength": 1,
 	    "maxLength": 1024
         },

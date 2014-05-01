@@ -8,28 +8,33 @@
 require __DIR__ . '/utils/Utils.php';
 
 $input_file = "";
+$debug = false;
 
 function usage()
 {
-    echo("Usage: php ". basename(__FILE__) . " [-h] -c <path to JSON input file>\n");
+    echo("Usage: php ". basename(__FILE__) . " [-h] -i <path to JSON input file>\n");
     echo("-h: Print this help\n");
-    echo("-c <file path>: Specify a JSON input file to simulate input from SQS. Useful for testing Input JSON files and performing tests !\n");
+    echo("-i <file path>: Specify a JSON input file to simulate input from SQS. Useful for testing Input JSON files and performing tests !\n");
     exit(0);
 }
 
 function check_input_parameters()
 {
     global $input_file;
+    global $debug;
     
     // Handle input parameters
-    $options = getopt("c:h");
+    $options = getopt("i:hd");
     
     if (isset($options['h']))
         usage();
     
-    if (isset($options['c']))
+    if (isset($options['d']))
+        $debug = true;
+    
+    if (isset($options['i']))
     {
-        $input_file = $options['c'];
+        $input_file = $options['i'];
         if (!($input = file_get_contents($input_file)))
         {
             log_out("ERROR", basename(__FILE__), "Invalid JSON file! Falling back on SQS queue ...");
@@ -94,8 +99,10 @@ function poll_sqs_messages($config, $inputQueues)
 {
     // SQS client
     global $sqs;
-    
-    log_out("INFO", basename(__FILE__), "Polling ...");
+    global $debug;
+
+    if ($debug)
+        log_out("INFO", basename(__FILE__), "Polling SQS messages ...");
 
     foreach ($inputQueues as $queueUrl)
     {                
@@ -141,16 +148,23 @@ print_r($input);
 
 // Get config file
 $config = json_decode(file_get_contents(dirname(__FILE__) . "/../config/cloudTranscodeConfig.json"), true);
-log_out("INFO", basename(__FILE__), "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'");
-log_out("INFO", basename(__FILE__), "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'");
-log_out("INFO", basename(__FILE__), "Clients: ");
-print_r($config['clients']);
+log_out(
+    "INFO", 
+    basename(__FILE__), 
+    "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'"
+);
+log_out(
+    "INFO", 
+    basename(__FILE__), 
+    "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'"
+);
+log_out("INFO", basename(__FILE__), $config['clients']);
 
 /** FROM Utils.php **/
 if (!init_domain($config['cloudTranscode']['workflow']['domain']))
-    throw new Exception("[ERROR] Unable to init the domain !\n");
+    throw new Exception("Unable to init the domain !\n");
 if (!init_workflow($config['cloudTranscode']['workflow']))
-    throw new Exception("[ERROR] Unable to init the workflow !\n");
+    throw new Exception("Unable to init the workflow !\n");
 
 // Get SQS queue URL - "input" queue
 if (!$input)

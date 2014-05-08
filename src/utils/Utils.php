@@ -27,6 +27,9 @@ function log_out($type, $source, $message, $workflowId = 0)
     case "ERROR":
         $priority = LOG_ERR;
         break;
+    case "FATAL":
+        $priority = LOG_ALERT;
+        break;
     case "WARNING":
         $priority = LOG_WARNING;
         break;
@@ -39,7 +42,10 @@ function log_out($type, $source, $message, $workflowId = 0)
     }
     
     $out = json_encode($log);
-    echo("$out\n");
+    
+    if (!is_string($log['message']))
+        $log['message'] = json_encode($log['message']);
+    echo($log['time'] . " [" . $log['type'] . "] [" . $log['source'] . "] " . $log['message'] . "\n");
     syslog($priority, $out);
 }
 
@@ -169,6 +175,9 @@ class CTException extends Exception
 // Composer for loading dependices: http://getcomposer.org/
 require __DIR__ . "/../../vendor/autoload.php";
 
+// XXX temporary require. Should use Composer for that!
+require "/home/koxon/dev/CloudTranscode/cloudTranscodeComSDK.git/src/CTComSDK.php";
+
 // Amazon library
 use Aws\Common\Aws;
 use Aws\Swf\Exception;
@@ -177,8 +186,6 @@ use Aws\Swf\Exception;
 $aws = Aws::factory(__DIR__ . "/../../config/awsConfig.json");
 // SWF client
 $swf = $aws->get('Swf');
-// SQS Client
-$sqs = $aws->get('Sqs');
 
 // File types 
 define('VIDEO', 'VIDEO');

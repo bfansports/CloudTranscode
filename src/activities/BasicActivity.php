@@ -196,17 +196,21 @@ class BasicActivity
     }
     
     // Create TMP folder and download file to process
-    public function get_file_to_process($task, $input, $saveFileTo)
+    public function get_file_to_process($task, $inputBuket, $inputFile, $saveFileTo)
     {        
         // Get file from S3 or local copy if any
         $s3Utils = new S3Utils();
         log_out("INFO", 
             basename(__FILE__), 
-            "Downloading '" . $input->{'input_bucket'} . "/" . $input->{'input_file'}  . "' to '$saveFileTo' ...",
+            "Downloading '$inputBuket/$inputFile' to '$saveFileTo' ...",
             $this->activityLogKey);
-        $s3Output = $s3Utils->get_file_from_s3($input->{'input_bucket'}, 
-            $input->{'input_file'}, $saveFileTo,
-            array($this, "s3_get_processing_callback"), $task);
+        $s3Output = $s3Utils->get_file_from_s3(
+            $inputBuket, 
+            $inputFile, 
+            $saveFileTo,
+            array($this, "s3_get_processing_callback"), 
+            $task
+        );
         
         log_out("INFO", basename(__FILE__), 
             $s3Output['msg'],

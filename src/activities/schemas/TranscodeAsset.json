@@ -4,6 +4,9 @@
     "title": "Schema for TranscodeAsset activity task",
     "type": "object",
     "properties": {
+	"client": {
+            "$ref": "client.json"
+        },
         "input_json": {
             "description": "Original JSON input submitted to the Workflow",
             "type": "object"

@@ -268,7 +268,16 @@ function check_input_parameters(&$defaultConfigFile)
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 // Check input parameters
 $activities = check_input_parameters($defaultConfigFile);
-$config     = json_decode(file_get_contents($defaultConfigFile), true);
+if (!($config = json_decode(file_get_contents($defaultConfigFile), true)))
+{
+    log_out(
+        "FATAL", 
+        basename(__FILE__), 
+        "Configuration file '$defaultConfigFile' invalid!"
+    );
+    exit(1);
+}
+
 log_out(
     "INFO", 
     basename(__FILE__), 

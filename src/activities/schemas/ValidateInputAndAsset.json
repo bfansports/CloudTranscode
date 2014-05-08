@@ -4,51 +4,61 @@
     "title": "Schema for ValidateInputAndAsset activity task",
     "type": "object",
     "properties": {
-        "api_key": {
-            "description": "API for your Cloud Transcode account",
+        "client": {
+            "$ref": "client.json"
+        },
+	"command": {
+	    "description": "Command to execute. Only 'StartJob' accepted",
             "type": "string",
-	    "pattern": "^.+$",
-	    "maxLength": 256
-        },
-        "input_type": {
-            "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ],
-            "description": "Type of the input file to transcode: VIDEO, AUDIO, DOC, IMG",
-            "type": "string"
-        },
-        "input_bucket": {
-            "description": "S3 bucket where the file is located",
-            "type": "string",
-	    "pattern": "^[0-9a-z\\.\\-]+$",
-	    "minLength": 3,
-	    "maxLength": 63
-        },
-        "input_file": {
-            "description": "Path to the file to process",
-            "type": "string",
-	    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
-	    "minLength": 1,
-	    "maxLength": 1024
-        },
-        "job_label": {
-            "description": "Name to your job",
-	    "pattern": "^.+$",
-            "type": "string",
-	    "maxLength": 256
-        },
-        "outputs": {
-            "description": "List of all the outputs needed for that job array of max 100 entries",
-            "type": "array",
-            "items": {
-                "$ref": "output/base.json",
-                "oneOf": [                    
-                    { "$ref": "output/video.json" },
-		    { "$ref": "output/thumb.json" }
-                ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
-        }
+	    "pattern": "^StartJob$"
+	},
+	"data" : {
+	    "description": "Data for the new transcoding job",
+	    "type": "object",
+	    "properties": {
+		"input_type": {
+		    "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ],
+		    "description": "Type of the input file to transcode: VIDEO, AUDIO, DOC, IMG",
+		    "type": "string"
+		},
+		"input_bucket": {
+		    "description": "S3 bucket where the file is located",
+		    "type": "string",
+		    "pattern": "^[0-9a-z\\.\\-]+$",
+		    "minLength": 3,
+		    "maxLength": 63
+		},
+		"input_file": {
+		    "description": "Path to the file to process",
+		    "type": "string",
+		    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
+		    "minLength": 1,
+		    "maxLength": 1024
+		},
+		"job_label": {
+		    "description": "Name to your job",
+		    "pattern": "^.+$",
+		    "type": "string",
+		    "maxLength": 256
+		},
+		"outputs": {
+		    "description": "List of all the outputs needed for that job array of max 100 entries",
+		    "type": "array",
+		    "items": {
+			"$ref": "output/base.json",
+			"oneOf": [                    
+			    { "$ref": "output/video.json" },
+			    { "$ref": "output/thumb.json" }
+			]
+		    },
+		    "minItems": 1,
+		    "uniqueItems": true
+		}
+	    },
+	    "required": ["input_type", "input_bucket", "input_file", "outputs"],
+	    "additionalProperties": false
+	}
     },
-    "required": ["api_key", "input_type", "input_bucket", "input_file", "outputs"],
+    "required": ["command", "data"],
     "additionalProperties": true
 }

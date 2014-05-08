@@ -30,9 +30,10 @@ class Decider
     {
         global $debug;
         
-        $this->debug  = $debug;
+        $this->debug            = $debug;
         $this->domain           = $config['cloudTranscode']['workflow']['domain'];
-        $this->decisionTaskList = array("name" => $config['cloudTranscode']['workflow']['decisionTaskList']);
+        $this->decisionTaskList = array("name" => 
+            $config['cloudTranscode']['workflow']['decisionTaskList']);
         $this->activityList     = $config['cloudTranscode']['activities'];
     
         // Init domain. see: Utils.php
@@ -141,6 +142,7 @@ class Decider
     }
 }
 
+
 /**
  * DECIDER START
  */
@@ -182,7 +184,15 @@ function check_input_parameters(&$defaultConfigFile)
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 check_input_parameters($defaultConfigFile);
-$config = json_decode(file_get_contents($defaultConfigFile), true);
+if (!($config = json_decode(file_get_contents($defaultConfigFile), true)))
+{
+    log_out(
+        "FATAL", 
+        basename(__FILE__), 
+        "Configuration file '$defaultConfigFile' invalid!"
+    );
+    exit(1);
+}
 log_out(
     "INFO", 
 	basename(__FILE__), 
@@ -195,24 +205,36 @@ log_out(
 );
 log_out("INFO", basename(__FILE__), $config['clients']);
 
-// Start decider
-$decider = new Decider($config);
+// Create decider object
+try {
+    $decider = new Decider($config);
+} 
+catch (Exception $e) {
+    log_out(
+        "FATAL", 
+        basename(__FILE__), 
+        $e->getMessage()
+    );
+    exit(1);
+}
 
-// Start polling loop
-log_out(
-    "INFO", 
-    basename(__FILE__), 
-    "Starting decision tasks polling"
-);
-while (1)
+// Start polling loop to get decision tasks
+if ($debug)
+    log_out(
+        "DEBUG", 
+        basename(__FILE__), 
+        "Starting decision tasks polling"
+    );
+while (42)
 {
     if (!$decider->poll_for_decisions())
     {
-        log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "Polling for decisions over! Exiting ..."
-        );
+        if ($debug)
+            log_out(
+                "DEBUG", 
+                basename(__FILE__), 
+                "Polling for decisions over! Exiting ..."
+            );
         exit(1);
     }
 } 

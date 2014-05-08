@@ -8,7 +8,9 @@ require __DIR__ . '/transcoders/BasicTranscoder.php';
  */
 class ValidateInputAndAssetActivity extends BasicActivity
 {
-  
+    private $data;
+    private $client;
+
     // Perform the activity
     public function do_activity($task)
     {
@@ -23,7 +25,10 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
         // Perfom input validation
         $input = $this->do_input_validation($task, $activityType["name"]);
-        
+        $this->data = $input->{'data'};        
+        if (isset($input->{'client'}))
+            $this->client = $input->{'client'};
+
         log_out(
             "INFO", 
             basename(__FILE__), "Preparing Asset validation ...",
@@ -31,7 +36,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         );
 
         // Create TMP storage to store input file to transcode 
-        $inputFileInfo = pathinfo($input->{'input_file'});
+        $inputFileInfo = pathinfo($this->data->{'input_file'});
         // Use workflowID to generate a unique TMP folder localy.
         $tmpPathInput = self::TMP_FOLDER 
             . $task["workflowExecution"]["workflowId"] . "/" 
@@ -48,7 +53,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
         $pathToInputFile = 
             $this->get_file_to_process(
                 $task, 
-                $input,
+                $this->data->{'input_bucket'},
+                $this->data->{'input_file'},
                 $saveFileTo
             );
         
@@ -59,13 +65,13 @@ class ValidateInputAndAssetActivity extends BasicActivity
             "INFO", 
             basename(__FILE__), 
             "Gathering information about input file '$pathToInputFile' - Type: " 
-            . $input->{'input_type'},
+            . $this->data->{'input_type'},
             $this->activityLogKey
         );
         
         // Load the right transcoder base on input_type
         // Get asset detailed info
-        switch ($input->{'input_type'}) 
+        switch ($this->data->{'input_type'}) 
         {
         case VIDEO:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
@@ -73,7 +79,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
             // Initiate transcoder obj
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Validate all outputs presets before checking input
-            foreach ($input->{'outputs'} as $output) {
+            foreach ($this->data->{'outputs'} as $output) {
                 // Presets are only for VIDEO
                 if ($output->{'output_type'} == VIDEO)
                     $videoTranscoder->validate_preset($output);
@@ -95,14 +101,17 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // XXX
         // XXX. HERE, Notify validation task success through SQS !
         // XXX
-
+        
         // Create result object to be passed to next activity in the Workflow as input
         $result = [
-            "input_json"       => $input, // Original JSON
-            "input_asset_type" => $input->{'input_type'}, // Input asset detailed info
+            "input_json"       => $this->data, // Original JSON
+            "input_asset_type" => $this->data->{'input_type'}, // Input asset detailed info
             "input_asset_info" => $assetInfo, // Input asset detailed info
-            "outputs"          => $input->{'outputs'} // Outputs to generate
+            "outputs"          => $this->data->{'outputs'} // Outputs to generate
         ];
+
+        if (isset($input->{'client'}))
+            $result["client"] = $input->{'client'};
     
         return $result;
     }

@@ -11,6 +11,8 @@ class TranscodeAssetActivity extends BasicActivity
     const TMP_PATH_OPEN_FAIL    = "TMP_PATH_OPEN_FAIL";
     const UNKOWN_OUTPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
 
+    private $input_json;
+
     // Perform the activity
     public function do_activity($task)
     {
@@ -57,7 +59,8 @@ class TranscodeAssetActivity extends BasicActivity
         $pathToInputFile = 
             $this->get_file_to_process(
                 $task, 
-                $input->{'input_json'},
+                $input->{'input_json'}->{'input_bucket'},
+                $input->{'input_json'}->{'input_file'},
                 $saveFileTo
             );
         

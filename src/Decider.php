@@ -57,7 +57,8 @@ class Decider
         $this->deciderBrain = new DeciderBrain(
             $config, 
             $this->workflowTracker, 
-            $this->workflowManager
+            $this->workflowManager, 
+            $this->debug
         );
     }
 

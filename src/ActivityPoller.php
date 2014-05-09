@@ -91,22 +91,32 @@ class ActivityPoller
         // Can activity be handled by this poller ?
         if (!($activity = $this->get_activity($activityType))) 
         {
-            log_out("ERROR", basename(__FILE__), 
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
                 "This activity type is unknown ! Skipping ...",
-                $workflowExecution['workflowId']);
+                $workflowExecution['workflowId']
+            );
             return false;
         }
     
-        log_out("INFO", basename(__FILE__), 
-            "Starting activity: name=" . $activity["name"] . ",version=" . $activity["version"],
-            $workflowExecution['workflowId']);
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Starting activity: name=" 
+            . $activity["name"] . ",version=" . $activity["version"],
+            $workflowExecution['workflowId']
+        );
 
         // Has activity handler object been instantiated ?
         if (!isset($activity["object"])) 
         {
-            log_out("ERROR", basename(__FILE__),
+            log_out(
+                "ERROR", 
+                basename(__FILE__),
                 "The activity handler class for this activity type is not instantiated !",
-                $workflowExecution['workflowId']);
+                $workflowExecution['workflowId']
+            );
             return false;
         }
 
@@ -114,14 +124,18 @@ class ActivityPoller
         try {
             $result = $activity["object"]->do_activity($activityTask);
         } catch (CTException $e) {
-            $activity["object"]->activity_failed($activityTask, 
+            $activity["object"]->activity_failed(
+                $activityTask, 
                 $e->ref, 
-                $e->getMessage());
+                $e->getMessage()
+            );
             return false;
         } catch (Exception $e) {
-            $activity["object"]->activity_failed($activityTask, 
+            $activity["object"]->activity_failed(
+                $activityTask, 
                 self::ACTIVITY_FAILED, 
-                $e->getMessage());
+                $e->getMessage()
+            );
             return false;
         }
     
@@ -162,7 +176,8 @@ class ActivityPoller
                             . $activityToHandle["class"] . "'. Abording ...");
                     }
 
-                    log_out("INFO", 
+                    log_out(
+                        "INFO", 
                         basename(__FILE__), 
                         "Activity handler registered: name=" 
                         . $activityToHandle["name"] . ",version=" 
@@ -294,7 +309,7 @@ log_out(
     basename(__FILE__), 
     "Starting activity tasks polling"
 );
-while (1)
+while (42)
 {
     if (!$activityPoller->poll_for_activities())
     {

@@ -37,7 +37,12 @@ class WorkflowManager
                     "workflowId" => $workflowExecution["workflowId"]
                 ]);
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Cannot cancel the workflow '" . $workflowExecution["workflowId"] . "' !");
+			log_out(
+                "ERROR", 
+                basename(__FILE__), "Cannot cancel the workflow '" 
+                . $workflowExecution["workflowId"] . "'!"
+                . " Details: " . $e->getMessage()
+            );
 			return false;
 		}
 
@@ -63,7 +68,13 @@ class WorkflowManager
                     "details"    => $details
                 ]);
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Cannot terminate the workflow '" . $workflowExecution["workflowId"] . "' ! Something is messed up ...");
+			log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Cannot terminate the workflow '" 
+                . $workflowExecution["workflowId"] . "' ! Something is messed up." 
+                . " Details: " . $e->getMessage()
+            );
 			return false;
 		}
 
@@ -89,7 +100,13 @@ class WorkflowManager
                     ]
                 ]);
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Cannot get workflow '" . $workflowExecution["workflowId"] . "' type information !");
+			log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Cannot get workflow '" 
+                . $workflowExecution["workflowId"] . "' type information!"
+                . " Details: " . $e->getMessage()
+            );
 			return false;
 		}
 
@@ -112,7 +129,12 @@ class WorkflowManager
                     "execution" => $workflowExecution
                 ]);
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Cannot get workflow '" . $workflowExecution["workflowId"] . "' execution status !");
+			log_out(
+                "ERROR", 
+                basename(__FILE__), "Cannot get workflow '" 
+                . $workflowExecution["workflowId"] . "' execution status!"
+                . " Details: " . $e->getMessage()
+            );
 			return false;
 		}
 
@@ -134,10 +156,20 @@ class WorkflowManager
                     "execution" => $workflowExecution
                 ]);
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-            log_out("ERROR", basename(__FILE__), "Unable to find the workflow '" . $workflowExecution['workflowId'] . "'. Can't get workflow history. " . $e->getMessage());
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to find the workflow '" 
+                . $workflowExecution['workflowId'] . "'. Can't get workflow history. " 
+                . " Details: " . $e->getMessage()
+            );
             return false;
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to get workflow history ! " . $e->getMessage());
+			log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to get workflow history! Details: " . $e->getMessage()
+            );
 			return false;
 		}
 
@@ -165,7 +197,12 @@ class WorkflowManager
                     ]
                 ]);
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to cancel activity '" . $activityId . "' !");
+			log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to cancel activity '" . $activityId . "'!"
+                . " Details: " . $e->getMessage()
+            );
 			return false;
 		}
 
@@ -190,10 +227,19 @@ class WorkflowManager
 		try {
 			$swf->respondDecisionTaskCompleted($params);
 		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-			log_out("ERROR", basename(__FILE__), "Resource Unknown ! " . $e->getMessage());
+			log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Resource Unknown ! " . $e->getMessage()
+                . " Details: " . $e->getMessage()
+            );
 			return false;
 		} catch (Exception $e) {
-			log_out("ERROR", basename(__FILE__), "Unable to respond to the decision task! Details: " . $e->getMessage());
+			log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to respond to the decision task! Details: " . $e->getMessage()
+            );
 			return false;
 		}
         

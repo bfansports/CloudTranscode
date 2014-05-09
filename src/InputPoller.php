@@ -44,7 +44,7 @@ class InputPoller
 
         // Instantiating CloudTranscode Communication SDK.
         // See: https://github.com/sportarchive/CloudTranscodeComSDK
-        $this->CTCom = new CTComSDK(false, false, false, $this->debug);
+        $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
     }
 
     // Poll from the 'input' SQS queue of all clients
@@ -57,18 +57,25 @@ class InputPoller
         {
             // Long Polling messages from client input queue
             $queue = $client['queues']['input'];
-            if ($msg = $this->CTCom->receive_message(false, $queue, 2))
-            {
-                if (!($decoded = json_decode($msg['Body'])))
-                    log_out(
-                        "ERROR", 
-                        basename(__FILE__), 
-                        "JSON data invalid in queue: '$queue'");
-                else                    
-                    $this->handle_input($decoded, $client);
+            try {
+                if ($msg = $this->CTCom->receive_message(false, $queue, 2))
+                {
+                    if (!($decoded = json_decode($msg['Body'])))
+                        log_out(
+                            "ERROR", 
+                            basename(__FILE__), 
+                            "JSON data invalid in queue: '$queue'");
+                    else                    
+                        $this->handle_input($decoded, $client);
 
-                // Message polled. We delete it from SQS
-                $this->CTCom->delete_message(false, $msg);
+                    // Message polled. We delete it from SQS
+                    $this->CTCom->delete_message(false, $queue, $msg);
+                }
+            } catch (Exception $e) {
+                log_out(
+                    "ERROR", 
+                    basename(__FILE__), 
+                    $e->getMessage());
             }
         }
     }
@@ -76,16 +83,7 @@ class InputPoller
     // Receive an input, check if we know the command and exec the callback
     public function handle_input($input, $client = false)
     {
-        if (!isset($input) || 
-            !isset($input->{"command"}) || $input->{"command"} == "" || 
-            !isset($input->{"data"}) || $input->{"data"} == "")
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Invalid input! Provide 'command' and 'data' object!");
-            return;
-        }
+        $this->validate_input($input);
 
         // Do we know this input ?
         if (!isset($this->commandsMap[$input->{"command"}]))
@@ -101,9 +99,8 @@ class InputPoller
         log_out(
             "INFO", 
             basename(__FILE__), 
-            "Received command '" . $input->{"command"}  . "'!"
+            "Received command '" . $input->{"command"}  . "'"
         );
-
         if ($this->debug)
             log_out(
                 "INFO", 
@@ -138,12 +135,9 @@ class InputPoller
             "name"    => $this->config['cloudTranscode']['workflow']["name"],
             "version" => $this->config['cloudTranscode']['workflow']["version"]);
 
-        // Generate input data
-        $input = array(
-            "command" => $input->{'command'},
-            "data"    => $input->{'data'});
+        // If we have a client. (No client in case of testing using -i option)
         if ($client)
-            $input["client"] = $client;
+            $input->{"client"} = $client;
 
         // Request start SWF workflow
         try {
@@ -161,6 +155,19 @@ class InputPoller
                 "Unable to start workflow!"
                 . $e->getMessage());
         }
+    }
+
+    /**
+     * UTILS
+     */ 
+
+    private function validate_input($input)
+    {
+        if (!isset($input) || 
+            !isset($input->{"command"}) || $input->{"command"} == "" || 
+            !isset($input->{"data"}) || $input->{"data"} == "" || 
+            !isset($input->{"job_id"}) || $input->{"job_id"} == "")
+            throw new Exception("'command', 'job_id' or 'data' fields missing in JSON input file!");
     }
 }
 

@@ -175,9 +175,6 @@ class CTException extends Exception
 // Composer for loading dependices: http://getcomposer.org/
 require __DIR__ . "/../../vendor/autoload.php";
 
-// XXX temporary require. Should use Composer for that!
-require "/home/koxon/dev/CloudTranscode/cloudTranscodeComSDK.git/src/CTComSDK.php";
-
 // Amazon library
 use Aws\Common\Aws;
 use Aws\Swf\Exception;

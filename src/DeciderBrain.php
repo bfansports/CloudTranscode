@@ -2,23 +2,30 @@
 
 class DeciderBrain
 {
+    private $debug;
     private $config;
     private $eventsMap;
     private $workflowTracker;
     private $workflowManager;
     private $decisionTaskList;
     private $activityList;
+    private $CTCom;
   
     // Errors
     const ACTIVITY_TIMEOUT = "ACTIVITY_TIMEOUT";
     const ACTIVITY_FAILED  = "ACTIVITY_FAILED";
+    const DECIDER_ERROR    = "DECIDER_ERROR";
+    const WF_NO_INPUT      = "WF_NO_INPUT";
+    const WF_TRACKER_ISSUE = "WF_TRACKER_ISSUE";
+    const ACTIVITY_SCHEDULE_FAILED = "ACTIVITY_SCHEDULE_FAILED";
 
     // Activities
     const VALIDATE_INPUT  = "ValidateInputAndAsset";
     const TRANSCODE_ASSET = "TranscodeAsset";
 
-    function __construct($config, $workflowTracker, $workflowManager)
+    function __construct($config, $workflowTracker, $workflowManager, $debug)
     {
+        $this->debug = $debug;
         $this->config = $config;
 
         // Init eventMap. Maps events with callback functions.
@@ -39,6 +46,9 @@ class DeciderBrain
             "name" => $config['cloudTranscode']['workflow']['decisionTaskList']
         );
         $this->activityList     = $this->config['cloudTranscode']['activities'];
+
+        // Instanciate CloudTranscode SDK
+        $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
     }
   
     /**
@@ -59,12 +69,39 @@ class DeciderBrain
             $workflowExecution['workflowId']
         );
 
-        // We call the callback function that handles this event 
-        $this->{$this->eventsMap[$event["eventType"]]}(
-            $event, 
-            $taskToken, 
-            $workflowExecution
-        );
+        try {
+            // We call the callback function that handles this event 
+            $this->{$this->eventsMap[$event["eventType"]]}(
+                $event, 
+                $taskToken, 
+                $workflowExecution);
+        }
+        catch (CTException $e) {
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "[" . $e->ref . "] " . $e->getMessage(), 
+                $workflowExecution['workflowId']
+            );
+            $this->workflowManager->terminate_workflow(
+                $workflowExecution, 
+                $e->ref, 
+                $e->getMessage()
+            );
+        }
+        catch (Exception $e) {
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                $e->getMessage(), 
+                $workflowExecution['workflowId']
+            );
+            $this->workflowManager->terminate_workflow(
+                $workflowExecution, 
+                self::DECIDER_ERROR, 
+                $e->getMessage()
+            );
+        }
     }
 
   
@@ -75,26 +112,22 @@ class DeciderBrain
     // Workflow started !
     private function workflow_execution_started($event, $taskToken, $workflowExecution)
     {
-        // XXX
-        // SQS Workflow started
-        // XXX
-
         if (!isset($event["workflowExecutionStartedEventAttributes"]["input"]))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), "Workflow doesn't contain any input data !", 
-                $workflowExecution['workflowId']
+            throw new CTException(
+                "Workflow doesn't contain any input data!",
+                self::WF_NO_INPUT
             );
-            return false;
-        }
+        
         // Get the input passed to the workflow at startup
         $workflowInput = $event["workflowExecutionStartedEventAttributes"]["input"];
 
         // Next Task to process
         if (!($fistActivity = 
                 $this->workflowTracker->get_first_activity($workflowExecution)))
-            return false;
+            throw new CTException(
+                "Unable to get first registered activity to process!",
+                self::WF_TRACKER_ISSUE
+            );
 
         // Start new activity
         if (!$this->schedule_new_activity(
@@ -102,7 +135,16 @@ class DeciderBrain
                 $taskToken, 
                 $fistActivity, 
                 [json_decode($workflowInput)]))
-            return false;
+            throw new CTException(
+                "Unable to schedule new activity '" . $activity["name"]  ."'!",
+                self::ACTIVITY_SCHEDULE_FAILED
+            );
+        
+        // XXX
+        // SQS Workflow started
+        // XXX
+        //print_r($workflowInput);
+        $this->CTCom->job_started($workflowInput, $workflowExecution);
         
         return true;
     }
@@ -120,6 +162,7 @@ class DeciderBrain
         // XXX
         // SQS Workflow completed
         // XXX
+        $this->CTCom->job_completed();
 
         return true;
     }
@@ -130,6 +173,7 @@ class DeciderBrain
         // XXX
         // Send message through SQS to tell activity task scheduled
         // XXX
+        $this->CTCom->activity_scheduled();
 
         // Register new scheduled activities in tracker
         if (!($activity = 
@@ -143,6 +187,7 @@ class DeciderBrain
         // XXX
         // Send message through SQS to tell activity task started
         // XXX
+        $this->CTCom->activity_started();
         
         // Register new started activities in tracker
         if (!($activity = $this->workflowTracker->record_activity_started($workflowExecution, $event)))
@@ -155,6 +200,7 @@ class DeciderBrain
         // XXX
         // Send message through SQS to tell activity validate completed
         // XXX
+        $this->CTCom->activity_completed();
         
         // We get the output of the completed activity
         $activityResult = 
@@ -232,6 +278,7 @@ class DeciderBrain
         // XXX
         // Send message through SQS to tell activity transcode timed out
         // XXX
+        $this->CTCom->activity_timeout();
 
         // Record activity timeout in tracker
         if (!($activity = 
@@ -277,6 +324,7 @@ class DeciderBrain
         // XXX
         // SQS: Workflow terminated
         // XXX
+        $this->CTCom->job_terminated();
 
         return true;
     }
@@ -331,6 +379,7 @@ class DeciderBrain
         // XXX
         // SQS: Workflow terminated
         // XXX
+        $this->CTCom->job_terminated();
 
         return true;
     }
@@ -362,7 +411,7 @@ class DeciderBrain
             // Send decision
             $this->workflowManager->respond_decisions($taskToken);
       
-            return false;
+            return true;
         }
 
         log_out(

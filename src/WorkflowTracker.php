@@ -28,21 +28,55 @@ class WorkflowTracker
     // Register a workflow in the tracker for further use
     // We register the workflow execution and its activity list
     // See Utils.php for activity list
-    public function register_workflow_in_tracker($workflowExecution, $activityList) 
+    public function register_workflow_in_tracker(
+        $workflowExecution, 
+        $activityList, 
+        $input) 
     {
         if ($this->is_workflow_tracked($workflowExecution))
             return true;
     
-        log_out("INFO", basename(__FILE__), 
-            "Registering workflow '" . $workflowExecution["workflowId"] . "' in the workflow tracker !", 
-            $workflowExecution['workflowId']);
+        log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Registering workflow '" 
+            . $workflowExecution["workflowId"] . "' in the workflow tracker !", 
+            $workflowExecution['workflowId']
+        );
         $this->executionTracker[$workflowExecution["workflowId"]] = [
             "step"              => 0,
+            "input"             => $input,
             "activityList"      => $activityList,
-            "ongoingActivities" => []
+            "ongoingActivities" => [],
+            "status"            => self::STARTED
         ];
 
         return true;
+    }
+
+    // Mark WF as completed
+    public function record_workflow_completed($workflowExecution)
+    {
+        if (!$this->is_workflow_tracked($workflowExecution))
+            return false;
+        
+        $this->executionTracker[$workflowExecution["workflowId"]]["status"] = 
+            self::COMPLETED;
+    }
+
+    // Return true if WF is completed
+    public function is_workflow_completed($workflowExecution)
+    {
+        if ($this->executionTracker[$workflowExecution["workflowId"]]["status"] ==
+            self::COMPLETED)
+            return true;
+        return false;
+    }
+
+    // Return WF input data
+    public function get_workflow_input($workflowExecution)
+    {
+        return ($this->executionTracker[$workflowExecution["workflowId"]]["input"]);
     }
 
     // Register newly scheduled activity in the tracker
@@ -56,12 +90,13 @@ class WorkflowTracker
         $newActivity = [
             "activityId"   => $event["activityTaskScheduledEventAttributes"]["activityId"],
             "activityType" => $event["activityTaskScheduledEventAttributes"]["activityType"],
+            "input"        => json_decode($event["activityTaskScheduledEventAttributes"]["input"]),
             "scheduledId"  => $event["eventId"],
             "startedId"    => 0,
             "completedId"  => 0,
             "status"       => self::SCHEDULED
         ];
-    
+        
         log_out("INFO", basename(__FILE__), 
             "Recording scheduled activityId '" . $newActivity['activityId'] . "', activityType '" . $newActivity['activityType']['name'] . "'", 
             $workflowExecution['workflowId']);
@@ -213,7 +248,8 @@ class WorkflowTracker
         }
         return true;
     }
-  
+    
+    
     // Is the workflow tracked by the tracker ?
     private function is_workflow_tracked($workflowExecution)
     {
@@ -223,7 +259,7 @@ class WorkflowTracker
         return true;
     }
 
-  
+      
     /**
      * TOOLS to get previous, ongoing or next activity from the activityList in JSON config file
      * Used to keep track of what activity comes next

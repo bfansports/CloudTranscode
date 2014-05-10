@@ -45,7 +45,13 @@ function log_out($type, $source, $message, $workflowId = 0)
     
     if (!is_string($log['message']))
         $log['message'] = json_encode($log['message']);
-    echo($log['time'] . " [" . $log['type'] . "] [" . $log['source'] . "] " . $log['message'] . "\n");
+    $toPrint = $log['time'] . " [" . $log['type'] . "] [" . $log['source'] . "] ";
+    if ($workflowId)
+        $toPrint .= "[$workflowId] ";
+    $toPrint .= $log['message'] . "\n";
+            
+    echo($toPrint);
+    
     syslog($priority, $out);
 }
 

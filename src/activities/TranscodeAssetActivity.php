@@ -126,10 +126,13 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Sanitize output bucket path "/"
         $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
+
+        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         // XXX: Add tmp workflowID to output bucket to seperate upload
         // XXX: For testing only !
         $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
-        
+        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
         // Prepare S3 options
         $options = array("rrs" => false, "encrypt" => false);
         if (isset($input->{'output'}->{'s3_rrs'}) &&

@@ -9,7 +9,6 @@
  */
 
 require __DIR__ . '/utils/Utils.php';
-require __DIR__ . '/WorkflowTracker.php';
 require __DIR__ . '/WorkflowManager.php';
 require __DIR__ . '/DeciderBrain.php';
 
@@ -21,7 +20,6 @@ class Decider
     private $activityList;
 
     private $workflowManager;
-    private $workflowTracker;
 
     // Decider brain, where all decisions are made
     private $deciderBrain;
@@ -47,16 +45,11 @@ class Decider
         // Instantiate manager
         // Used to perform actions on the workflow. Toolbox.
         $this->workflowManager = new WorkflowManager($config);
-    
-        // Instantiate tracker. 
-        // Used to track workflow execution and track workflow status
-        $this->workflowTracker = new WorkflowTracker($config, $this->workflowManager);
-    
+        
         // Instantiate DeciderBrain
         // This is where the decisions are made and new activity initiated
         $this->deciderBrain = new DeciderBrain(
             $config, 
-            $this->workflowTracker, 
             $this->workflowManager, 
             $this->debug
         );
@@ -93,18 +86,6 @@ class Decider
                 basename(__FILE__), 
                 "Unable to pull jobs for decision ! " . $e->getMessage());
             return true;
-        }
-
-        // Register workflow in tracker if not already register
-        if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, 
-                $this->activityList))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Unable to register the workflow in tracker ! Can't process decision task !"
-            );
-            return false; 
         }
     
         // We give the new decision task to the event handler for processing

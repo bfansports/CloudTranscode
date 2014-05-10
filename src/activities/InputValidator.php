@@ -16,7 +16,7 @@ class InputValidator
         if (!($decoded = json_decode($input)))
             throw new CTException("JSON input is invalid !", 
 			    self::INPUT_INVALID); 
-    
+        
         return $decoded;
     }
 

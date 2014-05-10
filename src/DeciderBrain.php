@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/WorkflowTracker.php';
+
 class DeciderBrain
 {
     private $debug;
@@ -18,12 +20,13 @@ class DeciderBrain
     const WF_NO_INPUT      = "WF_NO_INPUT";
     const WF_TRACKER_ISSUE = "WF_TRACKER_ISSUE";
     const ACTIVITY_SCHEDULE_FAILED = "ACTIVITY_SCHEDULE_FAILED";
+    const TRACKER_RECORD_SCHEDULE_FAILED = "TRACKER_RECORD_SCHEDULE_FAILED";
 
     // Activities
     const VALIDATE_INPUT  = "ValidateInputAndAsset";
     const TRANSCODE_ASSET = "TranscodeAsset";
 
-    function __construct($config, $workflowTracker, $workflowManager, $debug)
+    function __construct($config, $workflowManager, $debug)
     {
         $this->debug = $debug;
         $this->config = $config;
@@ -38,9 +41,13 @@ class DeciderBrain
             'ActivityTaskFailed'         => 'activity_task_failed',
             'ActivityTaskTimedOut'       => 'activity_task_timed_out',
             'ActivityTaskCanceled'       => 'activity_task_canceled',
+            'DecisionTaskStarted'        => 'decision_task_started'
         ];
     
-        $this->workflowTracker  = $workflowTracker;
+        // Instantiate tracker. 
+        // Used to track workflow execution and track workflow status
+        $this->workflowTracker = new WorkflowTracker($this->config, $this->workflowManager);
+        
         $this->workflowManager  = $workflowManager;
         $this->decisionTaskList = array(
             "name" => $config['cloudTranscode']['workflow']['decisionTaskList']
@@ -60,8 +67,16 @@ class DeciderBrain
     public function handle_event($event, $taskToken, $workflowExecution)
     {
         // Do we know this event ?
-        if (!isset($this->eventsMap[$event["eventType"]]))
+        if (!isset($this->eventsMap[$event["eventType"]])) {
+            if ($this->debug)
+                log_out(
+                    "DEBUG", 
+                    basename(__FILE__), 
+                    "UnHandled event: *" . $event["eventType"] . "*", 
+                    $workflowExecution['workflowId']
+                );
             return;
+        }
     
         log_out(
             "INFO", 
@@ -120,7 +135,21 @@ class DeciderBrain
         
         // Get the input passed to the workflow at startup
         $workflowInput = $event["workflowExecutionStartedEventAttributes"]["input"];
-
+        
+        // Register workflow in tracker if not already register
+        if (!$this->workflowTracker->register_workflow_in_tracker(
+                $workflowExecution, 
+                $this->activityList,
+                $workflowInput))
+        {
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to register the workflow in tracker! Can't process decision task!"
+            );
+            return false; 
+        }
+        
         // Next Task to process
         if (!($fistActivity = 
                 $this->workflowTracker->get_first_activity($workflowExecution)))
@@ -140,11 +169,8 @@ class DeciderBrain
                 self::ACTIVITY_SCHEDULE_FAILED
             );
         
-        // XXX
-        // SQS Workflow started
-        // XXX
-        //print_r($workflowInput);
-        $this->CTCom->job_started($workflowInput, $workflowExecution);
+        // ComSDK - Notify Workflow started
+        $this->CTCom->job_started($workflowExecution, $workflowInput);
         
         return true;
     }
@@ -159,6 +185,8 @@ class DeciderBrain
             $workflowExecution['workflowId']
         );
 
+        //print_r($event);
+        
         // XXX
         // SQS Workflow completed
         // XXX
@@ -170,15 +198,23 @@ class DeciderBrain
     // Activity scheduled
     private function activity_task_scheduled($event, $taskToken, $workflowExecution)
     {
-        // XXX
-        // Send message through SQS to tell activity task scheduled
-        // XXX
-        $this->CTCom->activity_scheduled();
-
         // Register new scheduled activities in tracker
         if (!($activity = 
                 $this->workflowTracker->record_activity_scheduled($workflowExecution, $event)))
-            return false;
+            throw new CTException(
+                "Unable to record activity schedule '" 
+                . $event["activityTaskScheduledEventAttributes"]["activityType"]['name'] ."'!",
+                self::TRACKER_RECORD_SCHEDULE_FAILED
+            );
+
+        // XXX
+        // Send message through SQS to tell activity task scheduled
+        // XXX
+        $this->CTCom->activity_scheduled(
+            $workflowExecution,
+            $this->workflowTracker->get_workflow_input($workflowExecution),
+            $activity
+        );
     }
 
     // Activity started !
@@ -228,6 +264,7 @@ class DeciderBrain
             foreach ($activityResult->{"outputs"} as $output)
             {
                 $newInput = [
+                    "job_id"           => $activityResult->{"job_id"},
                     "input_json"       => $activityResult->{"input_json"},
                     "input_asset_type" => $activityResult->{"input_asset_type"},
                     "input_asset_info" => $activityResult->{"input_asset_info"},
@@ -384,7 +421,23 @@ class DeciderBrain
         return true;
     }
 
+    private function decision_task_started($event, $taskToken, $workflowExecution)
+    {
+        /* if ($this->workflowTracker->is_workflow_completed($workflowExecution)) */
+        /* { */
+        /*     log_out( */
+        /*         "INFO",  */
+        /*         basename(__FILE__),  */
+        /*         "No more activity to perform. Completing Workflow ...!",  */
+        /*         $workflowExecution['workflowId'] */
+        /*     ); */
 
+        /*     // The workflow is over ! */
+        /*     if (!$this->workflowManager->respond_decisions($taskToken, */
+        /*             [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
+        /*         return false; */
+        /* } */
+    }
   
     /** 
      * TOOLS
@@ -421,10 +474,13 @@ class DeciderBrain
             $workflowExecution['workflowId']
         );
     
+        // Mark WF as completed in tracker
+        $this->workflowTracker->record_workflow_completed($workflowExecution);
+        
         // The workflow is over !
-        if (!$this->workflowManager->respond_decisions($taskToken, 
-                [ ["decisionType" => "CompleteWorkflowExecution"] ]))
-            return false;
+        /* if (!$this->workflowManager->respond_decisions($taskToken,  */
+        /*         [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
+        /*     return false; */
     
         return true;
     }

@@ -10,9 +10,7 @@ class TranscodeAssetActivity extends BasicActivity
     const CONVERSION_TYPE_ERROR = "CONVERSION_TYPE_ERROR";
     const TMP_PATH_OPEN_FAIL    = "TMP_PATH_OPEN_FAIL";
     const UNKOWN_OUTPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
-
-    private $input_json;
-
+    
     // Perform the activity
     public function do_activity($task)
     {

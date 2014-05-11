@@ -5,7 +5,7 @@ class InputValidator
     private $input;
   
     const INPUT_INVALID  = "INPUT_INVALID";
-    const INVALID_FORMAT = "INVALID_FORMAT";
+    const FORMAT_INVALID = "FORMAT_INVALID";
 
     function __construct() { }
 
@@ -41,6 +41,6 @@ class InputValidator
             $details .= sprintf("[%s] %s\n", $error['property'], $error['message']);
         }
         throw new CTException($details, 
-            self::INVALID_FORMAT); 
+            self::FORMAT_INVALID); 
     }
 }

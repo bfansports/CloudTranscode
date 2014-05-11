@@ -9,7 +9,6 @@
  */
 
 require __DIR__ . '/utils/Utils.php';
-require __DIR__ . '/WorkflowManager.php';
 require __DIR__ . '/DeciderBrain.php';
 
 class Decider
@@ -18,8 +17,6 @@ class Decider
     private $domain;
     private $decisionTaskList;
     private $activityList;
-
-    private $workflowManager;
 
     // Decider brain, where all decisions are made
     private $deciderBrain;
@@ -41,16 +38,11 @@ class Decider
         // Init workflow. see: Utils.php
         if (!init_workflow($config['cloudTranscode']['workflow']))
             throw new Exception("Unable to init the workflow !\n");
-
-        // Instantiate manager
-        // Used to perform actions on the workflow. Toolbox.
-        $this->workflowManager = new WorkflowManager($config);
         
         // Instantiate DeciderBrain
         // This is where the decisions are made and new activity initiated
         $this->deciderBrain = new DeciderBrain(
-            $config, 
-            $this->workflowManager, 
+            $config,
             $this->debug
         );
     }

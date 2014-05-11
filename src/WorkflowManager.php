@@ -60,25 +60,12 @@ class WorkflowManager
 	{
 		global $swf;
 
-		try {
-			$swf->terminateWorkflowExecution([
-                    "domain"     => $this->domain,
-                    "workflowId" => $workflowExecution["workflowId"],
-                    "reason"     => $reason,
-                    "details"    => $details
-                ]);
-		} catch (Exception $e) {
-			log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Cannot terminate the workflow '" 
-                . $workflowExecution["workflowId"] . "' ! Something is messed up." 
-                . " Details: " . $e->getMessage()
-            );
-			return false;
-		}
-
-		return true;
+        $swf->terminateWorkflowExecution([
+                "domain"     => $this->domain,
+                "workflowId" => $workflowExecution["workflowId"],
+                "reason"     => $reason,
+                "details"    => $details
+            ]);
 	}
 
 	/**
@@ -224,25 +211,6 @@ class WorkflowManager
         if ($decisions)
             $params["decisions"] = $decisions;
         
-		try {
-			$swf->respondDecisionTaskCompleted($params);
-		} catch (\Aws\Swf\Exception\UnknownResourceException $e) {
-			log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Resource Unknown ! " . $e->getMessage()
-                . " Details: " . $e->getMessage()
-            );
-			return false;
-		} catch (Exception $e) {
-			log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Unable to respond to the decision task! Details: " . $e->getMessage()
-            );
-			return false;
-		}
-        
-		return true;
+        $swf->respondDecisionTaskCompleted($params);
     }
 }

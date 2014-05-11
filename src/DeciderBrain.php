@@ -1,6 +1,14 @@
 <?php
 
+/**
+ * The Decider brain is where the workflow logic happens
+ * Based on the workflow historic (using WorkflowTracker) we make decisions
+ * We fire new activities, catch timeout, failure, etc.
+ * We make the workflows move on util they complete
+ */
+
 require __DIR__ . '/WorkflowTracker.php';
+require __DIR__ . '/WorkflowManager.php';
 
 class DeciderBrain
 {
@@ -17,21 +25,23 @@ class DeciderBrain
     const ACTIVITY_TIMEOUT = "ACTIVITY_TIMEOUT";
     const ACTIVITY_FAILED  = "ACTIVITY_FAILED";
     const DECIDER_ERROR    = "DECIDER_ERROR";
-    const WF_NO_INPUT      = "WF_NO_INPUT";
     const WF_TRACKER_ISSUE = "WF_TRACKER_ISSUE";
-    const ACTIVITY_SCHEDULE_FAILED = "ACTIVITY_SCHEDULE_FAILED";
-    const TRACKER_RECORD_SCHEDULE_FAILED = "TRACKER_RECORD_SCHEDULE_FAILED";
+    const NO_INPUT         = "NO_INPUT";
+    const INPUT_INVALID    = "INPUT_INVALID";
+    const RESULT_INVALID   = "RESULT_INVALID";
+    const UNKNOWN_ACTIVITY = "UNKNOWN_ACTIVITY";
+    const FATAL_ISSUE      = "FATAL_ISSUE";
+    
+    // Known Activities
+    const VALIDATE_INPUT   = "ValidateInputAndAsset";
+    const TRANSCODE_ASSET  = "TranscodeAsset";
 
-    // Activities
-    const VALIDATE_INPUT  = "ValidateInputAndAsset";
-    const TRANSCODE_ASSET = "TranscodeAsset";
-
-    function __construct($config, $workflowManager, $debug)
+    function __construct($config, $debug)
     {
         $this->debug = $debug;
         $this->config = $config;
 
-        // Init eventMap. Maps events with callback functions.
+        // Init eventMap. Maps workflow events with callback functions.
         $this->eventsMap = [
             'WorkflowExecutionStarted'   => 'workflow_execution_started',
             'WorkflowExecutionCompleted' => 'workflow_execution_completed',
@@ -44,26 +54,25 @@ class DeciderBrain
             'DecisionTaskStarted'        => 'decision_task_started'
         ];
     
+        // Instantiate manager
+        // Used to perform actions on the workflow. Toolbox.
+        $this->workflowManager = new WorkflowManager($config);
+        
         // Instantiate tracker. 
         // Used to track workflow execution and track workflow status
         $this->workflowTracker = new WorkflowTracker($this->config, $this->workflowManager);
         
-        $this->workflowManager  = $workflowManager;
         $this->decisionTaskList = array(
             "name" => $config['cloudTranscode']['workflow']['decisionTaskList']
         );
         $this->activityList     = $this->config['cloudTranscode']['activities'];
 
-        // Instanciate CloudTranscode SDK
+        // Instanciate CloudTranscode COM SDK
+        // Used to communicate to job owner: progress, issues, completions, etc
         $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
     }
   
-    /**
-     * Handles new incoming events
-     * @param [String] $event [New event]
-     * @param [String] $taskToken [Decision task token]
-     * @param [String] $workflowExecution [workflow info]
-     */
+    // Handles new workflow events
     public function handle_event($event, $taskToken, $workflowExecution)
     {
         // Do we know this event ?
@@ -84,6 +93,8 @@ class DeciderBrain
             $workflowExecution['workflowId']
         );
 
+        $errRef = 0;
+        $errMsg = 0;
         try {
             // We call the callback function that handles this event 
             $this->{$this->eventsMap[$event["eventType"]]}(
@@ -98,11 +109,8 @@ class DeciderBrain
                 "[" . $e->ref . "] " . $e->getMessage(), 
                 $workflowExecution['workflowId']
             );
-            $this->workflowManager->terminate_workflow(
-                $workflowExecution, 
-                $e->ref, 
-                $e->getMessage()
-            );
+            $errRef = $e->ref;
+            $errMsg = $e->getMessage();
         }
         catch (Exception $e) {
             log_out(
@@ -111,11 +119,28 @@ class DeciderBrain
                 $e->getMessage(), 
                 $workflowExecution['workflowId']
             );
-            $this->workflowManager->terminate_workflow(
-                $workflowExecution, 
-                self::DECIDER_ERROR, 
-                $e->getMessage()
-            );
+            $errRef = self::DECIDER_ERROR;
+            $errMsg = $e->getMessage();
+        }
+        finally {
+            if ($errRef && $errMsg)
+            {
+                try {
+                    $this->workflowManager->terminate_workflow(
+                        $workflowExecution, 
+                        $errRef, 
+                        $errMsg
+                    );
+                }
+                catch (Exception $e) {
+                    log_out(
+                        "ERROR", 
+                        basename(__FILE__), 
+                        "Unable to terminate workflow! Details: " . $e->getMessage(), 
+                        $workflowExecution['workflowId']
+                    );
+                }
+            }
         }
     }
 
@@ -124,55 +149,42 @@ class DeciderBrain
      * Callback functions
      */
 
-    // Workflow started !
+    // A new Workflow started !
     private function workflow_execution_started($event, $taskToken, $workflowExecution)
     {
+        // Get the input passed to the workflow at startup
         if (!isset($event["workflowExecutionStartedEventAttributes"]["input"]))
             throw new CTException(
                 "Workflow doesn't contain any input data!",
-                self::WF_NO_INPUT
+                self::NO_INPUT
             );
-        
-        // Get the input passed to the workflow at startup
-        $workflowInput = $event["workflowExecutionStartedEventAttributes"]["input"];
+        if (!($workflowInput = 
+                json_decode($event["workflowExecutionStartedEventAttributes"]["input"])))
+            throw new CTException(
+                "Workflow input JSON is invalid!",
+                self::INPUT_INVALID
+            );
         
         // Register workflow in tracker if not already register
-        if (!$this->workflowTracker->register_workflow_in_tracker(
-                $workflowExecution, 
-                $this->activityList,
-                $workflowInput))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Unable to register the workflow in tracker! Can't process decision task!"
-            );
-            return false; 
-        }
+        $newWorkflow = $this->workflowTracker->register_workflow_in_tracker(
+            $workflowExecution, 
+            $this->activityList,
+            $workflowInput
+        );
         
         // Next Task to process
-        if (!($fistActivity = 
-                $this->workflowTracker->get_first_activity($workflowExecution)))
-            throw new CTException(
-                "Unable to get first registered activity to process!",
-                self::WF_TRACKER_ISSUE
-            );
+        $fistActivity = 
+            $this->workflowTracker->get_first_activity($workflowExecution);
 
         // Start new activity
-        if (!$this->schedule_new_activity(
-                $workflowExecution, 
-                $taskToken, 
-                $fistActivity, 
-                [json_decode($workflowInput)]))
-            throw new CTException(
-                "Unable to schedule new activity '" . $activity["name"]  ."'!",
-                self::ACTIVITY_SCHEDULE_FAILED
-            );
+        $this->schedule_new_activity(
+            $workflowExecution, 
+            $taskToken, 
+            $fistActivity, 
+            [$workflowInput]);
         
         // ComSDK - Notify Workflow started
         $this->CTCom->job_started($workflowExecution, $workflowInput);
-        
-        return true;
     }
   
     // Workflow completed !
@@ -198,18 +210,27 @@ class DeciderBrain
     // Activity scheduled
     private function activity_task_scheduled($event, $taskToken, $workflowExecution)
     {
-        // Register new scheduled activities in tracker
-        if (!($activity = 
-                $this->workflowTracker->record_activity_scheduled($workflowExecution, $event)))
+        if (!isset($event["activityTaskScheduledEventAttributes"]["input"]))
             throw new CTException(
-                "Unable to record activity schedule '" 
-                . $event["activityTaskScheduledEventAttributes"]["activityType"]['name'] ."'!",
-                self::TRACKER_RECORD_SCHEDULE_FAILED
+                "Activity doesn't contain any input data!",
+                self::NO_INPUT
+            );
+        if (!($input = 
+                json_decode($event["activityTaskScheduledEventAttributes"]["input"])))
+            throw new CTException(
+                "Activity input JSON is invalid!",
+                self::INPUT_INVALID
             );
 
-        // XXX
-        // Send message through SQS to tell activity task scheduled
-        // XXX
+        // Register new scheduled activities in tracker
+        $activity = 
+            $this->workflowTracker->record_activity_scheduled(
+                $workflowExecution, 
+                $event, 
+                $input
+            );
+        
+        // ComSDK - Notify Activity scheduled
         $this->CTCom->activity_scheduled(
             $workflowExecution,
             $this->workflowTracker->get_workflow_input($workflowExecution),
@@ -220,40 +241,47 @@ class DeciderBrain
     // Activity started !
     private function activity_task_started($event, $taskToken, $workflowExecution)
     {
-        // XXX
-        // Send message through SQS to tell activity task started
-        // XXX
-        $this->CTCom->activity_started();
-        
         // Register new started activities in tracker
-        if (!($activity = $this->workflowTracker->record_activity_started($workflowExecution, $event)))
-            return false;
+        $activity = 
+            $this->workflowTracker->record_activity_started($workflowExecution, $event);
+            
+
+        // ComSDK - Notify Activity scheduled
+        $this->CTCom->activity_started(
+            $workflowExecution,
+            $this->workflowTracker->get_workflow_input($workflowExecution),
+            $activity
+        );
     }
   
     // Activity Task completed
     private function activity_task_completed($event, $taskToken, $workflowExecution)
     {
-        // XXX
-        // Send message through SQS to tell activity validate completed
-        // XXX
-        $this->CTCom->activity_completed();
-        
-        // We get the output of the completed activity
-        $activityResult = 
-            json_decode($event['activityTaskCompletedEventAttributes']['result']);
-
         // Register completed activity in tracker
-        if (!($activity = 
-                $this->workflowTracker->record_activity_completed(
-                    $workflowExecution,
-                    $event
-                )))
-            return false;
+        $activity = 
+            $this->workflowTracker->record_activity_completed(
+                $workflowExecution,
+                $event
+            );
+
+        // ComSDK - Notify Activity scheduled
+        $this->CTCom->activity_completed(
+            $workflowExecution,
+            $this->workflowTracker->get_workflow_input($workflowExecution),
+            $activity
+        );
 
         // We completed 'ValidateInputAndAsset' activity
         if ($activity['activityType']['name'] == self::VALIDATE_INPUT)
         {
-            
+            // We get the output of the completed activity
+            if (!($activityResult = 
+                    json_decode($event['activityTaskCompletedEventAttributes']['result'])))
+                throw new CTException(
+                    "Activity result JSON is invalid!",
+                    self::RESULT_INVALID
+                );
+
             // We get the next activity information
             $nextActivity = 
                 $this->workflowTracker->move_to_next_activity($workflowExecution);
@@ -278,36 +306,30 @@ class DeciderBrain
       
             // Start new activity(ies).
             // Several activity to be scheduled if several outputs needed !
-            if (!$this->schedule_new_activity(
-                    $workflowExecution, 
-                    $taskToken, 
-					$nextActivity, 
-					$nextActivitiesInput
-                ))
-                return false;
+            $this->schedule_new_activity(
+                $workflowExecution, 
+                $taskToken, 
+                $nextActivity, 
+                $nextActivitiesInput
+            );
+
+            return;
         }
         else if ($activity['activityType']['name'] == self::TRANSCODE_ASSET)
         {
-            return $this->transcode_asset_completed(
+            $this->transcode_asset_completed(
                 $event, 
                 $taskToken, 
                 $workflowExecution, 
-                $activity, 
-                $activityResult
+                $activity
             );
+            return;
         }
-        else
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Unknown activity has completed ! Something is messed up !", 
-                $workflowExecution['workflowId']
-            );
-            return false;
-        }
-    
-        return true;
+
+        throw new CTException(
+            "Unknown activity has completed! Something is messed up!",
+            self::UNKNOWN_ACTIVITY
+        );
     }
 
     private function activity_task_timed_out($event, $taskToken, $workflowExecution)
@@ -318,18 +340,16 @@ class DeciderBrain
         $this->CTCom->activity_timeout();
 
         // Record activity timeout in tracker
-        if (!($activity = 
-                $this->workflowTracker->record_activity_timed_out(
-                    $workflowExecution,
-                    $event
-                )))
-            return false;
-
-        $msg = "Activity '" . $activity['activityType']['name'] . "' timed out !";
+        $activity = 
+            $this->workflowTracker->record_activity_timed_out(
+                $workflowExecution,
+                $event
+            );
+        
         log_out(
             "ERROR", 
             basename(__FILE__), 
-            $msg, 
+            "Activity '" . $activity['activityType']['name'] . "' timed out !", 
             $workflowExecution['workflowId']
         );
 
@@ -337,33 +357,19 @@ class DeciderBrain
         // may be in progress
         if ($activity['activityType']['name'] == self::TRANSCODE_ASSET)
         {
-            return $this->transcode_asset_completed(
+            $this->transcode_asset_completed(
                 $event, 
                 $taskToken, 
                 $workflowExecution, 
                 $activity
             );
+            return;
         }
 
-        // Kill workflow
-        log_out(
-            "ERROR", 
-            basename(__FILE__), 
-            "Killing workflow ...", 
-            $workflowExecution['workflowId']
+        throw new CTException(
+            "Can't continue workflow execution. Fatal issue!",
+            self::FATAL_ISSUE
         );
-        $this->workflowManager->terminate_workflow(
-            $workflowExecution, 
-            self::ACTIVITY_TIMEOUT, 
-            $msg
-        );
-
-        // XXX
-        // SQS: Workflow terminated
-        // XXX
-        $this->CTCom->job_terminated();
-
-        return true;
     }
   
     private function activity_task_failed($event, $taskToken, $workflowExecution)
@@ -373,18 +379,16 @@ class DeciderBrain
         // XXX
 
         // Record activity timeout in tracker
-        if (!($activity = 
-                $this->workflowTracker->record_activity_failed(
-                    $workflowExecution,
-                    $event
-                )))
-            return false;
-    
-        $msg = "Activity '" . $activity['activityType']['name'] . "' failed !";
+        $activity = 
+            $this->workflowTracker->record_activity_failed(
+                $workflowExecution,
+                $event
+            );
+        
         log_out(
             "ERROR", 
             basename(__FILE__), 
-            $msg, 
+            "Activity '" . $activity['activityType']['name'] . "' failed !", 
             $workflowExecution['workflowId']
         );
         
@@ -392,33 +396,19 @@ class DeciderBrain
         {
             // If TRANSCODE_ASSET, we want to continue as more than one transcode 
             // may be in progress
-            return $this->transcode_asset_completed(
+            $this->transcode_asset_completed(
                 $event, 
                 $taskToken, 
                 $workflowExecution, 
                 $activity
             );
+            return ;
         }
-    
-        // Kill workflow
-        log_out(
-            "ERROR", 
-            basename(__FILE__), 
-            "Killing workflow ...", 
-            $workflowExecution['workflowId']
-        );
-        $this->workflowManager->terminate_workflow(
-            $workflowExecution, 
-            self::ACTIVITY_FAILED, 
-            $msg
-        );
 
-        // XXX
-        // SQS: Workflow terminated
-        // XXX
-        $this->CTCom->job_terminated();
-
-        return true;
+        throw new CTException(
+            "Can't continue workflow execution. Fatal issue!",
+            self::FATAL_ISSUE
+        );
     }
 
     private function decision_task_started($event, $taskToken, $workflowExecution)
@@ -451,7 +441,8 @@ class DeciderBrain
         $activity)
     {
         // Check if we are done with all outputs that needs to be transcoded ?
-        if (!$this->workflowTracker->are_similar_activities_completed($workflowExecution, 
+        if (!$this->workflowTracker->are_similar_activities_completed(
+                $workflowExecution, 
                 $activity))
         {
             log_out(
@@ -464,13 +455,13 @@ class DeciderBrain
             // Send decision
             $this->workflowManager->respond_decisions($taskToken);
       
-            return true;
+            return;
         }
 
         log_out(
             "INFO", 
             basename(__FILE__), 
-            "All transcode activities are over. Workflow completed.", 
+            "All transcode activities are over! Requesting workflow completion ...", 
             $workflowExecution['workflowId']
         );
     
@@ -481,8 +472,6 @@ class DeciderBrain
         /* if (!$this->workflowManager->respond_decisions($taskToken,  */
         /*         [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
         /*     return false; */
-    
-        return true;
     }
 
     // Start a new activity
@@ -493,14 +482,10 @@ class DeciderBrain
         $inputs)
     {
         if (!$inputs || !count($inputs))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "No inputs provided for the next activity !"
+            throw new CTException(
+                "No input provided for the next activity !",
+                self::NO_INPUT
             );
-            return false;
-        }
 
         // Create new decisions based on input
         $decisions = [];
@@ -534,9 +519,6 @@ class DeciderBrain
         );
     
         // Send response to SWF to schedule new activities
-        if (!$this->workflowManager->respond_decisions($taskToken, $decisions))
-            return false;
-    
-        return true;
+        $this->workflowManager->respond_decisions($taskToken, $decisions);
     }
 }

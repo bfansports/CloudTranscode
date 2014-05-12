@@ -10,7 +10,7 @@ We start with video transcoding which is the most costly. Today's commercial sol
 We use FFMpeg for video transcoding.
 
 With Cloud Transcode, you control: scale, speed and cost. You can even run everything locally if you want, no Cloud instance required. You
-only need an Amazon AWS account and an Internet connection to use the Amazon services needed: Amnazon SWF, SQS and S3. 
+only need an Amazon AWS account and an Internet connection to use the required Amazon services: SWF, SQS and S3. 
 
 It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 instance, it's up to you.
 

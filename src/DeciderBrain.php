@@ -63,9 +63,9 @@ class DeciderBrain
         $this->workflowTracker = new WorkflowTracker($this->config, $this->workflowManager);
         
         $this->decisionTaskList = array(
-            "name" => $config['cloudTranscode']['workflow']['decisionTaskList']
+            "name" => $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'}
         );
-        $this->activityList     = $this->config['cloudTranscode']['activities'];
+        $this->activityList     = $this->config->{'cloudTranscode'}->{'activities'};
 
         // Instanciate CloudTranscode COM SDK
         // Used to communicate to job owner: progress, issues, completions, etc
@@ -246,7 +246,7 @@ class DeciderBrain
             $this->workflowTracker->record_activity_started($workflowExecution, $event);
             
 
-        // ComSDK - Notify Activity scheduled
+        // ComSDK - Notify Activity started
         $this->CTCom->activity_started(
             $workflowExecution,
             $this->workflowTracker->get_workflow_input($workflowExecution),
@@ -264,7 +264,7 @@ class DeciderBrain
                 $event
             );
 
-        // ComSDK - Notify Activity scheduled
+        // ComSDK - Notify Activity completed
         $this->CTCom->activity_completed(
             $workflowExecution,
             $this->workflowTracker->get_workflow_input($workflowExecution),
@@ -334,11 +334,6 @@ class DeciderBrain
 
     private function activity_task_timed_out($event, $taskToken, $workflowExecution)
     {
-        // XXX
-        // Send message through SQS to tell activity transcode timed out
-        // XXX
-        $this->CTCom->activity_timeout();
-
         // Record activity timeout in tracker
         $activity = 
             $this->workflowTracker->record_activity_timed_out(
@@ -346,6 +341,12 @@ class DeciderBrain
                 $event
             );
         
+        // ComSDK - Notify Activity timeout
+        $this->CTCom->activity_timeout(
+            $workflowExecution,
+            $this->workflowTracker->get_workflow_input($workflowExecution),
+            $activity);
+
         log_out(
             "ERROR", 
             basename(__FILE__), 
@@ -374,16 +375,18 @@ class DeciderBrain
   
     private function activity_task_failed($event, $taskToken, $workflowExecution)
     {
-        // XXX
-        // Send message through SQS to tell activity transcode failed
-        // XXX
-
         // Record activity timeout in tracker
         $activity = 
             $this->workflowTracker->record_activity_failed(
                 $workflowExecution,
                 $event
             );
+
+        // ComSDK - Notify Activity failed
+        $this->CTCom->activity_failed(
+            $workflowExecution,
+            $this->workflowTracker->get_workflow_input($workflowExecution),
+            $activity);
         
         log_out(
             "ERROR", 
@@ -496,16 +499,16 @@ class DeciderBrain
                     "scheduleActivityTaskDecisionAttributes" => [
                         "activityType" => 
                         [
-                            "name"     => $activity["name"],
-                            "version"  => $activity["version"]
+                            "name"     => $activity->{"name"},
+                            "version"  => $activity->{"version"}
                         ],
                         "activityId"   => uniqid(),
                         "input"	       => json_encode($input),
-                        "taskList"     => [ "name" => $activity["activityTaskList"] ],
-                        "scheduleToStartTimeout"   => $activity["scheduleToStartTimeout"],
-                        "startToCloseTimeout"      => $activity["startToCloseTimeout"],
-                        "scheduleToCloseTimeout"   => $activity["scheduleToCloseTimeout"],
-                        "heartbeatTimeout"         => $activity["heartbeatTimeout"]
+                        "taskList"     => [ "name" => $activity->{"activityTaskList"} ],
+                        "scheduleToStartTimeout"   => $activity->{"scheduleToStartTimeout"},
+                        "startToCloseTimeout"      => $activity->{"startToCloseTimeout"},
+                        "scheduleToCloseTimeout"   => $activity->{"scheduleToCloseTimeout"},
+                        "heartbeatTimeout"         => $activity->{"heartbeatTimeout"}
                     ]
                 ]);
         }
@@ -513,8 +516,8 @@ class DeciderBrain
         log_out(
             "INFO", 
             basename(__FILE__), 
-            "Scheduling new activity: name='" . $activity["name"] . "',version='" 
-            . $activity["version"] . "',taskList='" . $activity["activityTaskList"]  . "'", 
+            "Scheduling new activity: name='" . $activity->{"name"} . "',version='" 
+            . $activity->{"version"} . "',taskList='" . $activity->{"activityTaskList"}  . "'", 
             $workflowExecution['workflowId']
         );
     

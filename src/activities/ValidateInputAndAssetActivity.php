@@ -19,6 +19,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // XXX. HERE, Notify validation task starts through SQS !
         // XXX
         
+        print_r($task);
+
         $activityId   = $task->get("activityId");
         $activityType = $task->get("activityType");
         // Create a key workflowId:activityId to put in logs

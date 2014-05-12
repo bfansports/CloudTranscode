@@ -18,7 +18,7 @@ class WorkflowManager
 			return false;
         }
         
-        $this->domain = $config['cloudTranscode']['workflow']['domain'];
+        $this->domain = $config->{'cloudTranscode'}->{'workflow'}->{'domain'};
         $this->config = $config;
 	}	
     
@@ -82,8 +82,8 @@ class WorkflowManager
 			$info = $swf->describeWorkflowType([
                     "domain"       => $this->domain,
                     "workflowType" => [
-                        "name"    => $this->config["cloudTrancode"]["workflow"]["name"],
-                        "version" => $this->config["cloudTrancode"]["workflow"]["version"]
+                        "name"    => $this->config->{"cloudTrancode"}->{"workflow"}->{"name"},
+                        "version" => $this->config->{"cloudTrancode"}->{"workflow"}->{"version"}
                     ]
                 ]);
 		} catch (Exception $e) {

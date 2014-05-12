@@ -1,6 +1,5 @@
 {
     "job_id": 1234567890,
-    "command": "StartJob",
     "data": {
 	"input_type": "VIDEO",
 	"input_bucket": "ct-my-bucket-in",

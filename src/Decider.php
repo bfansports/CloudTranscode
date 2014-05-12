@@ -26,17 +26,17 @@ class Decider
         global $debug;
         
         $this->debug            = $debug;
-        $this->domain           = $config['cloudTranscode']['workflow']['domain'];
+        $this->domain           = $config->{'cloudTranscode'}->{'workflow'}->{'domain'};
         $this->decisionTaskList = array("name" => 
-            $config['cloudTranscode']['workflow']['decisionTaskList']);
-        $this->activityList     = $config['cloudTranscode']['activities'];
+            $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'});
+        $this->activityList     = $config->{'cloudTranscode'}->{'activities'};
     
         // Init domain. see: Utils.php
         if (!init_domain($this->domain))
             throw new Exception("Unable to init the domain !\n");
         
         // Init workflow. see: Utils.php
-        if (!init_workflow($config['cloudTranscode']['workflow']))
+        if (!init_workflow($config->{'cloudTranscode'}->{'workflow'}))
             throw new Exception("Unable to init the workflow !\n");
         
         // Instantiate DeciderBrain
@@ -158,7 +158,7 @@ function check_input_parameters(&$defaultConfigFile)
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 check_input_parameters($defaultConfigFile);
-if (!($config = json_decode(file_get_contents($defaultConfigFile), true)))
+if (!($config = json_decode(file_get_contents($defaultConfigFile))))
 {
     log_out(
         "FATAL", 
@@ -170,14 +170,14 @@ if (!($config = json_decode(file_get_contents($defaultConfigFile), true)))
 log_out(
     "INFO", 
 	basename(__FILE__), 
-    "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'"
+    "Domain: '" . $config->{'cloudTranscode'}->{'workflow'}->{'domain'} . "'"
 );
 log_out(
     "INFO", 
 	basename(__FILE__), 
-    "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'"
+    "TaskList: '" . $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'} . "'"
 );
-log_out("INFO", basename(__FILE__), $config['clients']);
+log_out("INFO", basename(__FILE__), $config->{'clients'});
 
 // Create decider object
 try {
@@ -200,17 +200,4 @@ if ($debug)
         "Starting decision tasks polling"
     );
 while (42)
-{
-    if (!$decider->poll_for_decisions())
-    {
-        if ($debug)
-            log_out(
-                "DEBUG", 
-                basename(__FILE__), 
-                "Polling for decisions over! Exiting ..."
-            );
-        exit(1);
-    }
-} 
-
-
+    $decider->poll_for_decisions();

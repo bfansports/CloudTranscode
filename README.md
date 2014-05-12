@@ -3,20 +3,16 @@
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.
 
-The goal of this project is to create an open source, scalable and cheap
-distributed transcoding platform where users have complete control over
+The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over
 performance and cost. 
 
-We start with video transcoding which is the most costly. Today's commercial solutions for video transcoding are way
-too expensive for large volumes. With this solution you can transcode large quantity of videos at the pace you want, thus controling your cost. 
+We start with video transcoding which is the most costly. Today's commercial solutions for video transcoding are way too expensive for large volumes. With this solution you can transcode large quantity of videos at the pace you want, thus controling your cost. 
+We use FFMpeg for video transcoding.
 
-With Cloud Transcode, you control scale, speed and cost. You
-can even run everything locally if you want, no Cloud instance required. You
-only need an Amazon AWS account and an Internet connection to use the Amazon
-services needed: Amnazon SWF, SQS and S3. 
+With Cloud Transcode, you control: scale, speed and cost. You can even run everything locally if you want, no Cloud instance required. You
+only need an Amazon AWS account and an Internet connection to use the Amazon services needed: Amnazon SWF, SQS and S3. 
 
-It means that you can have a local, hybrid or full cloud setup using Amazon Ec2
-instance, it's up to you.
+It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 instance, it's up to you.
 
 # Transcoding supported
 

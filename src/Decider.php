@@ -9,8 +9,6 @@
  */
 
 require __DIR__ . '/utils/Utils.php';
-require __DIR__ . '/WorkflowTracker.php';
-require __DIR__ . '/WorkflowManager.php';
 require __DIR__ . '/DeciderBrain.php';
 
 class Decider
@@ -20,9 +18,6 @@ class Decider
     private $decisionTaskList;
     private $activityList;
 
-    private $workflowManager;
-    private $workflowTracker;
-
     // Decider brain, where all decisions are made
     private $deciderBrain;
   
@@ -31,33 +26,24 @@ class Decider
         global $debug;
         
         $this->debug            = $debug;
-        $this->domain           = $config['cloudTranscode']['workflow']['domain'];
+        $this->domain           = $config->{'cloudTranscode'}->{'workflow'}->{'domain'};
         $this->decisionTaskList = array("name" => 
-            $config['cloudTranscode']['workflow']['decisionTaskList']);
-        $this->activityList     = $config['cloudTranscode']['activities'];
+            $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'});
+        $this->activityList     = $config->{'cloudTranscode'}->{'activities'};
     
         // Init domain. see: Utils.php
         if (!init_domain($this->domain))
             throw new Exception("Unable to init the domain !\n");
         
         // Init workflow. see: Utils.php
-        if (!init_workflow($config['cloudTranscode']['workflow']))
+        if (!init_workflow($config->{'cloudTranscode'}->{'workflow'}))
             throw new Exception("Unable to init the workflow !\n");
-
-        // Instantiate manager
-        // Used to perform actions on the workflow. Toolbox.
-        $this->workflowManager = new WorkflowManager($config);
-    
-        // Instantiate tracker. 
-        // Used to track workflow execution and track workflow status
-        $this->workflowTracker = new WorkflowTracker($config, $this->workflowManager);
-    
+        
         // Instantiate DeciderBrain
         // This is where the decisions are made and new activity initiated
         $this->deciderBrain = new DeciderBrain(
-            $config, 
-            $this->workflowTracker, 
-            $this->workflowManager
+            $config,
+            $this->debug
         );
     }
 
@@ -92,18 +78,6 @@ class Decider
                 basename(__FILE__), 
                 "Unable to pull jobs for decision ! " . $e->getMessage());
             return true;
-        }
-
-        // Register workflow in tracker if not already register
-        if (!$this->workflowTracker->register_workflow_in_tracker($workflowExecution, 
-                $this->activityList))
-        {
-            log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Unable to register the workflow in tracker ! Can't process decision task !"
-            );
-            return false; 
         }
     
         // We give the new decision task to the event handler for processing
@@ -184,7 +158,7 @@ function check_input_parameters(&$defaultConfigFile)
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 check_input_parameters($defaultConfigFile);
-if (!($config = json_decode(file_get_contents($defaultConfigFile), true)))
+if (!($config = json_decode(file_get_contents($defaultConfigFile))))
 {
     log_out(
         "FATAL", 
@@ -196,14 +170,14 @@ if (!($config = json_decode(file_get_contents($defaultConfigFile), true)))
 log_out(
     "INFO", 
 	basename(__FILE__), 
-    "Domain: '" . $config['cloudTranscode']['workflow']['domain'] . "'"
+    "Domain: '" . $config->{'cloudTranscode'}->{'workflow'}->{'domain'} . "'"
 );
 log_out(
     "INFO", 
 	basename(__FILE__), 
-    "TaskList: '" . $config['cloudTranscode']['workflow']['decisionTaskList'] . "'"
+    "TaskList: '" . $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'} . "'"
 );
-log_out("INFO", basename(__FILE__), $config['clients']);
+log_out("INFO", basename(__FILE__), $config->{'clients'});
 
 // Create decider object
 try {
@@ -226,17 +200,4 @@ if ($debug)
         "Starting decision tasks polling"
     );
 while (42)
-{
-    if (!$decider->poll_for_decisions())
-    {
-        if ($debug)
-            log_out(
-                "DEBUG", 
-                basename(__FILE__), 
-                "Polling for decisions over! Exiting ..."
-            );
-        exit(1);
-    }
-} 
-
-
+    $decider->poll_for_decisions();

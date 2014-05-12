@@ -7,6 +7,10 @@
         "client": {
             "$ref": "client.json"
         },
+	"job_id": {
+	    "description": "ID of the new job",
+            "type": "number"
+	},
 	"command": {
 	    "description": "Command to execute. Only 'StartJob' accepted",
             "type": "string",
@@ -59,6 +63,6 @@
 	    "additionalProperties": false
 	}
     },
-    "required": ["command", "data"],
+    "required": ["command", "data", "job_id"],
     "additionalProperties": true
 }

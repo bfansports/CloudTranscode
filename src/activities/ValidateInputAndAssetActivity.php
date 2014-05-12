@@ -10,6 +10,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
 {
     private $data;
     private $client;
+    private $job_id;
 
     // Perform the activity
     public function do_activity($task)
@@ -18,6 +19,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // XXX. HERE, Notify validation task starts through SQS !
         // XXX
         
+        print_r($task);
+
         $activityId   = $task->get("activityId");
         $activityType = $task->get("activityType");
         // Create a key workflowId:activityId to put in logs
@@ -25,7 +28,10 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
         // Perfom input validation
         $input = $this->do_input_validation($task, $activityType["name"]);
-        $this->data = $input->{'data'};        
+        $this->job_id = $input->{'job_id'};         
+        $this->data   = $input->{'data'};  
+        // We may not have 'client' if the InputPoller receive input from cmd line.
+        // Testing purposes. No client == No SQS communication.
         if (isset($input->{'client'}))
             $this->client = $input->{'client'};
 
@@ -104,6 +110,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
         // Create result object to be passed to next activity in the Workflow as input
         $result = [
+            "job_id"           => $this->job_id,
             "input_json"       => $this->data, // Original JSON
             "input_asset_type" => $this->data->{'input_type'}, // Input asset detailed info
             "input_asset_info" => $assetInfo, // Input asset detailed info

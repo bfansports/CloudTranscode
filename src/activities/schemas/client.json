@@ -4,42 +4,38 @@
     "title": "Schema for 'client'",
     "type": "object",
     "properties": {
-	"description": "Client information. Not mandatory. We may throw input for testing without providing client information. No SQS messages will be sent or received if no client is provided.",
-        "type": "object",
-	"properties": {
-	    "name": {
-		"description": "Client name",
-		"type": "string",
-		"minLength": 3,
-		"maxLength": 64
-	    },
-	    "externalId": {
-		"description": "AWS ExternalID as provided by the client. Can be empty",
-		"type": "string"
-	    },
-	    "role": {
-		"description": "AWS role to access SQS resources",
-		"type": "string",
-		"pattern": "^arn:aws:iam::[0-9]{12}:role/.+$"
-	    },
-	    "queues": {
-		"type": "object",
-		"properties": {
-		    "input": {
-			"description": "SQS input queue",
-			"type": "string",
-			"pattern": "^https://.+$"
-		    },
-		    "output": {
-			"description": "SQS output queue",
-			"type": "string",
-			"pattern": "^https://.+$"
-		    }
-		},
-		"required": ["input", "output"]
-	    }
+	"name": {
+	    "description": "Client name",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 64
 	},
-	"required": ["name", "role", "queues"],
-	"additionalProperties": false
-    }
+	"externalId": {
+	    "description": "AWS ExternalID as provided by the client. Can be empty",
+	    "type": "string"
+	},
+	"role": {
+	    "description": "AWS role to access SQS resources",
+	    "type": "string",
+	    "pattern": "^arn:aws:iam::[0-9]{12}:role/.+$"
+	},
+	"queues": {
+	    "type": "object",
+	    "properties": {
+		"input": {
+		    "description": "SQS input queue",
+		    "type": "string",
+		    "pattern": "^https://.+$"
+		},
+		"output": {
+		    "description": "SQS output queue",
+		    "type": "string",
+		    "pattern": "^https://.+$"
+		}
+	    },
+	    "required": ["input", "output"]
+	}
+    },
+    "required": ["name", "role", "queues"],
+    "additionalProperties": false
 }

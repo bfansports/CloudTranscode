@@ -45,7 +45,13 @@ function log_out($type, $source, $message, $workflowId = 0)
     
     if (!is_string($log['message']))
         $log['message'] = json_encode($log['message']);
-    echo($log['time'] . " [" . $log['type'] . "] [" . $log['source'] . "] " . $log['message'] . "\n");
+    $toPrint = $log['time'] . " [" . $log['type'] . "] [" . $log['source'] . "] ";
+    if ($workflowId)
+        $toPrint .= "[$workflowId] ";
+    $toPrint .= $log['message'] . "\n";
+            
+    echo($toPrint);
+    
     syslog($priority, $out);
 }
 
@@ -113,13 +119,13 @@ function init_workflow($params)
 
     // Save WF info
     $workflowType = array(
-        "name"    => $params["name"],
-        "version" => $params["version"]);
+        "name"    => $params->{"name"},
+        "version" => $params->{"version"});
 
     // Check if a workflow of this type already exists
     try {
         $swf->describeWorkflowType([
-                "domain"       => $params["domain"],
+                "domain"       => $params->{"domain"},
                 "workflowType" => $workflowType
             ]);
         return true;
@@ -174,9 +180,6 @@ class CTException extends Exception
 
 // Composer for loading dependices: http://getcomposer.org/
 require __DIR__ . "/../../vendor/autoload.php";
-
-// XXX temporary require. Should use Composer for that!
-require "/home/koxon/dev/CloudTranscode/cloudTranscodeComSDK.git/src/CTComSDK.php";
 
 // Amazon library
 use Aws\Common\Aws;

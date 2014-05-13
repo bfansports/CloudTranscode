@@ -1,22 +1,18 @@
 {
-    "job_id": 1234567890,
-    "command": "StartJob",
-    "data": {
-	"input_type": "VIDEO",
-	"input_bucket": "ct-my-bucket-in",
-	"input_file": "/input1/test1.mp4",
-	"job_label": "test1 thumbnails",
-	"outputs": [
-	    {
-		"output_type": "THUMB",
-		"mode": "snapshot",
-		"output_bucket": "ct-my-bucket-out",
-		"output_file": "/output1/thumbs/test1_thumb.jpg",
-		"s3_rrs": true,
-		"s3_encrypt": true,
-		"size": "160x120",
-		"snapshot_sec": 5
-	    }
-	]
-    }
+    "input_type": "VIDEO",
+    "input_bucket": "ct-my-bucket-in",
+    "input_file": "/input1/test1.mp4",
+    "job_label": "test1 thumbnails",
+    "outputs": [
+	{
+	    "output_type": "THUMB",
+	    "mode": "snapshot",
+	    "output_bucket": "ct-my-bucket-out",
+	    "output_file": "/output1/thumbs/test1_thumb.jpg",
+	    "s3_rrs": true,
+	    "s3_encrypt": true,
+	    "size": "160x120",
+	    "snapshot_sec": 5
+	}
+    ]
 }

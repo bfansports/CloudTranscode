@@ -53,11 +53,12 @@ class WorkflowTracker
             $workflowExecution['workflowId']
         );
         $newWorkflow = [
+            "status"            => self::STARTED,
             "step"              => 0,
-            "input"             => $workflowInput,
+            "info"              => $workflowExecution,
             "activityList"      => $activityList,
             "ongoingActivities" => [],
-            "status"            => self::STARTED
+            "input"             => $workflowInput
         ];
         $this->executionTracker[$workflowExecution["workflowId"]] = $newWorkflow;
         
@@ -118,13 +119,13 @@ class WorkflowTracker
         
         // Create an activity snapshot for tracking
         $newActivity = [
+            "status"       => self::SCHEDULED,
             "activityId"   => $event["activityTaskScheduledEventAttributes"]["activityId"],
             "activityType" => $event["activityTaskScheduledEventAttributes"]["activityType"],
-            "input"        => $activityInput,
             "scheduledId"  => $event["eventId"],
             "startedId"    => 0,
             "completedId"  => 0,
-            "status"       => self::SCHEDULED
+            "input"        => $activityInput
         ];
         
         log_out(

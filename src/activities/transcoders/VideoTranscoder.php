@@ -244,7 +244,6 @@ class VideoTranscoder extends BasicTranscoder
                 self::WATERMARK_ERROR);
         
         // Format options for FFMpeg
-        // XXX Work on watermark position !
         $size = explode('x', $watermarkOptions->{'size'});
         $width = $size[0];
         $height = $size[1];
@@ -358,6 +357,16 @@ class VideoTranscoder extends BasicTranscoder
             basename(__FILE__), 
             "Progress: $done / $progress%",
             $this->activityLogKey
+        );
+
+        // Send progress through CTCom to notify client of progress
+        $this->activityObj->CTCom->activity_progress(
+            $this->task, 
+            [
+                "duration" => $duration,
+                "done"     => $done,
+                "progress" => $progress
+            ]
         );
     }
 

@@ -68,7 +68,6 @@ class DeciderBrain
         $this->activityList     = $this->config->{'cloudTranscode'}->{'activities'};
 
         // Instanciate CloudTranscode COM SDK
-        // Used to communicate to job owner: progress, issues, completions, etc
         $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
     }
   
@@ -184,7 +183,7 @@ class DeciderBrain
             [$workflowInput]);
         
         // ComSDK - Notify Workflow started
-        $this->CTCom->job_started($workflowExecution, $workflowInput);
+        $this->CTCom->job_started($newWorkflow);
     }
   
     // Workflow completed !
@@ -400,9 +399,9 @@ class DeciderBrain
             // If TRANSCODE_ASSET, we want to continue as more than one transcode 
             // may be in progress
             $this->transcode_asset_completed(
-                $event, 
-                $taskToken, 
-                $workflowExecution, 
+                $event,
+                $taskToken,
+                $workflowExecution,
                 $activity
             );
             return ;
@@ -471,10 +470,10 @@ class DeciderBrain
         // Mark WF as completed in tracker
         $this->workflowTracker->record_workflow_completed($workflowExecution);
         
-        // The workflow is over !
-        /* if (!$this->workflowManager->respond_decisions($taskToken,  */
-        /*         [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
-        /*     return false; */
+        //The workflow is over !
+        if (!$this->workflowManager->respond_decisions($taskToken,
+                [ ["decisionType" => "CompleteWorkflowExecution"] ]))
+            return false;
     }
 
     // Start a new activity
@@ -502,7 +501,7 @@ class DeciderBrain
                             "name"     => $activity->{"name"},
                             "version"  => $activity->{"version"}
                         ],
-                        "activityId"   => uniqid(),
+                        "activityId"   => uniqid('', true),
                         "input"	       => json_encode($input),
                         "taskList"     => [ "name" => $activity->{"activityTaskList"} ],
                         "scheduleToStartTimeout"   => $activity->{"scheduleToStartTimeout"},

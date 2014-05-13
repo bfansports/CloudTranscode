@@ -14,9 +14,7 @@ class TranscodeAssetActivity extends BasicActivity
     // Perform the activity
     public function do_activity($task)
     {
-        // XXX
-        // XXX. HERE, Notify transcode task initializing through SQS !
-        // XXX
+        print_r($task);
         
         $activityId   = $task->get("activityId");
         $activityType = $task->get("activityType");
@@ -117,11 +115,7 @@ class TranscodeAssetActivity extends BasicActivity
 
         // *********************
         // Upload resulting file
-            
-        // XXX
-        // XXX. HERE, Notify upload starting through SQS !
-        // XXX
-        
+
         // Sanitize output bucket path "/"
         $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
 
@@ -147,8 +141,8 @@ class TranscodeAssetActivity extends BasicActivity
         if (!$handle = opendir($pathToOutputFiles))
             throw new CTException("Can't open tmp path '$pathToOutputFiles'!", 
                 self::TMP_PATH_OPEN_FAIL);
-        // XXX Failt for video! if they execute in parallel on same box!
-        // XXX Upload will be concurrent
+        
+        // Upload all resulting files sitting in same dir
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") 
                 continue;

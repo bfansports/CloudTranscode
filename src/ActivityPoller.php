@@ -54,7 +54,7 @@ class ActivityPoller
         {
             if ($this->debug)
                 log_out(
-                    "INFO", 
+                    "DEBUG", 
                     basename(__FILE__), 
                     "Polling activity taskList '" . $taskList  . "' ... "
                 );
@@ -166,11 +166,14 @@ class ActivityPoller
                     try {
                         // Instantiate the class
                         $activityToHandle->{"object"} = 
-                            new $activityToHandle->{"class"}([
+                            new $activityToHandle->{"class"}(
+                                [
                                     "domain"  => $this->domain,
                                     "name"    => $activityToHandle->{"name"},
                                     "version" => $activityToHandle->{"version"}
-                                ]);
+                                ], 
+                                $this->debug
+                            );
                     } catch (CTException $e) {
                         throw new Exception("Unable to load and register activity class '" 
                             . $activityToHandle->{"class"} . "'. Abording ...");
@@ -235,7 +238,8 @@ function check_input_parameters(&$defaultConfigFile)
     global $debug;
 
     // Handle input parameters
-    $options = getopt("j:c:a:hd");
+    if (!($options = getopt("j:c:a:hd")))
+        usage($defaultConfigFile);
     if (!count($options) || isset($options['h']))
         usage($defaultConfigFile);
 

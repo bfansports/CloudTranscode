@@ -14,8 +14,6 @@ class TranscodeAssetActivity extends BasicActivity
     // Perform the activity
     public function do_activity($task)
     {
-        print_r($task);
-        
         $activityId   = $task->get("activityId");
         $activityType = $task->get("activityType");
         // Create a key workflowId:activityId to put in logs
@@ -164,6 +162,9 @@ class TranscodeAssetActivity extends BasicActivity
             log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $this->activityLogKey);
+
+            // Send progress through CTCom to notify client of download
+            $this->CTCom->activity_finishing($task);
         }
     }
 

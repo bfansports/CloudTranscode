@@ -24,7 +24,17 @@ function poll_SQS_queues($CTCom, $clientInfoEncoded)
 
 function handle_output($output)
 {
-    print($output->{'type'}."\n");
+    global $debug;
+    
+    if ($debug)
+        print_r($output);
+    
+    if (isset($output->{'data'}->{'activity'}))
+        print($output->{'time'} . " " . $output->{'type'}."(" 
+            . $output->{'data'}->{'activity'}->{'activityId'}  . ")\n");
+    else
+        print($output->{'time'} . " " . $output->{'type'}."(" 
+            . $output->{'data'}->{'workflow'}->{'workflowId'}  . ")\n");
 }
 
 /**

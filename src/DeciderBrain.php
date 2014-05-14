@@ -183,7 +183,7 @@ class DeciderBrain
             [$workflowInput]);
         
         // ComSDK - Notify Workflow started
-        $this->CTCom->job_started($newWorkflow);
+        $this->CTCom->job_started($workflowExecution, $workflowInput);
     }
   
     // Workflow completed !
@@ -228,7 +228,7 @@ class DeciderBrain
                 $event, 
                 $input
             );
-        
+
         // ComSDK - Notify Activity scheduled
         $this->CTCom->activity_scheduled(
             $workflowExecution,
@@ -244,7 +244,6 @@ class DeciderBrain
         $activity = 
             $this->workflowTracker->record_activity_started($workflowExecution, $event);
             
-
         // ComSDK - Notify Activity started
         $this->CTCom->activity_started(
             $workflowExecution,
@@ -424,11 +423,9 @@ class DeciderBrain
         /*         $workflowExecution['workflowId'] */
         /*     ); */
 
-        /*     // The workflow is over ! */
-        /*     if (!$this->workflowManager->respond_decisions($taskToken, */
-        /*             [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
-        /*         return false; */
-        /* } */
+        // The workflow is over !
+        /* if (!$this->workflowManager->respond_decisions($taskToken, null)) */
+        /*     return false; */
     }
   
     /** 

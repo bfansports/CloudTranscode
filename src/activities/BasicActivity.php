@@ -232,9 +232,8 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // XXX
-        // Send SQS notification of GET progress
-        // XXX
+        // Send progress through CTCom to notify client of download
+        $this->CTCom->activity_preparing($task);
     }
 
     // Called from S3Utils while PUT to S3 is in progress
@@ -243,9 +242,8 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // XXX
-        // Send SQS notification of PUT progress
-        // XXX
+        // Send progress through CTCom to notify client of download
+        $this->CTCom->activity_finishing($task);
     }
 }
 

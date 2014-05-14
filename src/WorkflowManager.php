@@ -206,8 +206,9 @@ class WorkflowManager
     {
         global $swf;
         
+        $params = [ "taskToken" => $taskToken ];        
+
         // If no decisions, we send an empty response == continue workflow execution
-        $params = [ "taskToken" => $taskToken ];
         if ($decisions)
             $params["decisions"] = $decisions;
         

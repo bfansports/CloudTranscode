@@ -55,7 +55,7 @@ class Decider
 
         if ($this->debug)
             log_out(
-                "INFO", 
+                "DEBUG", 
                 basename(__FILE__), 
                 "Polling decision taskList ..."
             );
@@ -135,9 +135,14 @@ function usage($defaultConfigFile)
 function check_input_parameters(&$defaultConfigFile)
 {
     global $debug;
+    global $argv;
     
+    if (count($argv) == 1)
+        return;
+
     // Handle input parameters
-    $options = getopt("c:hd");
+    if (!($options = getopt("c:hd")))
+        usage($defaultConfigFile);
     if (isset($options['h']))
         usage($defaultConfigFile);
     

@@ -15,25 +15,19 @@ class ValidateInputAndAssetActivity extends BasicActivity
     // Perform the activity
     public function do_activity($task)
     {
-        // XXX
-        // XXX. HERE, Notify validation task starts through SQS !
-        // XXX
-        
-        print_r($task);
-
         $activityId   = $task->get("activityId");
         $activityType = $task->get("activityType");
         // Create a key workflowId:activityId to put in logs
         $this->activityLogKey = $task->get("workflowExecution")['workflowId'] . ":$activityId";
         
+        // Send started through CTCom to notify client
+        $this->CTCom->activity_started($task);
+
         // Perfom input validation
         $input = $this->do_input_validation($task, $activityType["name"]);
         $this->job_id = $input->{'job_id'};         
         $this->data   = $input->{'data'};  
-        // We may not have 'client' if the InputPoller receive input from cmd line.
-        // Testing purposes. No client == No SQS communication.
-        if (isset($input->{'client'}))
-            $this->client = $input->{'client'};
+        $this->client = $input->{'client'};
 
         log_out(
             "INFO", 
@@ -103,10 +97,6 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 
             break;
         }
-    
-        // XXX
-        // XXX. HERE, Notify validation task success through SQS !
-        // XXX
         
         // Create result object to be passed to next activity in the Workflow as input
         $result = [

@@ -1,5 +1,4 @@
 {
-    "api_key": "1234567890abcdefghijkl",
     "input_type": "VIDEO",
     "input_bucket": "ct-my-bucket-in",
     "input_file": "/input2/test2.mp4",

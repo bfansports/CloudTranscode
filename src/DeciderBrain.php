@@ -50,8 +50,7 @@ class DeciderBrain
             'ActivityTaskCompleted'      => 'activity_task_completed',
             'ActivityTaskFailed'         => 'activity_task_failed',
             'ActivityTaskTimedOut'       => 'activity_task_timed_out',
-            'ActivityTaskCanceled'       => 'activity_task_canceled',
-            'DecisionTaskStarted'        => 'decision_task_started'
+            'ActivityTaskCanceled'       => 'activity_task_canceled'
         ];
     
         // Instantiate manager
@@ -68,7 +67,6 @@ class DeciderBrain
         $this->activityList     = $this->config->{'cloudTranscode'}->{'activities'};
 
         // Instanciate CloudTranscode COM SDK
-        // Used to communicate to job owner: progress, issues, completions, etc
         $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
     }
   
@@ -93,43 +91,49 @@ class DeciderBrain
             $workflowExecution['workflowId']
         );
 
-        $errRef = 0;
-        $errMsg = 0;
+        $reason = 0;
+        $details = 0;
         try {
             // We call the callback function that handles this event 
             $this->{$this->eventsMap[$event["eventType"]]}(
                 $event, 
                 $taskToken, 
                 $workflowExecution);
-        }
-        catch (CTException $e) {
+        } catch (CTException $e) {
             log_out(
                 "ERROR", 
                 basename(__FILE__), 
                 "[" . $e->ref . "] " . $e->getMessage(), 
                 $workflowExecution['workflowId']
             );
-            $errRef = $e->ref;
-            $errMsg = $e->getMessage();
-        }
-        catch (Exception $e) {
+            $reason = $e->ref;
+            $details = $e->getMessage();
+        } catch (Exception $e) {
             log_out(
                 "ERROR", 
                 basename(__FILE__), 
                 $e->getMessage(), 
                 $workflowExecution['workflowId']
             );
-            $errRef = self::DECIDER_ERROR;
-            $errMsg = $e->getMessage();
-        }
-        finally {
-            if ($errRef && $errMsg)
+            $reason = self::DECIDER_ERROR;
+            $details = $e->getMessage();
+        } finally {
+            if ($reason && $details)
             {
                 try {
+                    // Ask SWF to terminate the WF
                     $this->workflowManager->terminate_workflow(
                         $workflowExecution, 
-                        $errRef, 
-                        $errMsg
+                        $reason, 
+                        $details
+                    );
+
+                    // Notify client that the job failed!
+                    $this->CTCom->job_failed(
+                        $workflowExecution,
+                        $this->workflowTracker->get_workflow_input($workflowExecution),
+                        $reason,
+                        $details
                     );
                 }
                 catch (Exception $e) {
@@ -202,7 +206,7 @@ class DeciderBrain
         // XXX
         // SQS Workflow completed
         // XXX
-        $this->CTCom->job_completed();
+        //$this->CTCom->job_completed();
 
         return true;
     }
@@ -229,13 +233,6 @@ class DeciderBrain
                 $event, 
                 $input
             );
-        
-        // ComSDK - Notify Activity scheduled
-        $this->CTCom->activity_scheduled(
-            $workflowExecution,
-            $this->workflowTracker->get_workflow_input($workflowExecution),
-            $activity
-        );
     }
 
     // Activity started !
@@ -243,15 +240,10 @@ class DeciderBrain
     {
         // Register new started activities in tracker
         $activity = 
-            $this->workflowTracker->record_activity_started($workflowExecution, $event);
-            
-
-        // ComSDK - Notify Activity started
-        $this->CTCom->activity_started(
-            $workflowExecution,
-            $this->workflowTracker->get_workflow_input($workflowExecution),
-            $activity
-        );
+            $this->workflowTracker->record_activity_started(
+                $workflowExecution, 
+                $event
+            );
     }
   
     // Activity Task completed
@@ -263,13 +255,6 @@ class DeciderBrain
                 $workflowExecution,
                 $event
             );
-
-        // ComSDK - Notify Activity completed
-        $this->CTCom->activity_completed(
-            $workflowExecution,
-            $this->workflowTracker->get_workflow_input($workflowExecution),
-            $activity
-        );
 
         // We completed 'ValidateInputAndAsset' activity
         if ($activity['activityType']['name'] == self::VALIDATE_INPUT)
@@ -381,12 +366,6 @@ class DeciderBrain
                 $workflowExecution,
                 $event
             );
-
-        // ComSDK - Notify Activity failed
-        $this->CTCom->activity_failed(
-            $workflowExecution,
-            $this->workflowTracker->get_workflow_input($workflowExecution),
-            $activity);
         
         log_out(
             "ERROR", 
@@ -400,9 +379,9 @@ class DeciderBrain
             // If TRANSCODE_ASSET, we want to continue as more than one transcode 
             // may be in progress
             $this->transcode_asset_completed(
-                $event, 
-                $taskToken, 
-                $workflowExecution, 
+                $event,
+                $taskToken,
+                $workflowExecution,
                 $activity
             );
             return ;
@@ -412,24 +391,6 @@ class DeciderBrain
             "Can't continue workflow execution. Fatal issue!",
             self::FATAL_ISSUE
         );
-    }
-
-    private function decision_task_started($event, $taskToken, $workflowExecution)
-    {
-        /* if ($this->workflowTracker->is_workflow_completed($workflowExecution)) */
-        /* { */
-        /*     log_out( */
-        /*         "INFO",  */
-        /*         basename(__FILE__),  */
-        /*         "No more activity to perform. Completing Workflow ...!",  */
-        /*         $workflowExecution['workflowId'] */
-        /*     ); */
-
-        /*     // The workflow is over ! */
-        /*     if (!$this->workflowManager->respond_decisions($taskToken, */
-        /*             [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
-        /*         return false; */
-        /* } */
     }
   
     /** 
@@ -471,10 +432,16 @@ class DeciderBrain
         // Mark WF as completed in tracker
         $this->workflowTracker->record_workflow_completed($workflowExecution);
         
-        // The workflow is over !
-        /* if (!$this->workflowManager->respond_decisions($taskToken,  */
-        /*         [ ["decisionType" => "CompleteWorkflowExecution"] ])) */
-        /*     return false; */
+        // Notify client that the job completed!
+        $this->CTCom->job_completed(
+            $workflowExecution,
+            $this->workflowTracker->get_workflow_input($workflowExecution)
+        );
+
+        // Notify SWF that the workflow is over !
+        if (!$this->workflowManager->respond_decisions($taskToken,
+                [ ["decisionType" => "CompleteWorkflowExecution"] ]))
+            return false;
     }
 
     // Start a new activity
@@ -502,7 +469,7 @@ class DeciderBrain
                             "name"     => $activity->{"name"},
                             "version"  => $activity->{"version"}
                         ],
-                        "activityId"   => uniqid(),
+                        "activityId"   => uniqid('', true),
                         "input"	       => json_encode($input),
                         "taskList"     => [ "name" => $activity->{"activityTaskList"} ],
                         "scheduleToStartTimeout"   => $activity->{"scheduleToStartTimeout"},

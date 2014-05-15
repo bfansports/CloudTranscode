@@ -53,11 +53,12 @@ class WorkflowTracker
             $workflowExecution['workflowId']
         );
         $newWorkflow = [
+            "status"            => self::STARTED,
             "step"              => 0,
-            "input"             => $workflowInput,
+            "info"              => $workflowExecution,
             "activityList"      => $activityList,
             "ongoingActivities" => [],
-            "status"            => self::STARTED
+            "input"             => $workflowInput
         ];
         $this->executionTracker[$workflowExecution["workflowId"]] = $newWorkflow;
         
@@ -86,7 +87,9 @@ class WorkflowTracker
     // Return WF input data
     public function get_workflow_input($workflowExecution)
     {
-        return ($this->executionTracker[$workflowExecution["workflowId"]]["input"]);
+        if ($this->is_workflow_tracked($workflowExecution))
+            return ($this->executionTracker[$workflowExecution["workflowId"]]["input"]);
+        return false;
     }
     
     // Is the workflow tracked by the tracker ?
@@ -118,13 +121,13 @@ class WorkflowTracker
         
         // Create an activity snapshot for tracking
         $newActivity = [
+            "status"       => self::SCHEDULED,
             "activityId"   => $event["activityTaskScheduledEventAttributes"]["activityId"],
             "activityType" => $event["activityTaskScheduledEventAttributes"]["activityType"],
-            "input"        => $activityInput,
             "scheduledId"  => $event["eventId"],
             "startedId"    => 0,
             "completedId"  => 0,
-            "status"       => self::SCHEDULED
+            "input"        => $activityInput
         ];
         
         log_out(

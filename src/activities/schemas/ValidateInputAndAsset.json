@@ -7,14 +7,21 @@
         "client": {
             "$ref": "client.json"
         },
-	"job_id": {
-	    "description": "ID of the new job",
+	"time": {
+	    "description": "Timestamp of the command",
             "type": "number"
 	},
-	"command": {
-	    "description": "Command to execute. Only 'StartJob' accepted",
+	"job_id": {
+	    "description": "ID of the new job",
             "type": "string",
-	    "pattern": "^StartJob$"
+	    "pattern": "^[0-9a-z]+$",
+	    "maxLength": 32,
+	    "minLength": 32
+	},
+	"type": {
+	    "description": "Type of message",
+            "type": "string",
+	    "pattern": "^START_JOB$"
 	},
 	"data" : {
 	    "description": "Data for the new transcoding job",
@@ -63,6 +70,6 @@
 	    "additionalProperties": false
 	}
     },
-    "required": ["command", "data", "job_id"],
+    "required": ["type", "data", "job_id", "time"],
     "additionalProperties": true
 }

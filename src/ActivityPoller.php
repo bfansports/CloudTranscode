@@ -54,7 +54,7 @@ class ActivityPoller
         {
             if ($this->debug)
                 log_out(
-                    "INFO", 
+                    "DEBUG", 
                     basename(__FILE__), 
                     "Polling activity taskList '" . $taskList  . "' ... "
                 );
@@ -121,22 +121,26 @@ class ActivityPoller
         }
 
         // Run activity task
+        $reason = 0;
+        $details = 0;
         try {
             $result = $activity->{"object"}->do_activity($activityTask);
         } catch (CTException $e) {
-            $activity->{"object"}->activity_failed(
-                $activityTask, 
-                $e->ref, 
-                $e->getMessage()
-            );
-            return false;
+            $reason  = $e->ref;
+            $details = $e->getMessage();
         } catch (Exception $e) {
-            $activity->{"object"}->activity_failed(
-                $activityTask, 
-                self::ACTIVITY_FAILED, 
-                $e->getMessage()
-            );
-            return false;
+            $reason  = self::ACTIVITY_FAILED;
+            $details = $e->getMessage();
+        } finally {
+            if ($reason && $details)
+            {
+                $activity->{"object"}->activity_failed(
+                    $activityTask, 
+                    $reason, 
+                    $details
+                );
+                return false;
+            }
         }
     
         // Send completion msg
@@ -166,11 +170,14 @@ class ActivityPoller
                     try {
                         // Instantiate the class
                         $activityToHandle->{"object"} = 
-                            new $activityToHandle->{"class"}([
+                            new $activityToHandle->{"class"}(
+                                [
                                     "domain"  => $this->domain,
                                     "name"    => $activityToHandle->{"name"},
                                     "version" => $activityToHandle->{"version"}
-                                ]);
+                                ], 
+                                $this->debug
+                            );
                     } catch (CTException $e) {
                         throw new Exception("Unable to load and register activity class '" 
                             . $activityToHandle->{"class"} . "'. Abording ...");
@@ -235,7 +242,8 @@ function check_input_parameters(&$defaultConfigFile)
     global $debug;
 
     // Handle input parameters
-    $options = getopt("j:c:a:hd");
+    if (!($options = getopt("j:c:a:hd")))
+        usage($defaultConfigFile);
     if (!count($options) || isset($options['h']))
         usage($defaultConfigFile);
 

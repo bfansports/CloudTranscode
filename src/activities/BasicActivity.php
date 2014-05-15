@@ -11,8 +11,8 @@ class BasicActivity
 {
     private   $activityType; // Type of activity
     private   $activityResult; // Contain activity result output
-    private   $root; // This file location
     public    $activityLogKey; // Create a key workflowId:activityId to put in logs
+    public    $CTCom;
   
     // Constants
     const NO_INPUT             = "NO_INPUT";
@@ -26,7 +26,7 @@ class BasicActivity
     
     const TMP_FOLDER           = "/tmp/CloudTranscode/";
     
-    function __construct($params)
+    function __construct($params, $debug)
     {
         if (!isset($params["name"]) || !$params["name"])
             throw new CTException("Can't instantiate asicActivity: 'name' is not provided or empty !\n", 
@@ -39,8 +39,11 @@ class BasicActivity
         if (!$this->init_activity($params))
             throw new CTException("Unable to init the activity !\n", 
 			    Self::ACTIVITY_INIT_FAILED);
-    
-        $this->root = realpath(dirname(__FILE__));
+        
+        $this->debug = $debug;
+
+        // Instanciate CloudTranscode COM SDK
+        $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
     }
 
     private function init_activity($params)
@@ -123,6 +126,9 @@ class BasicActivity
     public function activity_failed($task, $reason = "", $details = "")
     {
         global $swf;
+        
+        // Notify client of failure
+        $this->CTCom->activity_failed($task, $reason, $details);
 
         try {
             log_out("ERROR", basename(__FILE__), "[$reason] $details",
@@ -144,6 +150,9 @@ class BasicActivity
     public function activity_completed($task, $result)
     {
         global $swf;
+        
+        // Notify client of failure
+        $this->CTCom->activity_completed($task);
     
         try {
             log_out("INFO", basename(__FILE__),
@@ -229,9 +238,8 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // XXX
-        // Send SQS notification of GET progress
-        // XXX
+        // Send progress through CTCom to notify client of download
+        $this->CTCom->activity_preparing($task);
     }
 
     // Called from S3Utils while PUT to S3 is in progress
@@ -240,9 +248,8 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // XXX
-        // Send SQS notification of PUT progress
-        // XXX
+        // Send progress through CTCom to notify client of upload
+        $this->CTCom->activity_finishing($task);
     }
 }
 

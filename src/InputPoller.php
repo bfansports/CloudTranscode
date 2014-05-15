@@ -32,14 +32,14 @@ class InputPoller
             throw new Exception("Unable to init the workflow !\n");
         
         // Init eventMap. Maps events with callback functions.
-        $this->commandsMap = [
-            'StartJob'             => 'start_job',
-            'CancelJob'            => 'cancel_job',
-            'CancelActivity'       => 'cancel_activity',
-            'GetJobList'           => 'get_job_list',
-            'GetActivityList'      => 'get_activity_list',
-            'GetJobStatus'         => 'get_job_status',
-            'GetActivityStatus'    => 'get_activity_status',
+        $this->typesMap = [
+            'START_JOB'            => 'start_job',
+            'CANCEL_JOB'           => 'cancel_job',
+            'CANCEL_ACTIVITY'      => 'cancel_activity',
+            'GET_JOB_LIST'         => 'get_job_list',
+            'GET_ACTIVITY_LIST'    => 'get_activity_list',
+            'GET_JOB_STATUS'       => 'get_job_status',
+            'GET_ACTIVITY_STATUS'  => 'get_activity_status',
         ];
 
         // Instantiating CloudTranscode Communication SDK.
@@ -58,18 +58,18 @@ class InputPoller
             // Long Polling messages from client input queue
             $queue = $client->{'queues'}->{'input'};
             try {
-                if ($msg = $this->CTCom->receive_message(false, $queue, 2))
+                if ($msg = $this->CTCom->receive_message(false, $queue, 1))
                 {
+                    // Message polled. We delete it from SQS
+                    $this->CTCom->delete_message(false, $queue, $msg);
+
                     if (!($decoded = json_decode($msg['Body'])))
                         log_out(
                             "ERROR", 
                             basename(__FILE__), 
                             "JSON data invalid in queue: '$queue'");
                     else                    
-                        $this->handle_input($decoded, $client);
-                    
-                    // Message polled. We delete it from SQS
-                    $this->CTCom->delete_message(false, $queue, $msg);
+                        $this->handle_message($decoded, $client);
                 }
             } catch (Exception $e) {
                 log_out(
@@ -81,17 +81,17 @@ class InputPoller
     }
 
     // Receive an input, check if we know the command and exec the callback
-    public function handle_input($input, $client)
+    public function handle_message($message, $client)
     {
-        $this->validate_input($input);
+        $this->validate_message($message);
 
         // Do we know this input ?
-        if (!isset($this->commandsMap[$input->{"command"}]))
+        if (!isset($this->typesMap[$message->{"type"}]))
         {
             log_out(
                 "ERROR", 
                 basename(__FILE__), 
-                "Command '" . $input->{"command"} . "' is unknown! Ignoring ..."
+                "Command '" . $message->{"type"} . "' is unknown! Ignoring ..."
             );
             return;
         }
@@ -99,17 +99,17 @@ class InputPoller
         log_out(
             "INFO", 
             basename(__FILE__), 
-            "Received command '" . $input->{"command"}  . "'"
+            "Received message '" . $message->{"type"}  . "'"
         );
         if ($this->debug)
             log_out(
                 "INFO", 
                 basename(__FILE__), 
-                "Details:\n" . json_encode($input, JSON_PRETTY_PRINT)
+                "Details:\n" . json_encode($message, JSON_PRETTY_PRINT)
             );
 
-        // We call the callback function that handles this input command 
-        $this->{$this->commandsMap[$input->{"command"}]}($input, $client);
+        // We call the callback function that handles this message  
+        $this->{$this->typesMap[$message->{"type"}]}($message, $client);
     }
 
     
@@ -118,7 +118,7 @@ class InputPoller
      */
 
     // Start a new workflow in SWF to initiate new transcoding job
-    private function start_job($input, $client)
+    private function start_job($message, $client)
     {
         // SWF client
         global $swf;
@@ -135,8 +135,8 @@ class InputPoller
             "name"    => $this->config->{'cloudTranscode'}->{'workflow'}->{"name"},
             "version" => $this->config->{'cloudTranscode'}->{'workflow'}->{"version"});
         
-        // Append client info to input data
-        $input->{"client"} = $client;
+        // Append client info to message data
+        $message->{"client"} = $client;
 
         // Request start SWF workflow
         try {
@@ -145,7 +145,7 @@ class InputPoller
                     "workflowId"   => uniqid('', true),
                     "workflowType" => $workflowType,
                     "taskList"     => array("name" => $this->config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'}),
-                    "input"        => json_encode($input)
+                    "input"        => json_encode($message)
                 ));
         } catch (\Aws\Swf\Exception\SwfException $e) {
             log_out(
@@ -160,12 +160,14 @@ class InputPoller
      * UTILS
      */ 
 
-    private function validate_input($input)
+    private function validate_message($message)
     {
-        if (!isset($input) || 
-            !isset($input->{"data"}) || $input->{"data"} == "" || 
-            !isset($input->{"job_id"}) || $input->{"job_id"} == "")
-            throw new Exception("'job_id' or 'data' fields missing in JSON input file!");
+        if (!isset($message) || 
+            !isset($message->{"time"})   || $message->{"time"} == "" || 
+            !isset($message->{"job_id"}) || $message->{"job_id"} == "" || 
+            !isset($message->{"type"})   || $message->{"type"} == "" || 
+            !isset($message->{"data"})   || $message->{"data"} == "")
+            throw new Exception("'time', 'type', 'job_id' or 'data' fields missing in JSON message file!");
     }
 }
 
@@ -189,9 +191,14 @@ function check_input_parameters(&$defaultConfigFile)
 {
     global $input_file;
     global $debug;
+    global $argv;
     
+    if (count($argv) == 1)
+        return;
+
     // Handle input parameters
-    $options = getopt("c:hd");
+    if (!($options = getopt("c:hd")))
+        usage($defaultConfigFile);
     
     if (isset($options['h']))
         usage($defaultConfigFile);

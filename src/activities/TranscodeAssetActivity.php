@@ -14,15 +14,15 @@ class TranscodeAssetActivity extends BasicActivity
     // Perform the activity
     public function do_activity($task)
     {
-        // XXX
-        // XXX. HERE, Notify transcode task initializing through SQS !
-        // XXX
-        
         $activityId   = $task->get("activityId");
         $activityType = $task->get("activityType");
         // Create a key workflowId:activityId to put in logs
         $this->activityLogKey = $task->get("workflowExecution")['workflowId'] 
             . ":$activityId";
+
+        
+        // Send started through CTCom to notify client
+        $this->CTCom->activity_started($task);
         
         // Perfom input validation
         // Pass callback function 'validate_input' to perfrom custom validation
@@ -117,11 +117,7 @@ class TranscodeAssetActivity extends BasicActivity
 
         // *********************
         // Upload resulting file
-            
-        // XXX
-        // XXX. HERE, Notify upload starting through SQS !
-        // XXX
-        
+
         // Sanitize output bucket path "/"
         $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
 
@@ -147,8 +143,9 @@ class TranscodeAssetActivity extends BasicActivity
         if (!$handle = opendir($pathToOutputFiles))
             throw new CTException("Can't open tmp path '$pathToOutputFiles'!", 
                 self::TMP_PATH_OPEN_FAIL);
-        // XXX Failt for video! if they execute in parallel on same box!
-        // XXX Upload will be concurrent
+        
+        // Upload all resulting files sitting in same dir
+        $i = 0;
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") 
                 continue;
@@ -170,7 +167,21 @@ class TranscodeAssetActivity extends BasicActivity
             log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $this->activityLogKey);
+            
+            $i++;
+            
+            if ($i == 5)
+            {
+                $this->send_heartbeat($task);
+                // Send progress through CTCom to notify client of finishing
+                $this->CTCom->activity_finishing($task); 
+                $i = 0;
+            }
         }
+        
+        $this->send_heartbeat($task);
+        // Send progress through CTCom to notify client of finishing
+        $this->CTCom->activity_finishing($task); 
     }
 
     // Perform custom validation on JSON input

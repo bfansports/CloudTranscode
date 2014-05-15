@@ -121,22 +121,26 @@ class ActivityPoller
         }
 
         // Run activity task
+        $reason = 0;
+        $details = 0;
         try {
             $result = $activity->{"object"}->do_activity($activityTask);
         } catch (CTException $e) {
-            $activity->{"object"}->activity_failed(
-                $activityTask, 
-                $e->ref, 
-                $e->getMessage()
-            );
-            return false;
+            $reason  = $e->ref;
+            $details = $e->getMessage();
         } catch (Exception $e) {
-            $activity->{"object"}->activity_failed(
-                $activityTask, 
-                self::ACTIVITY_FAILED, 
-                $e->getMessage()
-            );
-            return false;
+            $reason  = self::ACTIVITY_FAILED;
+            $details = $e->getMessage();
+        } finally {
+            if ($reason && $details)
+            {
+                $activity->{"object"}->activity_failed(
+                    $activityTask, 
+                    $reason, 
+                    $details
+                );
+                return false;
+            }
         }
     
         // Send completion msg

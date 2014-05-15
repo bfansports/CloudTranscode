@@ -126,6 +126,9 @@ class BasicActivity
     public function activity_failed($task, $reason = "", $details = "")
     {
         global $swf;
+        
+        // Notify client of failure
+        $this->CTCom->activity_failed($task, $reason, $details);
 
         try {
             log_out("ERROR", basename(__FILE__), "[$reason] $details",
@@ -147,6 +150,9 @@ class BasicActivity
     public function activity_completed($task, $result)
     {
         global $swf;
+        
+        // Notify client of failure
+        $this->CTCom->activity_completed($task);
     
         try {
             log_out("INFO", basename(__FILE__),
@@ -242,7 +248,7 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // Send progress through CTCom to notify client of download
+        // Send progress through CTCom to notify client of upload
         $this->CTCom->activity_finishing($task);
     }
 }

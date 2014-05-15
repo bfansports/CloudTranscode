@@ -19,6 +19,10 @@ class TranscodeAssetActivity extends BasicActivity
         // Create a key workflowId:activityId to put in logs
         $this->activityLogKey = $task->get("workflowExecution")['workflowId'] 
             . ":$activityId";
+
+        
+        // Send started through CTCom to notify client
+        $this->CTCom->activity_started($task);
         
         // Perfom input validation
         // Pass callback function 'validate_input' to perfrom custom validation
@@ -141,6 +145,7 @@ class TranscodeAssetActivity extends BasicActivity
                 self::TMP_PATH_OPEN_FAIL);
         
         // Upload all resulting files sitting in same dir
+        $i = 0;
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") 
                 continue;
@@ -162,10 +167,21 @@ class TranscodeAssetActivity extends BasicActivity
             log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $this->activityLogKey);
-
-            // Send progress through CTCom to notify client of download
-            $this->CTCom->activity_finishing($task);
+            
+            $i++;
+            
+            if ($i == 5)
+            {
+                $this->send_heartbeat($task);
+                // Send progress through CTCom to notify client of finishing
+                $this->CTCom->activity_finishing($task); 
+                $i = 0;
+            }
         }
+        
+        $this->send_heartbeat($task);
+        // Send progress through CTCom to notify client of finishing
+        $this->CTCom->activity_finishing($task); 
     }
 
     // Perform custom validation on JSON input

@@ -20,6 +20,9 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Create a key workflowId:activityId to put in logs
         $this->activityLogKey = $task->get("workflowExecution")['workflowId'] . ":$activityId";
         
+        // Send started through CTCom to notify client
+        $this->CTCom->activity_started($task);
+
         // Perfom input validation
         $input = $this->do_input_validation($task, $activityType["name"]);
         $this->job_id = $input->{'job_id'};         

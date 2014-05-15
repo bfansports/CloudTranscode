@@ -31,22 +31,10 @@ class WorkflowManager
 	{
 		global $swf;
 
-		try {
-			$swf->requestCancelWorkflowExecution([
-                    "domain"     => $this->domain,
-                    "workflowId" => $workflowExecution["workflowId"]
-                ]);
-		} catch (Exception $e) {
-			log_out(
-                "ERROR", 
-                basename(__FILE__), "Cannot cancel the workflow '" 
-                . $workflowExecution["workflowId"] . "'!"
-                . " Details: " . $e->getMessage()
-            );
-			return false;
-		}
-
-		return true;
+        $swf->requestCancelWorkflowExecution([
+                "domain"     => $this->domain,
+                "workflowId" => $workflowExecution["workflowId"]
+            ]);
 	}
 
 	/**

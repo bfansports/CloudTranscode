@@ -87,7 +87,9 @@ class WorkflowTracker
     // Return WF input data
     public function get_workflow_input($workflowExecution)
     {
-        return ($this->executionTracker[$workflowExecution["workflowId"]]["input"]);
+        if ($this->is_workflow_tracked($workflowExecution))
+            return ($this->executionTracker[$workflowExecution["workflowId"]]["input"]);
+        return false;
     }
     
     // Is the workflow tracked by the tracker ?

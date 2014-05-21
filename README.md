@@ -27,10 +27,8 @@ composer and download all dependencies.
 Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transcode-Installation-Deployment-8zAu2d03Zxr
 
 # Using the stack
-Clients using the transcoding stack need to use the ComSDK to send new jobs and receive updates from the stack.
+Clients using the transcoding stack need to use the CloudTranscodeComSDK specially concived to communicate with the stack. With it you can send new jobs and receive updates from the stack.
 Available here: https://github.com/sportarchive/CloudTranscodeComSDK
-
-It allows the clients and the stack to easily communicate with eachother over AWS SQS.
 
 # FFMpeg performance benchmark on Amazon EC2
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:

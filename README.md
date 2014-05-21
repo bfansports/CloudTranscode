@@ -13,7 +13,6 @@ only need an Amazon AWS account and an Internet connection to use the required A
 It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 instance, it's up to you.
 
 # Transcoding supported
-
 - **Video to Video transcoding**: One video IN, many videos OUT. Any format and codec supported by ffmpeg.
 - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
 - **Watermark integration in video**: Take image IN and position it on top of the video. Custom position and transparency.
@@ -21,21 +20,19 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 # Detailed info 
 http://sportarchive.github.io/CloudTranscode/
 
-## FFMpeg performance benchmark on Amazon EC2
-
-Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:
-https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
-
-## Getting started
-
+# Getting started
 Simply type "make" in the top level directory of the project. It will fetch PHP
 composer and download all dependencies.
 
 Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transcode-Installation-Deployment-8zAu2d03Zxr
 
-## Using the stack
-
+# Using the stack
 Clients using the transcoding stack need to use the ComSDK to send new jobs and receive updates from the stack.
 Available here: https://github.com/sportarchive/CloudTranscodeComSDK
 
 It allows the clients and the stack to easily communicate with eachother over AWS SQS.
+
+# FFMpeg performance benchmark on Amazon EC2
+Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:
+https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
+

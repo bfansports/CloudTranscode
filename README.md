@@ -20,6 +20,7 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 # Detailed info 
 http://sportarchive.github.io/CloudTranscode/
 
+# High Level Architecture
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")
 
 # Getting started

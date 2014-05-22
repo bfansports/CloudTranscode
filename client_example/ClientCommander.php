@@ -2,7 +2,6 @@
 
 require __DIR__ . "/../vendor/autoload.php";
 
-
 function start_job($args)
 {
     global $CTCom;
@@ -70,9 +69,10 @@ function check_input_parameters()
     global $secret;
     global $key;
     global $debug;
+    global $clientInfo;
     
     // Handle input parameters
-    if (!($options = getopt("k:s:r:hd")))
+    if (!($options = getopt("c:k:s:r:hd")))
         usage();
     if (isset($options['h']))
         usage();
@@ -80,6 +80,17 @@ function check_input_parameters()
     if (isset($options['d']))
         $debug = true;
   
+    if (isset($options['c']))
+    {
+        $clientConfFile = $options['c'];
+        if (!file_exists($clientConfFile))
+            throw new Exception("The client config file is not valid!");
+        if (!($clientInfo = file_get_contents($clientConfFile)))
+            throw new Exception("Unable to read the file");
+    }
+    else
+        throw new Exception("Please provide the client config file!");
+
     if (isset($options['k']))
         $key = $options['k'];
     if (!$key)
@@ -96,30 +107,24 @@ function check_input_parameters()
         throw new Exception("Please provide your AWS region!");
 }
 
-check_input_parameters();
+try {
+    check_input_parameters();
+} 
+catch (Exception $e) {
+    print "[ERROR] " . $e->getMessage() . "\n";
+    exit(2);
+}
+
+if (!($clientInfoDecoded = json_decode($clientInfo)))
+{
+    print "[ERROR] invalid JSON format in config file!\n";
+    exit(2);
+}
 
 // Instanciate ComSDK to communicate with the stack
 $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
 
-// Example of the data you should provide to get identified
-// The role and the queues should be created by the stack owner
-// The owner should entitle the client by creating the proper roles and queues
-// Use AWS IAM roles to do so
-// As a client you MUST keep this info safely and provide it when you COM with the stack
-$clientInfo = <<<EOF
-{
-    "name": "NicoMencie",
-    "externalId": "CT-NicoMencie",
-    "role": "arn:aws:iam::686112866222:role/CT-NicoMencie",
-    "queues": {
-       "input": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-NicoMencie-InputQueue",
-       "output": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-NicoMencie-OutputQueue"
-       }
-    }
-EOF;
-// You must JSON decode it
-$clientInfoDecoded = json_decode($clientInfo);
-
+// Commands mapping
 $commandMap = [
     "start_job" => "start_job",
 ];
@@ -128,11 +133,13 @@ $commandMap = [
 print($help);
 while (42)
 {
+    // Prompt (<3 php)
     $line = readline("Command [enter]: ");
     if (!$line)
         continue;
     readline_add_history($line);
 
+    // Process user input
     $args = explode(" ", $line);
     if (!isset($commandMap[$args[0]]))
         print "[ERROR] Command not found!\n";

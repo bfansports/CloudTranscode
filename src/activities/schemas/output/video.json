@@ -9,14 +9,10 @@
             "value": "VIDEO",
             "description": "Type of the file to output"
         },
-        "output_label": {
-            "type": "string",
-            "description": "Give a label to your output"
-        },
         "output_bucket": {
             "type": "string",
             "description": "S3 bucket and path where the output file will be uploaded",
-	    "pattern": "^[0-9a-z\\.\\-]+$",
+	    "pattern": "^[0-9a-zA-Z\\.\\-_]+$",
 	    "minLength": 3,
 	    "maxLength": 63
         },

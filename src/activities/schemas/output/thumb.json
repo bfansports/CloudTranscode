@@ -17,7 +17,7 @@
         "output_bucket": {
             "type": "string",
             "description": "S3 bucket and path where the thumbnails will be uploaded",
-	    "pattern": "^[0-9a-z\\.\\-]+$",
+	    "pattern": "^[0-9a-zA-Z\\.\\-_]+$",
 	    "minLength": 3,
 	    "maxLength": 63
         },

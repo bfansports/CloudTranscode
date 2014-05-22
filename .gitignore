@@ -3,6 +3,7 @@
 # Ignore the local config
 config/awsConfig.json
 config/cloudTranscodeConfig.json
+client_example/clientConfig.json
 
 # Ignore vendor tree
 vendor/*

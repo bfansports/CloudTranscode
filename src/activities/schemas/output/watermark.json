@@ -7,7 +7,7 @@
 	"input_butcket": {
             "type": "string",
             "description": "Bucket name and path where the watermark is located",
-	    "pattern": "^[0-9a-z\\.\\-]+$",
+	    "pattern": "^[0-9a-zA-Z\\.\\-_]+$",
 	    "minLength": 3,
 	    "maxLength": 63
 	},

@@ -2,12 +2,10 @@
     "input_type": "VIDEO",
     "input_bucket": "ct-my-bucket-in",
     "input_file": "/input1/test1.mp4",
-    "job_label": "test1 transcode",
     "outputs": 
     [
 	{
 	    "output_type": "VIDEO",
-	    "output_label": "SD test1 output",
 	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "/output1/test1_sd.mp4",
 	    "s3_rrs": true,
@@ -24,7 +22,6 @@
 	},
 	{
 	    "output_type": "VIDEO",
-	    "output_label": "HD test1 output",
 	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "/output1/test1_hd.mp4",
 	    "s3_rrs": true,

@@ -2,7 +2,6 @@
     "input_type": "VIDEO",
     "input_bucket": "ct-my-bucket-in",
     "input_file": "/input2/test2.mp4",
-    "job_label": "test2 thumbnails",
     "outputs": [
 	{
 	    "output_type": "THUMB",

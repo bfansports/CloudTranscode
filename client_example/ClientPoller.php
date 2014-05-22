@@ -7,7 +7,7 @@ function poll_SQS_queues($CTCom, $clientInfoEncoded)
     $queue = $clientInfoEncoded->{'queues'}->{'output'};
     try {
         // Will poll for 2 seconds
-        if ($msg = $CTCom->receive_message($clientInfoEncoded, $queue, 10))
+        if ($msg = $CTCom->receive_message($queue, 10))
         {
             if (!($decoded = json_decode($msg['Body'])))
                 throw new Exception("JSON output data is invalid!");
@@ -15,7 +15,7 @@ function poll_SQS_queues($CTCom, $clientInfoEncoded)
                 handle_output($decoded);
                     
             // Message polled. We delete it from SQS
-            $CTCom->delete_message($clientInfoEncoded, $queue, $msg);
+            $CTCom->delete_message($queue, $msg);
         }
     } catch (Exception $e) {
         print("[ERROR] " . $e->getMessage() . "\n");
@@ -96,8 +96,8 @@ $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
 
 // Example of the data you should provide to get identified
 // The role and the queues should be created by the stack owner
-// The owner should entitle the client by creating the proper roles and queues
-// Use AWS IAM roles to do so
+// The owner must entitle the client by creating the proper roles and queues
+// Create a new IAM roles to do so and a trust relationship with the client (this)
 // As a client you MUST keep this info safely and provide it when you COM with the stack
 $clientInfo = <<<EOF
 {

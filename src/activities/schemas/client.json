@@ -10,15 +10,6 @@
 	    "minLength": 3,
 	    "maxLength": 64
 	},
-	"externalId": {
-	    "description": "AWS ExternalID as provided by the client. Can be empty",
-	    "type": "string"
-	},
-	"role": {
-	    "description": "AWS role to access SQS resources",
-	    "type": "string",
-	    "pattern": "^arn:aws:iam::[0-9]{12}:role/.+$"
-	},
 	"queues": {
 	    "type": "object",
 	    "properties": {
@@ -36,6 +27,6 @@
 	    "required": ["input", "output"]
 	}
     },
-    "required": ["name", "role", "queues"],
+    "required": ["name", "queues"],
     "additionalProperties": false
 }

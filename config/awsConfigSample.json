@@ -1,6 +1,3 @@
-// Rename this file to awsConfig.json
-// Put your credentials in
-
 {
     "includes": ["_aws"],
     "services": {

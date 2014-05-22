@@ -2,12 +2,10 @@
     "input_type": "VIDEO",
     "input_bucket": "ct-my-bucket-in",
     "input_file": "/input2/test2.mp4",
-    "job_label": "test2 transcode",
     "outputs": 
     [
 	{
 	    "output_type": "VIDEO",
-	    "output_label": "SD smartphone test2 output",
 	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "/output2/test2_sd_phone.mp4",
 	    "s3_rrs": true,
@@ -25,7 +23,6 @@
 	},
 	{
 	    "output_type": "VIDEO",
-	    "output_label": "HD smartphone test2 output",
 	    "output_bucket": "ct-my-bucket-out",
 	    "output_file": "/output2/test2_hd_phone.mp4",
 	    "s3_rrs": false,

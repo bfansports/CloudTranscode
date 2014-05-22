@@ -58,10 +58,10 @@ class InputPoller
             // Long Polling messages from client input queue
             $queue = $client->{'queues'}->{'input'};
             try {
-                if ($msg = $this->CTCom->receive_message(false, $queue, 1))
+                if ($msg = $this->CTCom->receive_message($queue, 1))
                 {
                     // Message polled. We delete it from SQS
-                    $this->CTCom->delete_message(false, $queue, $msg);
+                    $this->CTCom->delete_message($queue, $msg);
 
                     if (!($decoded = json_decode($msg['Body'])))
                         log_out(

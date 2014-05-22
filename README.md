@@ -18,7 +18,7 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 - **Watermark integration in video**: Take image IN and position it on top of the video. Custom position and transparency.
 
 # Detailed info 
-http://sportarchive.github.io/CloudTranscode/
+Find the detailed documentation here: http://sportarchive.github.io/CloudTranscode/
 
 # High Level Architecture
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")

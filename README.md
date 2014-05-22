@@ -30,7 +30,7 @@ composer and download all dependencies.
 Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transcode-Installation-Deployment-8zAu2d03Zxr
 
 # Using the stack
-Clients using the transcoding stack need to use the CloudTranscodeComSDK specially concived to communicate with the stack. With it you can send new jobs and receive updates from the stack.
+Clients using the transcoding stack need to use the CloudTranscodeComSDK conceived to communicate with the stack. With it you can send commands to the stack and receive updates from it as well.
 Available here: https://github.com/sportarchive/CloudTranscodeComSDK
 
 # FFMpeg performance benchmark on Amazon EC2

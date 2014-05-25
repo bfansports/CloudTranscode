@@ -1,7 +1,7 @@
 {
     "cloudTranscode": {
         "workflow": {
-            "domain": "[YOUR DOMAIN HERE]",
+            "domain": "[YOUR DOMAIN NAME]",
             "decisionTaskList": "[YOUR TASKLIST NAME]",
             "name": "[YOUR WF NAME]",
             "version": "v1",

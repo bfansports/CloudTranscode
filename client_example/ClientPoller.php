@@ -110,6 +110,7 @@ $clientInfo = <<<EOF
        }
     }
 EOF;
+
 // You must JSON decode it
 $clientInfoDecoded = json_decode($clientInfo);
 

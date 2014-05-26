@@ -24,11 +24,10 @@ class InputValidator
     public function validate_input($decoded, $taskType)
     {
         $retriever = new JsonSchema\Uri\UriRetriever;
-        $root = realpath(dirname(__FILE__));
-        $schema = $retriever->retrieve('file://' . realpath("$root/schemas/$taskType.json"));
+        $schema = $retriever->retrieve('file://' . __DIR__ . "/../../json_schemas/activities/$taskType.json");
 
         $refResolver = new JsonSchema\RefResolver($retriever);
-        $refResolver->resolve($schema, 'file://' . realpath("$root/schemas/output/"));
+        $refResolver->resolve($schema, 'file://' . __DIR__ . "/../../json_schemas/");
 
         $validator = new JsonSchema\Validator();
         $validator->check($decoded, $schema);

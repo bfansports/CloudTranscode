@@ -2,6 +2,6 @@
     "name": "ClientA",
     "queues": {
 	"input": "https://sqs.us-east-1.amazonaws.com/112233445566/ClientA-Input-Queue",
-	"output": "https://sqs.us-east-1.amazonaws.com/112233445566ClientA-Output-Queue/"
+	"output": "https://sqs.us-east-1.amazonaws.com/112233445566/ClientA-Output-Queue/"
     }
 }

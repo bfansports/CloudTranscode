@@ -24,7 +24,12 @@ class ValidateInputAndAssetActivity extends BasicActivity
         $this->CTCom->activity_started($task);
 
         // Perfom input validation
-        $input = $this->do_input_validation($task, $activityType["name"]);
+        $input = $this->do_input_validation(
+            $task, 
+            $activityType["name"],
+            array($this, 'validate_input')
+        );
+        
         $this->job_id = $input->{'job_id'};         
         $this->data   = $input->{'data'};  
         $this->client = $input->{'client'};
@@ -78,12 +83,6 @@ class ValidateInputAndAssetActivity extends BasicActivity
             
             // Initiate transcoder obj
             $videoTranscoder = new VideoTranscoder($this, $task);
-            // Validate all outputs presets before checking input
-            foreach ($this->data->{'outputs'} as $output) {
-                // Presets are only for VIDEO
-                if ($output->{'output_type'} == VIDEO)
-                    $videoTranscoder->validate_preset($output);
-            }
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($pathToInputFile);
             break;
@@ -113,5 +112,49 @@ class ValidateInputAndAssetActivity extends BasicActivity
         return $result;
     }
 
-    
+    // Perform custom validation on JSON input
+    // Callback function used in $this->do_input_validation
+    public function validate_input($input, $task)
+    {
+        $data = $input->{'data'};
+        foreach ($data->{'outputs'} as $output) 
+        {
+            // VIDEO can only be transcoded into VIDEO or THUMB
+            if ((
+                    $data->{'input_type'} == VIDEO &&
+                    $output->{'output_type'} != VIDEO &&
+                    $output->{'output_type'} != THUMB &&
+                    $output->{'output_type'} != AUDIO
+                )
+                ||
+                (
+                    $data->{'input_type'} == IMAGE &&
+                    $output->{'output_type'} != IMAGE
+                )
+                ||
+                (
+                    $data->{'input_type'} == AUDIO &&
+                    $output->{'output_type'} != AUDIO
+                )
+                ||
+                (
+                    $data->{'input_type'} == DOC &&
+                    $output->{'output_type'} != DOC
+                ))
+                throw new CTException("Can't convert that 'input_type' (" . $data->{'input_type'} . ") into this 'output_type' (" . $output->{'output_type'} . ")! Abording.", 
+                    self::CONVERSION_TYPE_ERROR);
+
+            // Specific tests for VIDEO
+            if ($output->{'output_type'} == VIDEO)
+            {
+                require_once __DIR__ . '/transcoders/VideoTranscoder.php';
+                
+                // Initiate transcoder obj
+                if (!isset($videoTranscoder))
+                    $videoTranscoder = new VideoTranscoder($this, $task);
+                // Validate output preset
+                $videoTranscoder->validate_preset($output);
+            }
+        }
+    }
 }

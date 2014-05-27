@@ -114,17 +114,29 @@ class TranscodeAssetActivity extends BasicActivity
             throw new CTException("Unknown 'output_type'! Abording ...", 
                 self::UNKOWN_OUTPUT_TYPE);
         }
-
-        // *********************
+        
         // Upload resulting file
+        $this->upload_result_files($task, $input, $pathToOutputFiles, $outputFileInfo);
+        
+        $this->send_heartbeat($task);
+        // Send progress through CTCom to notify client of finishing
+        $this->CTCom->activity_finishing($task); 
+    }
 
+    // Upload all output files to destination S3 bucket
+    private function upload_result_files(
+        $task,
+        $input, 
+        $pathToOutputFiles, 
+        $outputFileInfo)
+    {
         // Sanitize output bucket path "/"
         $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
 
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         // XXX: Add tmp workflowID to output bucket to seperate upload
         // XXX: For testing only !
-        $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
+        //$s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
         // Prepare S3 options
@@ -178,34 +190,36 @@ class TranscodeAssetActivity extends BasicActivity
                 $i = 0;
             }
         }
-        
-        $this->send_heartbeat($task);
-        // Send progress through CTCom to notify client of finishing
-        $this->CTCom->activity_finishing($task); 
     }
-
+    
     // Perform custom validation on JSON input
     // Callback function used in $this->do_input_validation
     public function validate_input($input)
     {
-        if ($input->{'input_asset_type'} == 
-            $input->{'output'}->{'output_type'})
-            return;
-        
         // VIDEO can only be transcoded into VIDEO or THUMB
-        if (($input->{'input_asset_type'} == VIDEO &&
+        if ((
+                $input->{'input_asset_type'} == VIDEO &&
                 $input->{'output'}->{'output_type'} != VIDEO &&
-                $input->{'output'}->{'output_type'} != THUMB)
+                $input->{'output'}->{'output_type'} != THUMB &&
+                $input->{'output'}->{'output_type'} != AUDIO
+            )
             ||
-            ($input->{'input_asset_type'} != VIDEO &&
-                $input->{'output'}->{'output_type'} == VIDEO &&
-                $input->{'output'}->{'output_type'} == THUMB))
+            (
+                $input->{'input_asset_type'} == IMAGE &&
+                $input->{'output'}->{'output_type'} != IMAGE
+            )
+            ||
+            (
+                $input->{'input_asset_type'} == AUDIO &&
+                $input->{'output'}->{'output_type'} != AUDIO
+            )
+            ||
+            (
+                $input->{'input_asset_type'} == DOC &&
+                $input->{'output'}->{'output_type'} != DOC
+            ))
             throw new CTException("Can't convert that 'input_type' (" . $input->{'input_asset_type'} . ") into this 'output_type' (" . $input->{'output'}->{'output_type'} . ")! Abording.", 
                 self::CONVERSION_TYPE_ERROR);
-        
-        // XXX
-        // Add more conversion tests !
-        // XXX
     }
 }
 

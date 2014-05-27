@@ -14,7 +14,7 @@
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in",
 		"input_file": "/watermark/logo_SA.png",
-		"size": "75.2x28.4",
+		"size": "75x28",
 		"opacity": 0.2,
 		"x": -20,
 		"y": -20
@@ -31,7 +31,7 @@
 	    "watermark": {
 		"input_bucket": "ct-my-bucket-in",
 		"input_file": "/watermark/logo_SA.png",
-		"size": "75.2x28.4",
+		"size": "75x28",
 		"opacity": 0.2,
 		"x": 20,
 		"y": -20

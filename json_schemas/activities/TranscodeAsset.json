@@ -34,10 +34,10 @@
             }
         },
         "output": {
-            "$ref": "output/base.json",
+            "$ref": "activities/output/base.json",
             "oneOf": [                    
-                { "$ref": "output/video.json" },
-		{ "$ref": "output/thumb.json" }
+                { "$ref": "activities/output/video.json" },
+		{ "$ref": "activities/output/thumb.json" }
             ]
         }
     },

@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema/Client#",
+    "id": "http://sport-archive.com/input-schema/client#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schema for 'client'",
     "type": "object",

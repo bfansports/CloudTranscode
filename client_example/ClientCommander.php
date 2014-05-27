@@ -5,7 +5,7 @@ require __DIR__ . "/../vendor/autoload.php";
 function start_job($args)
 {
     global $CTCom;
-    global $clientInfoDecoded;
+    global $clientInfo;
 
     if (count($args) != 2)
     {
@@ -25,7 +25,7 @@ function start_job($args)
     
     try {
         print("[INFO] Starting a new job!\n");
-        $CTCom->start_job($clientInfoDecoded, $content);
+        $CTCom->start_job($clientInfo, $content);
     }
     catch (Exception $e) {
         print("[ERROR] " . $e->getMessage() . "\n");
@@ -49,20 +49,7 @@ start_job <filepath>: Start a new job. Pass a JSON file containing the instructi
 
 EOF;
 
-function usage()
-{
-    global $help;
     
-    echo("Usage: php ". basename(__FILE__) . " [-h] -k <key> -s <secret> -r <region>\n");
-    echo("-h: Print this help\n");
-    echo("-d: Debug mode\n");
-    echo("-k <AWS key>: \n");
-    echo("-s <AWS secret>: \n");
-    echo("-r <AWS region>: \n\n");
-    echo($help);
-    exit(0);
-}
-
 function check_input_parameters()
 {
     global $region;
@@ -70,9 +57,10 @@ function check_input_parameters()
     global $key;
     global $debug;
     global $clientInfo;
-    
+    global $argv;
+        
     // Handle input parameters
-    if (!($options = getopt("c:k:s:r:hd")))
+    if (!($options = getopt("c:k::s::r::hd")))
         usage();
     if (isset($options['h']))
         usage();
@@ -93,31 +81,46 @@ function check_input_parameters()
 
     if (isset($options['k']))
         $key = $options['k'];
+    else 
+        $key = getenv("AWS_ACCESS_KEY_ID");
     if (!$key)
         throw new Exception("Please provide your AWS key!");
     
     if (isset($options['s']))
         $secret = $options['s'];
+    else 
+        $secret = getenv("AWS_SECRET_KEY");
     if (!$secret)
         throw new Exception("Please provide your AWS secret!");
 
     if (isset($options['r']))
         $region = $options['r'];
+    else 
+        $region = getenv("AWS_REGION");
     if (!$region)
         throw new Exception("Please provide your AWS region!");
 }
+
+    function usage()
+    {
+        global $help;
+    
+        echo("Usage: php ". basename(__FILE__) . " [-h] [-k <key>] [-s <secret>] [-r <region>]\n");
+        echo("-h: Print this help\n");
+        echo("-d: Debug mode\n");
+        echo("-k <AWS key>\n");
+        echo("-s <AWS secret>\n");
+        echo("-r <AWS region>\n\n");
+        echo($help);
+        exit(0);
+    }
+    
 
 try {
     check_input_parameters();
 } 
 catch (Exception $e) {
     print "[ERROR] " . $e->getMessage() . "\n";
-    exit(2);
-}
-
-if (!($clientInfoDecoded = json_decode($clientInfo)))
-{
-    print "[ERROR] invalid JSON format in config file!\n";
     exit(2);
 }
 

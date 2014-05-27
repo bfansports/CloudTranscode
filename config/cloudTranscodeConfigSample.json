@@ -1,7 +1,7 @@
 {
     "cloudTranscode": {
         "workflow": {
-            "domain": "[YOUR DOMAIN HERE]",
+            "domain": "[YOUR DOMAIN NAME]",
             "decisionTaskList": "[YOUR TASKLIST NAME]",
             "name": "[YOUR WF NAME]",
             "version": "v1",
@@ -39,7 +39,7 @@
     },
     "clients": [
         {
-            "client": "YOUR CLIENT NAME",
+            "name": "YOUR CLIENT NAME",
             "queues": {
                 "input": "https://sqs.[region].amazonaws.com/[AWS account]/[sqs-input-queue-name]",
                 "output": "https://sqs.[region].amazonaws.com/[AWS account]/[sqs-output-queue-name]"

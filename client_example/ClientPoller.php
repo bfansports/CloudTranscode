@@ -63,9 +63,12 @@ function check_input_parameters()
     global $secret;
     global $key;
     global $debug;
+    global $argv;
     
     // Handle input parameters
-    if (!($options = getopt("k:s:r:hd")))
+    if (count($argv) == 1)
+        $options = array();
+    else if (!($options = getopt("k::s::r::hd")))
         usage();
     if (isset($options['h']))
         usage();
@@ -75,16 +78,22 @@ function check_input_parameters()
   
     if (isset($options['k']))
         $key = $options['k'];
+    else 
+        $key = getenv("AWS_ACCESS_KEY_ID");
     if (!$key)
         throw new Exception("Please provide your AWS key!");
     
     if (isset($options['s']))
         $secret = $options['s'];
+     else 
+        $secret = getenv("AWS_SECRET_KEY");
     if (!$secret)
         throw new Exception("Please provide your AWS secret!");
 
     if (isset($options['r']))
         $region = $options['r'];
+     else 
+        $region = getenv("AWS_REGION");
     if (!$region)
         throw new Exception("Please provide your AWS region!");
 }
@@ -101,15 +110,14 @@ $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
 // As a client you MUST keep this info safely and provide it when you COM with the stack
 $clientInfo = <<<EOF
 {
-    "name": "NicoMencie",
-    "externalId": "CT-NicoMencie",
-    "role": "arn:aws:iam::686112866222:role/CT-NicoMencie",
+    "name": "RsInTheCloud",
     "queues": {
-       "input": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-NicoMencie-InputQueue",
-       "output": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-NicoMencie-OutputQueue"
+       "input": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-RSInTheCloud-InputQueue",
+       "output": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-RSInTheCloud-OutputQueue"
        }
     }
 EOF;
+
 // You must JSON decode it
 $clientInfoDecoded = json_decode($clientInfo);
 

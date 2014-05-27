@@ -1,0 +1,74 @@
+{
+    "id": "http://sport-archive.com/input-schema/activities#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Schemas for activities items in activities array of main config file",
+    "type": "object",
+    "properties": {
+	"name": {
+	    "description": "Activity name",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 64
+	},
+	"version": {
+	    "description": "Activity version",
+	    "type": "string",
+	    "minLength": 1,
+	    "maxLength": 32,
+	    "pattern": "^[\\w\\.\\- ]+$"
+	},
+	"description": {
+	    "description": "Activity description",
+	    "type": "string",
+	    "minLength": 1,
+	    "maxLength": 256
+	},
+	"file": {
+	    "description": "File implementing this activity",
+	    "type": "string",
+	    "minLength": 16,
+	    "maxLength": 1024,
+	    "pattern": "^[\\w\\-\\./]+\\.php+$"
+	},
+	"class": {
+	    "description": "Class name implementing this activity",
+	    "type": "string",
+	    "minLength": 8,
+	    "maxLength": 256,
+	    "pattern": "^[\\w\\-]+$"
+	},
+	"activityTaskList": {
+	    "description": "Tasklist (queue) where task are stacked and polled from",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 64,
+	    "pattern": "^[\\w\\.\\- ]+$"
+	},
+	"scheduleToStartTimeout": {
+	    "description": "Max time from schedule to start for a task",
+	    "type": "integer",
+	    "minimum": 1,
+	    "maximum": 31536000
+	},
+	"scheduleToCloseTimeout": {
+	    "description": "Max time from schedule to close for a task",
+	    "type": "integer",
+	    "minimum": 1,
+	    "maximum": 31536000
+	},
+	"startToCloseTimeout": {
+	    "description": "Max time from start to close for a task",
+	    "type": "integer",
+	    "minimum": 1,
+	    "maximum": 31536000
+	},
+	"heartbeatTimeout": {
+	    "description": "Max time between heartbeat",
+	    "type": "integer",
+	    "minimum": 1,
+	    "maximum": 99999999
+	}
+    },
+    "required": ["name", "version", "description", "file", "class", "activityTaskList", "scheduleToStartTimeout", "scheduleToCloseTimeout", "startToCloseTimeout", "heartbeatTimeout"],
+    "additionalProperties": false
+}

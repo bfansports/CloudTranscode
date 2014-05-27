@@ -414,7 +414,22 @@ class VideoTranscoder extends BasicTranscoder
             if (is_file("$presetPath/$presetFile"))
             {
                 if ($preset === pathinfo($presetFile)["filename"])
+                {
+                    if (!($presetContent = file_get_contents("$presetPath/$presetFile")))
+                        throw new CTException("Can't open preset file '$presetPath/$presetFile'!",
+                            self::OPEN_PRESET_FAILED);
+                    
+                    if (!($decodedPreset = json_decode($presetContent)))
+                        throw new CTException("Bad preset JSON format '$presetPath/$presetFile'!",
+                            self::BAD_PRESET_FORMAT);
+
+                    # Validate against JSON Schemas
+                    if (($err = validate_json($decodedPreset, "presets.json")))
+                        throw new CTException("JSON preset file '$presetPath/$presetFile' invalid! Details:\n".$err,
+                            self::BAD_PRESET_FORMAT);
+                    
                     return true;
+                }
             }
         }
         

@@ -1,0 +1,38 @@
+{
+    "id": "http://sport-archive.com/input-schema/mainConfig#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Schemas for main config file",
+    "type": "object",
+    "properties": {
+	"cloudTranscode": {
+	    "description": "Main cloudTranscode configuration",
+	    "type": "object",
+	    "properties": {
+		"workflow": {
+		    "$ref": "config/workflow.json"
+		},
+		"activities": {
+		    "type": "array",
+		    "items": {
+			"$ref": "config/activities.json"
+		    },
+		    "minItems": 2,
+		    "maxItems": 2,
+		    "uniqueItems": true
+		}
+	    },
+	    "required": ["workflow", "activities"],
+	    "additionalProperties": false
+	},
+	"clients": {
+	    "type": "array",
+	    "items": {
+		"$ref": "client.json"
+	    },
+	    "minItems": 1,
+	    "uniqueItems": true
+	}
+    },
+    "required": ["cloudTranscode", "clients"],
+    "additionalProperties": false
+}

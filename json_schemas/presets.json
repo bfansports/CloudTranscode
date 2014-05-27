@@ -1,0 +1,59 @@
+{
+    "id": "http://sport-archive.com/input-schema/presets#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Schemas for video presets",
+    "type": "object",
+    "properties": {
+	"name": {
+	    "description": "Preset name",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 128
+	},
+	"description": {
+	    "description": "Preset description",
+	    "type": "string",
+	    "minLength": 1,
+	    "maxLength": 512
+	},
+	"size": {
+	    "description": "Video size",
+	    "type": "string",
+	    "pattern": "^[0-9]{1,5}x[0-9]{1,5}+$"
+	},
+	"frame_rate": {
+	    "description": "Video frame rate",
+	    "type": "number"
+	},
+	"video_bitrate": {
+	    "description": "Video bitrate",
+	    "type": "string",
+	    "pattern": "^[0-9]{1,6}k$"
+	},
+	"audio_bitrate": {
+	    "description": "Audio bitrate",
+	    "type": "string",
+	    "pattern": "^[0-9]{1,6}k$"
+	},
+	"video_codec": {
+	    "description": "Video codec",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 64
+	},
+	"audio_codec": {
+	    "description": "Audio codec",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 64
+	},
+	"video_codec_options": {
+	    "description": "Video codec options",
+	    "type": "string",
+	    "minLength": 3,
+	    "maxLength": 256
+	}
+    },
+    "required": ["name", "description", "size", "frame_rate", "video_bitrate", "audio_bitrate", "video_codec", "audio_codec"],
+    "additionalProperties": false
+}

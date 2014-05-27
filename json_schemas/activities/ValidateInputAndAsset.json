@@ -50,10 +50,10 @@
 		    "description": "List of all the outputs needed for that job array of max 100 entries",
 		    "type": "array",
 		    "items": {
-			"$ref": "output/base.json",
+			"$ref": "activities/output/base.json",
 			"oneOf": [                    
-			    { "$ref": "output/video.json" },
-			    { "$ref": "output/thumb.json" }
+			    { "$ref": "activities/output/video.json" },
+			    { "$ref": "activities/output/thumb.json" }
 			]
 		    },
 		    "minItems": 1,

@@ -382,7 +382,7 @@ class VideoTranscoder extends BasicTranscoder
                 self::BAD_PRESETS_DIR);
         
         $preset = $output_wanted->{"preset"};
-        $presetPath = __DIR__ . '/../../../config/presets/';
+        $presetPath = __DIR__ . '/../../../presets/';
 
         if (!($presetContent = file_get_contents($presetPath.$preset.".json")))
             throw new CTException("Can't open preset file !",
@@ -403,7 +403,7 @@ class VideoTranscoder extends BasicTranscoder
                 self::BAD_PRESETS_DIR);
 
         $preset = $output->{"preset"};
-        $presetPath = __DIR__ . '/../../../config/presets/';
+        $presetPath = __DIR__ . '/../../../presets/';
         if (!($files = scandir($presetPath)))
             throw new CTException("Unable to open preset directory '$presetPath' !",
                 self::BAD_PRESETS_DIR);

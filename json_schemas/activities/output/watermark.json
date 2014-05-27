@@ -4,7 +4,7 @@
     "title": "CT transcode specification for watermark",
     "type": "object",
     "properties": {
-	"input_butcket": {
+	"input_bucket": {
             "type": "string",
             "description": "Bucket name and path where the watermark is located",
 	    "pattern": "^[0-9a-zA-Z\\.\\-_]+$",

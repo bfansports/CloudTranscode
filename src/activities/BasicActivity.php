@@ -90,7 +90,8 @@ class BasicActivity
     }
 
     // Perform JSON input validation
-    public function do_input_validation($task, 
+    public function do_input_validation(
+        $task, 
         $taskType, 
         $callback = false, 
         $callbackParams = false)
@@ -104,7 +105,7 @@ class BasicActivity
         $validator->validate_input($decoded, $taskType);
 
         if (isset($callback) && $callback)
-            call_user_func($callback, $decoded, $callbackParams);
+            call_user_func($callback, $decoded, $task, $callbackParams);
     
         return ($decoded);
     }

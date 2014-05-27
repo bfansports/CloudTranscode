@@ -69,8 +69,11 @@
         "no_enlarge": {
             "type": "boolean",
             "description": "If size provided is bigger than original the transcode will fail."
-        }
+        },
+	"watermark": {
+	    "$ref": "watermark.json"
+	}
     },
     "required": ["preset"],
-    "additionalProperties": true
+    "additionalProperties": false
 }

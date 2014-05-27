@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema/Client#",
+    "id": "http://sport-archive.com/input-schema/mainConfig#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schemas for main config file",
     "type": "object",
@@ -9,12 +9,12 @@
 	    "type": "object",
 	    "properties": {
 		"workflow": {
-		    "$ref": "workflow.json"
+		    "$ref": "config/workflow.json"
 		},
 		"activities": {
 		    "type": "array",
 		    "items": {
-			"$ref": "activities.json"
+			"$ref": "config/activities.json"
 		    },
 		    "minItems": 2,
 		    "maxItems": 2,
@@ -27,7 +27,7 @@
 	"clients": {
 	    "type": "array",
 	    "items": {
-		"$ref": "../client.json"
+		"$ref": "client.json"
 	    },
 	    "minItems": 1,
 	    "uniqueItems": true

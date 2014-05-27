@@ -158,6 +158,29 @@ function init_workflow($params)
     }
 }
 
+# Validate main configuration file against JSONM schemas
+function validate_json($decoded, $schemas)
+{
+    $retriever = new JsonSchema\Uri\UriRetriever;
+    $schema = $retriever->retrieve('file://' . __DIR__ . "/../../json_schemas/$schemas");
+
+    $refResolver = new JsonSchema\RefResolver($retriever);
+    $refResolver->resolve($schema, 'file://' . __DIR__ . "/../../json_schemas/");
+
+    $validator = new JsonSchema\Validator();
+    $validator->check($decoded, $schema);
+
+    if ($validator->isValid())
+        return false;
+    
+    $details = "";
+    foreach ($validator->getErrors() as $error) {
+        $details .= sprintf("[%s] %s\n", $error['property'], $error['message']);
+    }
+    
+    return $details;
+}
+
 // Custom exception class for Cloud Transcode
 class CTException extends Exception
 {
@@ -185,6 +208,7 @@ require __DIR__ . "/../../vendor/autoload.php";
 use Aws\Common\Aws;
 use Aws\Swf\Exception;
 
+# Check if preper env vars are setup
 if (!($key    = getenv("AWS_ACCESS_KEY_ID")))
     throw new Exception("Set 'AWS_ACCESS_KEY_ID' environment variable!");
 if (!($secret = getenv("AWS_SECRET_KEY")))

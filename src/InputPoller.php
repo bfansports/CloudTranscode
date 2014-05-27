@@ -230,6 +230,13 @@ if (!($config = json_decode(file_get_contents($defaultConfigFile))))
     exit(1);
 }
 
+# Validate against JSON Schemas
+if (($err = validate_json($config, "config/mainConfig.json")))
+{
+    print("JSON main configuration file invalid! Details:\n".$err);
+    exit(1);
+}
+
 log_out(
     "INFO", 
     basename(__FILE__), 

@@ -23,23 +23,11 @@ class InputValidator
     // Validate JSON input against schemas
     public function validate_input($decoded, $taskType)
     {
-        $retriever = new JsonSchema\Uri\UriRetriever;
-        $schema = $retriever->retrieve('file://' . __DIR__ . "/../../json_schemas/activities/$taskType.json");
-
-        $refResolver = new JsonSchema\RefResolver($retriever);
-        $refResolver->resolve($schema, 'file://' . __DIR__ . "/../../json_schemas/");
-
-        $validator = new JsonSchema\Validator();
-        $validator->check($decoded, $schema);
-
-        if ($validator->isValid())
+        // From Utils.php
+        if (!($err = validate_json($decoded, "activities/$taskType.json")))
             return true;
-    
-        $details = "JSON input format is not valid! Details:\n";
-        foreach ($validator->getErrors() as $error) {
-            $details .= sprintf("[%s] %s\n", $error['property'], $error['message']);
-        }
-        throw new CTException($details, 
-            self::FORMAT_INVALID); 
+
+        throw new CTException("JSON input format is not valid! Details:\n".$err, 
+            self::FORMAT_INVALID);
     }
 }

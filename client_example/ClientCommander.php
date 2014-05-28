@@ -125,7 +125,11 @@ catch (Exception $e) {
 }
 
 // Instanciate ComSDK to communicate with the stack
-$CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
+try {
+    $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
+} catch (Exception $e) {
+    exit($e->getMessage());
+  }
 
 // Commands mapping
 $commandMap = [

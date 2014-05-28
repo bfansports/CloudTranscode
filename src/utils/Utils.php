@@ -209,17 +209,11 @@ use Aws\Common\Aws;
 use Aws\Swf\Exception;
 
 # Check if preper env vars are setup
-if (!($key    = getenv("AWS_ACCESS_KEY_ID")))
-    throw new Exception("Set 'AWS_ACCESS_KEY_ID' environment variable!");
-if (!($secret = getenv("AWS_SECRET_KEY")))
-    throw new Exception("Set 'AWS_SECRET_KEY' environment variable!");
 if (!($region = getenv("AWS_REGION")))
-    throw new Exception("Set 'AWS_REGION' environment variable!");
+    exit("Set 'AWS_REGION' environment variable!");
 
 // Create AWS SDK instance
 $aws = Aws::factory(array(
-        'key'    => $key,
-        'secret' => $secret,
         'region' => $region,
     ));
 

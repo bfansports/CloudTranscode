@@ -10,10 +10,10 @@ We use FFMpeg for video transcoding.
 With Cloud Transcode, you control: scale, speed and cost. You can even run everything locally if you want, no Cloud instance required. You
 only need an Amazon AWS account and an Internet connection to use the required Amazon services: SWF, SQS and S3. 
 
-It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 instance, it's up to you.
+It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 instances, it's up to you.
 
 # Transcoding supported
-- **Video to Video transcoding**: One video IN, many videos OUT. Any format and codec supported by ffmpeg.
+- **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
 - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
 - **Watermark integration in video**: Take image IN and position it on top of the video. Custom position and transparency.
 

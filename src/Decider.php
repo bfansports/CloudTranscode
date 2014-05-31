@@ -30,7 +30,7 @@ class Decider
         $this->decisionTaskList = array("name" => 
             $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'});
         $this->activityList     = $config->{'cloudTranscode'}->{'activities'};
-    
+        
         // Init domain. see: Utils.php
         if (!init_domain($this->domain))
             throw new Exception("Unable to init the domain !\n");
@@ -174,10 +174,7 @@ if (!($config = json_decode(file_get_contents($defaultConfigFile))))
 
 # Validate against JSON Schemas
 if (($err = validate_json($config, "config/mainConfig.json")))
-{
-    print("JSON main configuration file invalid! Details:\n".$err);
-    exit(1);
-}
+    exit("JSON main configuration file invalid! Details:\n".$err);
 
 log_out(
     "INFO", 

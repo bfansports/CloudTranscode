@@ -101,7 +101,11 @@ function check_input_parameters()
 check_input_parameters();
 
 // Instanciate ComSDK to communicate with the stack
-$CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
+try {
+    $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
+} catch (Exception $e) {
+    exit($e->getMessage());
+}
 
 // Example of the data you should provide to get identified
 // The role and the queues should be created by the stack owner

@@ -21,10 +21,10 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")
 
 # Getting started
-Simply type "make" in the top level directory of the project. It will fetch PHP
-composer and download all dependencies.
+Simply type "make" in the top level directory of the project. It will fetch "PHP
+composer" and download all dependencies.
 
-Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transcode-Installation-Deployment-8zAu2d03Zxr
+Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J#:h=Setup
 
 # Using the stack
 Clients using the transcoding stack need to use the CloudTranscodeComSDK conceived to communicate with the stack. With it you can send commands to the stack and receive updates from it as well.

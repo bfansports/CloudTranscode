@@ -17,9 +17,6 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
 - **Watermark integration in video**: Take image IN and position it on top of the video. Custom position and transparency.
 
-# Detailed info 
-Find the detailed documentation here: http://sportarchive.github.io/CloudTranscode/
-
 # High Level Architecture
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")
 
@@ -33,7 +30,10 @@ Then follow the instructions here: https://sportarchive.hackpad.com/Cloud-Transc
 Clients using the transcoding stack need to use the CloudTranscodeComSDK conceived to communicate with the stack. With it you can send commands to the stack and receive updates from it as well.
 Available here: https://github.com/sportarchive/CloudTranscodeComSDK
 
-# FFMpeg performance benchmark on Amazon EC2
+# Detailed info 
+Find the detailed documentation here: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J
+
+## FFMpeg performance benchmark on Amazon EC2
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
 

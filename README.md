@@ -20,6 +20,11 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 # High Level Architecture
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")
 
+# Quick start with Vagrant
+We create a Vagrant box (Virtual Machine) which provides pre-configured environment to run the stack. You can use Vagrant on any OS and quicky test the stack.
+
+See: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J#:h=Quick-start-with-Vagrant
+
 # Getting started
 Simply type "make" in the top level directory of the project. It will fetch "PHP
 composer" and download all dependencies.

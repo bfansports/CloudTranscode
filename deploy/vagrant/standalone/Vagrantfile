@@ -1,0 +1,31 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # Every Vagrant virtual environment requires a box to build off of.
+  config.vm.box = "box-cutter/ubuntu1404-i386"
+
+  # Sync folders
+  config.vm.synced_folder "../../..", "/home/vagrant/CloudTranscodeSrc"
+  config.vm.synced_folder "~/.cloudtranscode", "/home/vagrant/CloudTranscodeConfig"
+  
+  # Start bootstrap.sh at bootup
+  config.vm.provision "shell" do |s|
+    s.path = "bootstrap.sh"
+    
+    # Will run the script as user "vagrant"
+    s.privileged = false
+    
+    # Args to script (keep order)
+    # $1: install|noinstall -> Force install of all converters. Will compile ffmpeg.
+    # $2: upgrade|noupgrade -> Run 'apt-get upgrade'
+    # $3: start|nostart     -> Start CloudTranscode scripts. All of them.
+    # $4: CT_ROLES the VM should assume. 
+    # Default: CT_ROLES="decider inputPoller validateAsset transcodeAsset"
+    s.args = "noinstall noupgrade start 'decider inputPoller validateAsset transcodeAsset'"
+  end
+
+end

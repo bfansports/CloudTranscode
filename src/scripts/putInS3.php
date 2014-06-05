@@ -40,6 +40,9 @@ $options = getopt("h", [
         "encrypt::"]);
 check_input_parameters($options);
 
+# Init AWS connection
+init_aws();
+
 try {
     // Get S3 client
     $s3 = $aws->get('S3');

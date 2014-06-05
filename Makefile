@@ -10,8 +10,8 @@ $(COMPOSER):
 
 vendor: $(COMPOSER) $(COMPOSER_CONF)
 	$(COMPOSER) self-update
-	$(COMPOSER) install --dev
-	$(COMPOSER) update
+	$(COMPOSER) update -n --dev
+	$(COMPOSER) dump-autoload --optimize
 
 lint: vendor/bin
 	mkdir -p build/reports

@@ -4,6 +4,22 @@
     "title": "Schemas for main config file",
     "type": "object",
     "properties": {
+	"aws": {
+	    "description": "Contains AWS credentials",
+	    "type": "object",
+	    "properties": {
+		"region": {
+		    "type": "string"
+		},
+		"key": {
+		    "type": "string"
+		},
+		"secret": {
+		    "type": "string"
+		}
+	    },
+	    "additionalProperties": false
+	},
 	"cloudTranscode": {
 	    "description": "Main cloudTranscode configuration",
 	    "type": "object",

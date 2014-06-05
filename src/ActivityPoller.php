@@ -305,6 +305,9 @@ if (!($config = json_decode(file_get_contents($defaultConfigFile))))
 if (($err = validate_json($config, "config/mainConfig.json")))
     exit("JSON main configuration file invalid! Details:\n".$err);
 
+# Load AWS credentials in env vars if any
+load_aws_creds($config);
+
 log_out(
     "INFO", 
     basename(__FILE__), 
@@ -312,8 +315,21 @@ log_out(
 );
 log_out("INFO", basename(__FILE__), $config->{'clients'});
 
+# Init AWS connection
+init_aws();
+
 // Instantiate AcivityPoller
+try {
 $activityPoller = new ActivityPoller($config, $activities);
+} 
+catch (Exception $e) {
+    log_out(
+        "FATAL", 
+        basename(__FILE__), 
+        $e->getMessage()
+    );
+    exit(1);
+}
 
 // Start polling loop
 log_out(

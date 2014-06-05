@@ -234,6 +234,9 @@ if (!($config = json_decode(file_get_contents($defaultConfigFile))))
 if (($err = validate_json($config, "config/mainConfig.json")))
     exit("JSON main configuration file invalid! Details:\n".$err);
 
+# Load AWS credentials in env vars if any
+load_aws_creds($config);
+
 log_out(
     "INFO", 
     basename(__FILE__), 
@@ -245,6 +248,9 @@ log_out(
     "TaskList: '" . $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'} . "'"
 );
 log_out("INFO", basename(__FILE__), $config->{'clients'});
+
+# Init AWS connection
+init_aws();
 
 // Create InputPoller object
 try {

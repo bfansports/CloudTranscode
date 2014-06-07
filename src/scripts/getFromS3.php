@@ -30,6 +30,9 @@ function check_input_parameters($options)
 $options = getopt("h", array("bucket:", "file:", "to:", "force::", "help::"));
 check_input_parameters($options);
 
+# Init AWS connection
+init_aws();
+
 // If local file already exists. We don't download unless --force
 if (!isset($options['force']) && 
     file_exists($options['to']) &&

@@ -48,9 +48,10 @@ $secret = getenv("AWS_SECRET_KEY");
 
 function usage()
 {
-    echo("Usage: php ". basename(__FILE__) . " [-h] -k <key> -s <secret> -r <region>\n");
+    echo("Usage: php ". basename(__FILE__) . " -c configFile [-h] -k <key> -s <secret> -r <region>\n");
     echo("-h: Print this help\n");
     echo("-d: Debug mode\n");
+    echo("-c: configFile\n");
     echo("-k <AWS key>: \n");
     echo("-s <AWS secret>: \n");
     echo("-r <AWS region>: \n");
@@ -63,18 +64,30 @@ function check_input_parameters()
     global $secret;
     global $key;
     global $debug;
+    global $clientInfo;
     global $argv;
     
     // Handle input parameters
     if (count($argv) == 1)
         $options = array();
-    else if (!($options = getopt("k::s::r::hd")))
+    else if (!($options = getopt("c:k::s::r::hd")))
         usage();
     if (isset($options['h']))
         usage();
     
     if (isset($options['d']))
         $debug = true;
+
+    if (isset($options['c']))
+    {
+        $clientConfFile = $options['c'];
+        if (!file_exists($clientConfFile))
+            throw new Exception("The client config file is not valid!");
+        if (!($clientInfo = file_get_contents($clientConfFile)))
+            throw new Exception("Unable to read the file");
+    }
+    else
+        throw new Exception("Please provide the client config file!");
   
     if (isset($options['k']))
         $key = $options['k'];
@@ -85,14 +98,14 @@ function check_input_parameters()
     
     if (isset($options['s']))
         $secret = $options['s'];
-     else 
+    else 
         $secret = getenv("AWS_SECRET_KEY");
     if (!$secret)
         throw new Exception("Please provide your AWS secret!");
 
     if (isset($options['r']))
         $region = $options['r'];
-     else 
+    else 
         $region = getenv("AWS_REGION");
     if (!$region)
         throw new Exception("Please provide your AWS region!");
@@ -105,22 +118,7 @@ try {
     $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
 } catch (Exception $e) {
     exit($e->getMessage());
-}
-
-// Example of the data you should provide to get identified
-// The role and the queues should be created by the stack owner
-// The owner must entitle the client by creating the proper roles and queues
-// Create a new IAM roles to do so and a trust relationship with the client (this)
-// As a client you MUST keep this info safely and provide it when you COM with the stack
-$clientInfo = <<<EOF
-{
-    "name": "RsInTheCloud",
-    "queues": {
-       "input": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-RSInTheCloud-InputQueue",
-       "output": "https://sqs.us-east-1.amazonaws.com/686112866222/CT-RSInTheCloud-OutputQueue"
-       }
-    }
-EOF;
+  }
 
 // You must JSON decode it
 $clientInfoDecoded = json_decode($clientInfo);

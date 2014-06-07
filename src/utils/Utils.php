@@ -1,5 +1,25 @@
 <?php
 
+
+// Composer for loading dependices: http://getcomposer.org/
+require __DIR__ . "/../../vendor/autoload.php";
+
+// Amazon library
+use Aws\Common\Aws;
+use Aws\Swf\Exception;
+
+# AWS variables
+$aws;
+$swf;
+
+// File types 
+define('VIDEO', 'VIDEO');
+define('AUDIO', 'AUDIO');
+define('IMAGE', 'IMAGE');
+define('DOC'  , 'DOC');
+define('THUMB', 'THUMB');
+
+
 // Log to STDOUT
 function log_out($type, $source, $message, $workflowId = 0)
 {
@@ -148,7 +168,7 @@ function init_workflow($params)
     try {
         $swf->registerWorkflowType((array) $params);
         return true;
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         log_out(
             "ERROR", 
             basename(__FILE__), 
@@ -158,7 +178,7 @@ function init_workflow($params)
     }
 }
 
-# Validate main configuration file against JSONM schemas
+// Validate main configuration file against JSONM schemas
 function validate_json($decoded, $schemas)
 {
     $retriever = new JsonSchema\Uri\UriRetriever;
@@ -181,13 +201,60 @@ function validate_json($decoded, $schemas)
     return $details;
 }
 
+// Load AWS vars from config file to env vars
+function load_aws_creds($config)
+{
+    if (!$config)
+        throw new \Exception("No config data provided to load AWS creds from!");
+    
+    if (!isset($config->{"aws"})) {
+        print("No AWS creds in config file\n");
+        return;
+    }
+    
+    if (isset($config->{"aws"}->{"region"}) &&
+        $config->{"aws"}->{"region"} != "") {
+        putenv("AWS_REGION=".$config->{"aws"}->{"region"});
+    }
+    if (isset($config->{"aws"}->{"key"}) &&
+        $config->{"aws"}->{"key"} != "")
+    {
+        putenv("AWS_ACCESS_KEY_ID=".$config->{"aws"}->{"key"});
+        putenv("AWS_ACCESS_KEY=".$config->{"aws"}->{"key"});
+    }
+    if (isset($config->{"aws"}->{"secret"}) &&
+        $config->{"aws"}->{"secret"} != "")
+    {
+        putenv("AWS_SECRET_ACCESS_KEY=".$config->{"aws"}->{"secret"});
+        putenv("AWS_SECRET_KEY=".$config->{"aws"}->{"secret"});
+    }
+}
+
+function init_aws()
+{
+    global $aws;
+    global $swf; 
+    
+    # Check if preper env vars are setup
+    if (!($region = getenv("AWS_REGION")))
+        exit("Set 'AWS_REGION' environment variable!");
+    
+    // Create AWS SDK instance
+    $aws = Aws::factory(array(
+            'region' => $region,
+        ));
+
+    // SWF client
+    $swf = $aws->get('Swf');
+}
+
 // Custom exception class for Cloud Transcode
-class CTException extends Exception
+class CTException extends \Exception
 {
     public $ref;
     
     // Redefine the exception so message isn't optional
-    public function __construct($message, $ref = "", $code = 0, Exception $previous = null) {
+    public function __construct($message, $ref = "", $code = 0, \Exception $previous = null) {
         $this->ref = $ref;
     
         // make sure everything is assigned properly
@@ -200,29 +267,3 @@ class CTException extends Exception
     }
 }
 
-
-// Composer for loading dependices: http://getcomposer.org/
-require __DIR__ . "/../../vendor/autoload.php";
-
-// Amazon library
-use Aws\Common\Aws;
-use Aws\Swf\Exception;
-
-# Check if preper env vars are setup
-if (!($region = getenv("AWS_REGION")))
-    exit("Set 'AWS_REGION' environment variable!");
-
-// Create AWS SDK instance
-$aws = Aws::factory(array(
-        'region' => $region,
-    ));
-
-// SWF client
-$swf = $aws->get('Swf');
-
-// File types 
-define('VIDEO', 'VIDEO');
-define('AUDIO', 'AUDIO');
-define('IMAGE', 'IMAGE');
-define('DOC'  , 'DOC');
-define('THUMB', 'THUMB');

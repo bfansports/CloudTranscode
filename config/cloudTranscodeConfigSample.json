@@ -1,4 +1,9 @@
 {
+    "aws": {
+	"region": "",
+	"key": "",
+	"secret": ""
+    },
     "cloudTranscode": {
         "workflow": {
             "domain": "[YOUR DOMAIN NAME]",

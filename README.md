@@ -21,7 +21,7 @@ It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")
 
 # Quick start with Vagrant
-We create a Vagrant box (Virtual Machine) which provides pre-configured environment to run the stack. You can use Vagrant on any OS and quicky test the stack.
+A Vagrant box (Virtual Machine) which provides pre-configured environment to run the stack has been created to help you test the stack and work on it. You can use Vagrant on any OS and quickly bootstrap.
 
 See: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J#:h=Quick-start-with-Vagrant
 

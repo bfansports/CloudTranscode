@@ -5,8 +5,12 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "box-cutter/ubuntu1404-i386"
+  # Base box used to build sportarchive/trusty-cloudtranscode. You can use it to reinstall the environment from scratch
+  # If you do, make sure you provide the 'install' arg below.
+  #config.vm.box = "box-cutter/ubuntu1404-i386
+
+  # Preinstalled box with all dependencies to run Cloud Transcode
+  config.vm.box = "sportarchive/trusty-cloudtranscode"
 
   # Sync folders
   config.vm.synced_folder "../../..", "/home/vagrant/CloudTranscodeSrc"
@@ -25,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # $3: start|nostart     -> Start CloudTranscode scripts. All of them.
     # $4: CT_ROLES the VM should assume. 
     # Default: CT_ROLES="decider inputPoller validateAsset transcodeAsset"
-    s.args = "noinstall noupgrade start 'decider inputPoller validateAsset transcodeAsset'"
+    s.args = "install noupgrade start 'decider inputPoller validateAsset transcodeAsset'"
   end
 
 end

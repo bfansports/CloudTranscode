@@ -29,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # $3: start|nostart     -> Start CloudTranscode scripts. All of them.
     # $4: CT_ROLES the VM should assume. 
     # Default: CT_ROLES="decider inputPoller validateAsset transcodeAsset"
-    s.args = "install noupgrade start 'decider inputPoller validateAsset transcodeAsset'"
+    s.args = "noinstall noupgrade start 'decider inputPoller validateAsset transcodeAsset'"
   end
 
 end

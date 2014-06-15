@@ -214,7 +214,7 @@ function load_aws_creds($config)
     
     if (isset($config->{"aws"}->{"region"}) &&
         $config->{"aws"}->{"region"} != "") {
-        putenv("AWS_REGION=".$config->{"aws"}->{"region"});
+        putenv("AWS_DEFAULT_REGION_REGION=".$config->{"aws"}->{"region"});
     }
     if (isset($config->{"aws"}->{"key"}) &&
         $config->{"aws"}->{"key"} != "")
@@ -236,8 +236,8 @@ function init_aws()
     global $swf; 
     
     # Check if preper env vars are setup
-    if (!($region = getenv("AWS_REGION")))
-        exit("Set 'AWS_REGION' environment variable!");
+    if (!($region = getenv("AWS_DEFAULT_REGION")))
+        exit("Set 'AWS_DEFAULT_REGION' environment variable!");
     
     // Create AWS SDK instance
     $aws = Aws::factory(array(

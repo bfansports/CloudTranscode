@@ -81,7 +81,7 @@ if [ "$1" == "install" ]; then
     ## FFMPEG (VIDEO) ## 
     # See: http://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
     # Dependencies:
-    sudo apt-get -y install autoconf automake build-essential libass-dev libfreetype6-dev libgpac-dev libtheora-dev libtool libvorbis-dev pkg-config texi2html zlib1g-dev
+    sudo apt-get -y install autoconf automake build-essential libass-dev libfreetype6-dev libgpac-dev libtheora-dev libtool libvorbis-dev pkg-config texi2html zlib1g-dev libXfixes-dev
     
     # Yasm 
     sudo apt-get -y install yasm

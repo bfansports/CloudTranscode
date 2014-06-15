@@ -96,7 +96,7 @@ function check_input_parameters()
     if (isset($options['r']))
         $region = $options['r'];
     else 
-        $region = getenv("AWS_REGION");
+        $region = getenv("AWS_DEFAULT_REGION");
     if (!$region)
         throw new Exception("Please provide your AWS region!");
 }

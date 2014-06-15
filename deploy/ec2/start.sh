@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 
-export HOME=/home/ubuntu/
-export CT_HOME=$HOME/CloudTranscode
-export CT_ROLES="decider inputPoller validateAsset transcodeAsset"
+set -x
+
+LOGS=$HOME/logs/
+mkdir -p $LOGS
+
+exec > >(tee $LOGS/user-data.log|logger -t user-data ) 2>&1
 
 if [ ! -e $CT_HOME ]; then
     echo "'$CT_HOME' doesn't exists! Abording"
     exit 2;
 fi
 
-LOGS=$HOME/logs/
-mkdir -p $LOGS
+# Get the configuration file from S3.
+# Put your own config file in a private S3 bucket
+aws s3 cp s3://cloud-transcode/config/cloudTranscodeConfig.json $CT_HOME/config/ --region us-east-1
 
 if [ ! -z "$CT_ROLES" ]; then
     # Start PHP scripts based on roles

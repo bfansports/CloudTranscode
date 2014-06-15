@@ -42,7 +42,7 @@ function handle_output($output)
  */
 
 $debug  = false;
-$region = getenv("AWS_REGION");
+$region = getenv("AWS_DEFAULT_REGION");
 $key    = getenv("AWS_ACCESS_KEY_ID");
 $secret = getenv("AWS_SECRET_KEY");
 
@@ -106,7 +106,7 @@ function check_input_parameters()
     if (isset($options['r']))
         $region = $options['r'];
     else 
-        $region = getenv("AWS_REGION");
+        $region = getenv("AWS_DEFAULT_REGION");
     if (!$region)
         throw new Exception("Please provide your AWS region!");
 }

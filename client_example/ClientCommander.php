@@ -81,24 +81,20 @@ function check_input_parameters()
 
     if (isset($options['k']))
         $key = $options['k'];
-    else 
+    else
         $key = getenv("AWS_ACCESS_KEY_ID");
-    if (!$key)
-        throw new Exception("Please provide your AWS key!");
     
     if (isset($options['s']))
         $secret = $options['s'];
-    else 
+    else
         $secret = getenv("AWS_SECRET_KEY");
-    if (!$secret)
-        throw new Exception("Please provide your AWS secret!");
 
     if (isset($options['r']))
         $region = $options['r'];
     else 
         $region = getenv("AWS_DEFAULT_REGION");
     if (!$region)
-        throw new Exception("Please provide your AWS region!");
+        throw new Exception("Please provide your AWS region as parameter or using AWS_DEFAULT_REGION env var !");
 }
 
     function usage()

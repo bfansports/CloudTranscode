@@ -94,11 +94,11 @@ echo "MANPATH_MAP $HOME/bin $HOME/ffmpeg_build/share/man" >> ~/.manpath
 apt-get -y autoremove
 
 ## CLOUD TRANSCODE ##
+CT_HOME=$HOME/CloudTranscode
 LOGS=$HOME/logs/
-mkdir -p $LOGS
-INSTALLDIR=$HOME/CloudTranscode
 
-git clone https://github.com/sportarchive/CloudTranscode $INSTALLDIR
+mkdir -p $LOGS
+git clone https://github.com/sportarchive/CloudTranscode $CT_HOME
 
 # Bootstrap using Makefile
-cd $INSTALLDIR && make
+cd $CT_HOME && make

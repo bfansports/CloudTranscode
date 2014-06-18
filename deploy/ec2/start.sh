@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-export HOME=/home/ubuntu/
 export PATH=$PATH:$HOME/bin/
-export CT_HOME=$HOME/CloudTranscode
-export CT_LOGS=$HOME/logs/
 
 set -x
 

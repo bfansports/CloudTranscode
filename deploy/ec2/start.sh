@@ -9,8 +9,7 @@ set -x
 
 exec > >(tee $CT_LOGS/user-data.log|logger -t user-data ) 2>&1
 
-git clone https://github.com/sportarchive/CloudTranscode $CT_HOME
-cd $CT_HOME && make
+cd $CT_HOME && git pull && make
 
 mkdir -p $CT_LOGS
 

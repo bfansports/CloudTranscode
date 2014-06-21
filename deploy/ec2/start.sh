@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
 
-export PATH=$PATH:$HOME/bin/
-
 set -x
-
 exec > >(tee $CT_LOGS/user-data.log|logger -t user-data ) 2>&1
 
-cd $CT_HOME && git pull && make
+export PATH=$PATH:$HOME/bin/
 
-mkdir -p $CT_LOGS
+# Get user data
+USER_DATA=`curl http://169.254.169.254/latest/user-data`
+if [ -z $USER_DATA ]; then
+    echo "No userdata provided!"
+    exit 2;
+fi
+eval $USER_DATA
 
 if [ ! -e $CT_HOME ]; then
     echo "'$CT_HOME' doesn't exists! Abording"
     exit 2;
 fi
+cd $CT_HOME && git pull && make
+mkdir -p $CT_LOGS
 
 # Get the configuration file from S3.
 # Put your own config file in a private S3 bucket

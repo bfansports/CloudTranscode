@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-export PATH=$PATH:$HOME/bin/
-
-# Get user data
+# Get user data from AWS. 
+# Userdata should be passed to Ec2 instance at launch time
+# See "userdata" file
 USER_DATA=`curl http://169.254.169.254/latest/user-data`
 if [ -z $USER_DATA ]; then
     echo "No userdata provided!"

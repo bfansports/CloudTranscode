@@ -1,4 +1,3 @@
-export HOME=/home/ubuntu/
 export CT_HOME=$HOME/CloudTranscode
 export CT_LOGS=$HOME/logs/
 export CT_ROLES="decider inputPoller validateAsset transcodeAsset"

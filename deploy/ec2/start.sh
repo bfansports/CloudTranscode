@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-exec > >(tee $CT_LOGS/user-data.log|logger -t user-data ) 2>&1
-
 export PATH=$PATH:$HOME/bin/
 
 # Get user data
@@ -11,23 +8,30 @@ if [ -z $USER_DATA ]; then
     echo "No userdata provided!"
     exit 2;
 fi
+# Eval userdata
 eval $USER_DATA
 
+# Verbose bash execution
+set -x
+# redirect this output to log file
+exec > >(tee $CT_LOGS/user-data.log|logger -t user-data ) 2>&1
+
+# Is CT_HOME defined?
 if [ ! -e $CT_HOME ]; then
     echo "'$CT_HOME' doesn't exists! Abording"
     exit 2;
 fi
-cd $CT_HOME && git pull && make
+# Refresh CloudTranscode code and make
+cd $CT_HOME && git pull -f && make
 mkdir -p $CT_LOGS
 
 # Get the configuration file from S3.
 # Put your own config file in a private S3 bucket
 aws s3 cp $CT_CONFIG_PATH $CT_HOME/config/ --region $AWS_DEFAULT_REGION
 
+# Check CT_ROLES and start appropriate scripts
 if [ ! -z "$CT_ROLES" ]; then
-    # Start PHP scripts based on roles
     echo "#### STARTING CLOUD TRANSCODE SCRIPTS ####"
-
     for role in $CT_ROLES; do
 	if   [ "$role" == "decider" ]; then
 	    echo "#-> STARTING DECIDER"

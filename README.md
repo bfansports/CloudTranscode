@@ -4,18 +4,18 @@ Cloud Transcode is a custom distributed transcoding stack using Amazon AWS servi
 The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over
 performance and cost. 
 
-We start with video transcoding which is the most costly. Today's commercial solutions for video transcoding are way too expensive for large volumes. With this solution you can transcode large quantity of videos at the pace you want, thus controling your cost. 
-We use FFMpeg for video transcoding.
+We start with video transcoding which is the most costly, but the goal is to transcode any media (audio, documents and images). We use FFMpeg for video transcoding.
 
-With Cloud Transcode, you control: scale, speed and cost. You can even run everything locally if you want, no Cloud instance required. You
-only need an Amazon AWS account and an Internet connection to use the required Amazon services: SWF, SQS and S3. 
+Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of videos at the pace you want, thus controling your cost. 
 
-It means that you can have a local, hybrid or full cloud setup using Amazon Ec2 instances, it's up to you.
+With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. You only need an Amazon AWS account and an Internet connection to use the required Amazon services: SWF, SQS and S3. 
+
+It means that you can have a local, hybrid or full cloud setup on Amazon Ec2 instances, it's up to you.
 
 # Transcoding supported
 - **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
 - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
-- **Watermark integration in video**: Take image IN and position it on top of the video. Custom position and transparency.
+- **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency.
 
 # High Level Architecture
 ![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")

@@ -1,7 +1,7 @@
-# Note
+### Note
 I am focusing on another technical part of my company. I can't work on CloudTranscode at the moment. If you have time and want to pick up where I left off, get in touch with me! I will gladly guide you through it. Thanks!
 
-## TODO
+### TODO
    - Improve Thumbnails generation
    - Transcode images, audio, documents
    - Perform video split/transcode/merge

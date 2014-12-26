@@ -1,4 +1,7 @@
-### Note
+## Updates [12/26/2014]: 
+CloudTranscode will be back in 2015 I believe. The sight on this coming year looks promising :)
+
+### Note:
 I am focusing on another technical part of my company. I can't work on CloudTranscode at the moment. If you have time and want to pick up where I left off, get in touch with me! I will gladly guide you through it.
 
 ### TODO

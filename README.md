@@ -9,6 +9,8 @@ I am focusing on another technical part of my company. I can't work on CloudTran
    - Improve Thumbnails generation
    - Transcode images, audio, documents
    - Perform video split/transcode/merge
+   - Finish Travis test
+   - Normalize code
 
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.

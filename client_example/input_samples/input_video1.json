@@ -1,20 +1,21 @@
 {
     "input_type": "VIDEO",
-    "input_bucket": "ct-my-bucket-in",
-    "input_file": "/input1/test1.mp4",
+    "input_bucket": "sportarchive-dev-orgs",
+    "input_file": "Fencing/videos/fencing1.mp4",
     "outputs": 
     [
 	{
 	    "output_type": "VIDEO",
-	    "output_bucket": "ct-my-bucket-out",
-	    "output_file": "/output1/test1_sd.mp4",
+	    "output_bucket": "cloudtranscode-dev",
+	    "output_file": "/output/fencingout.mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
+	    "keep_ratio": false,
 	    "preset": "360p-4.3-generic",
 	    "watermark": {
-		"input_bucket": "ct-my-bucket-in",
-		"input_file": "/watermark/logo_SA.png",
-		"size": "75x28",
+		"input_bucket": "cloudtranscode-dev",
+		"input_file": "/no-text-96px.png",
+		"size": "96x96",
 		"opacity": 0.2,
 		"x": -20,
 		"y": -20
@@ -22,16 +23,17 @@
 	},
 	{
 	    "output_type": "VIDEO",
-	    "output_bucket": "ct-my-bucket-out",
-	    "output_file": "/output1/test1_hd.mp4",
+	    "output_bucket": "cloudtranscode-dev",
+	    "output_file": "/output/fencingout2.mp4",
 	    "s3_rrs": true,
 	    "s3_encrypt": true,
 	    "preset": "480p-4.3-generic",
 	    "no_enlarge": false,
+	    "keep_ratio": false,
 	    "watermark": {
-		"input_bucket": "ct-my-bucket-in",
-		"input_file": "/watermark/logo_SA.png",
-		"size": "75x28",
+		"input_bucket": "cloudtranscode-dev",
+		"input_file": "/no-text-96px.png",
+		"size": "96x96",
 		"opacity": 0.2,
 		"x": 20,
 		"y": -20
@@ -40,8 +42,8 @@
 	{
 	    "output_type": "THUMB",
 	    "mode": "snapshot",
-	    "output_bucket": "ct-my-bucket-out",
-	    "output_file": "/output1/thumbs/test1_thumb.png",
+	    "output_bucket": "cloudtranscode-dev",
+	    "output_file": "/output/thumbs/fencingout_thumb.png",
 	    "s3_rrs": true,
 	    "size": "160x120",
 	    "snapshot_sec": 5

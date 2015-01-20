@@ -214,7 +214,7 @@ function load_aws_creds($config)
     
     if (isset($config->{"aws"}->{"region"}) &&
         $config->{"aws"}->{"region"} != "") {
-        putenv("AWS_DEFAULT_REGION_REGION=".$config->{"aws"}->{"region"});
+        putenv("AWS_DEFAULT_REGION=".$config->{"aws"}->{"region"});
     }
     if (isset($config->{"aws"}->{"key"}) &&
         $config->{"aws"}->{"key"} != "")

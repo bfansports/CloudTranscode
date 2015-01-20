@@ -2,7 +2,7 @@
 
 /**
  * This script listen to AWS SQS queues for incoming input commands
- * It opens the JSON input and starts a execute a callback correcponding to the command
+ * It opens the JSON input and starts a execute a callback corresponding to the command
  */
 
 require __DIR__ . '/utils/Utils.php';

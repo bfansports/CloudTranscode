@@ -159,6 +159,7 @@ function check_input_parameters(&$defaultConfigFile)
         $defaultConfigFile = $options['c'];
     }
 }
+
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 check_input_parameters($defaultConfigFile);

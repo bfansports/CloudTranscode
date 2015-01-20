@@ -1,21 +1,17 @@
-## Updates [01/19/2015]: 
+# Updates [01/19/2015]: 
 We are back.
 Here is what we are planning to do on the project in the coming months:
 - Allow several workflows so you can create you own Activity task and you can execute them in the order you want. All will be setup in the config file, no code change. This is a requirement to allow the creation of a Split/Merge workflow.
 - Rework the WorkflowTracker to look into the SWF history everytime instead of keeping workflow status in memory. Thus making the Decider fail tolerant and scalable.
 - Better thumbnail generation
 - Enable Smarter transcoding. Won't upscale the resolution or bitrate. Discard stupid transcoding requests.
+- Finish Travis test
+- Normalize code to PHP standard
 
-### Note:
-I am focusing on another technical part of my company. I can't work on CloudTranscode at the moment. If you have time and want to pick up where I left off, get in touch with me! I will gladly guide you through it.
-
-### TODO
-   - Improve Thumbnails generation
-   - Transcode images, audio, documents
-   - Perform video split/transcode/merge. 
-      - See publications by Sebastien Lafond and his team: http://users.abo.fi/slafond/publication.php
-   - Finish Travis test
-   - Normalize code
+### PHP! seriously?
+Several have asked this question. The simple reason I used PHP is at the time I started this project there was only 3 AWS SDKs available: Java, Ruby and PHP.
+PHP is by far the language I was the most fluent with. I needed to be fast coding this, so I went with PHP. 
+It may not be sexy, but PHP works just fine for this. It's well supported and it is getting better and faster (it's about time). Moreover, most of the work is done by AWS and FFmpeg. There is now an official AWS Python SDK, too bad it was not there at the time.
 
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.

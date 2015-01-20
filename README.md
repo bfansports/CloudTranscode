@@ -10,8 +10,11 @@ Here is what we are planning to do on the project in the coming months:
 
 ### PHP! seriously?
 Several have asked this question. The simple reason I used PHP is at the time I started this project there was only 3 AWS SDKs available: Java, Ruby and PHP.
+
 PHP is by far the language I was the most fluent with. I needed to be fast coding this, so I went with PHP. 
-It may not be sexy, but PHP works just fine for this. It's well supported and it is getting better and faster (it's about time). Moreover, most of the work is done by AWS and FFmpeg. There is now an official AWS Python SDK, too bad it was not there at the time.
+It may not be sexy, but PHP works just fine for this. It's well supported and it is getting better and faster (it's about time). Moreover, most of the work is done by AWS and FFmpeg. 
+
+There is now an official AWS Python SDK, too bad it was not there at the time.
 
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.
@@ -40,10 +43,10 @@ A Vagrant box (Virtual Machine) which provides pre-configured environment to run
 
 See: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J#:h=Quick-start-with-Vagrant
 
-# More info 
+# Deep dive
 Find the detailed documentation here: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J
 
-## FFMpeg performance benchmark on Amazon EC2
+# FFMpeg performance benchmark on Amazon EC2
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
 

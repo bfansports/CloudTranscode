@@ -1,6 +1,10 @@
-## Updates [12/26/2014]: 
-CloudTranscode will be back in 2015 I believe. The sight on this coming year looks promising.
-Happy new year to all and good hacking :)
+## Updates [01/19/2015]: 
+We are back.
+Here is what we are planning to do on the project in the coming months:
+- Allow several workflows so you can create you own Activity task and you can execute them in the order you want. All will be setup in the config file, no code change. This is a requirement to allow the creation of a Split/Merge workflow.
+- Rework the WorkflowTracker to look into the SWF history everytime instead of keeping workflow status in memory. Thus making the Decider fail tolerant and scalable.
+- Better thumbnail generation
+- Enable Smarter transcoding. Won't upscale the resolution or bitrate. Discard stupid transcoding requests.
 
 ### Note:
 I am focusing on another technical part of my company. I can't work on CloudTranscode at the moment. If you have time and want to pick up where I left off, get in touch with me! I will gladly guide you through it.

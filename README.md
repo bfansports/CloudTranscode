@@ -8,7 +8,8 @@ I am focusing on another technical part of my company. I can't work on CloudTran
 ### TODO
    - Improve Thumbnails generation
    - Transcode images, audio, documents
-   - Perform video split/transcode/merge
+   - Perform video split/transcode/merge. 
+      - See publications by Sebastien Lafond and his team: http://users.abo.fi/slafond/publication.php
    - Finish Travis test
    - Normalize code
 

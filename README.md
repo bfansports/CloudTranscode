@@ -1,3 +1,8 @@
+# Updates [04/13/2015]: 
+New decider will be pushed out soon. The new decider is written in Python as AWS now provide a Python SDK.
+The new Decider will accept arbitrary workflow, described in JSON.  It will scale and be resilient to failure.
+We will then create a Docker image of all components for easy deployment.
+
 # Updates [01/19/2015]: 
 We are back.
 Here is what we are planning to do on the project in the coming months:

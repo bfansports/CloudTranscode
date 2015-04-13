@@ -54,6 +54,10 @@ See: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J#:h=Qui
 # Deep dive
 Find the detailed documentation here: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J
 
+# Task tracking
+Check the project status and tasks in the pipe on Pivotal Tracker:
+- https://www.pivotaltracker.com/n/projects/1044000
+
 # FFMpeg performance benchmark on Amazon EC2
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx

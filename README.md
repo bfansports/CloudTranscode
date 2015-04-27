@@ -4,7 +4,7 @@ A new decider will be pushed out soon:
 - Will accept arbitrary workflow, described in JSON.
 - Will scale and be resilient to failure.
 
-We will also create a Docker image of all components for easy deployment in your infra.
+We will also create Docker images of all components for easy deployment.
 
 # Updates [01/19/2015]: 
 We are back.

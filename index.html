@@ -1,60 +1,41 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="chrome=1">
-  <title>Cloudtranscode by sportarchive</title>
-  <link rel="stylesheet" href="stylesheets/styles.css">
-  <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script src="javascripts/respond.js"></script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-      <![endif]-->
-    <!--[if lt IE 8]>
-    <link rel="stylesheet" href="stylesheets/ie.css">
-    <![endif]-->
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
-  </head>
-  <body>
-    <div id="header">
-      <nav>
-        <li class="fork"><a href="https://github.com/sportarchive/CloudTranscode">View On GitHub</a></li>
-        <li class="downloads"><a href="https://github.com/sportarchive/CloudTranscode/zipball/master">ZIP</a></li>
-        <li class="downloads"><a href="https://github.com/sportarchive/CloudTranscode/tarball/master">TAR</a></li>
-        <li class="title">DOWNLOADS</li>
-      </nav>
-    </div><!-- end header -->
-
-    <div class="wrapper">
-
-      <section>
-        <div id="title">
-          <h1>Cloud Transcode</h1>
-          <p>Custom distributed video transcoding stack using Amazon AWS and FFMpeg</p>
-          <hr>
-          <span class="credits left">Project maintained by <a href="https://github.com/sportarchive">sportarchive</a></span>
-          <span class="credits right">Hosted on GitHub</span>
-        </div>
-
-        <p>
-          Project sponsored by <b>Sport Archive LLC</b>: <a href="http://sportarchive.tv" target="_blank">http://sportarchive.tv</a><br>
-          <img src="images/logo.png" style="padding-top: 5px;">
-        </p>
-
-        <p>
-          <div class="black_box">
-            The following page is generated from the Cloud Transcode <b>Hackpad</b> accessible at: <a href="https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J" target="_blank">https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J</a>
-          </div> 
-        </p>
-
-        <script src="https://sportarchive.hackpad.com/poG8vKTC16J.js?format=html"></script><noscript><div>View <a href="https://sportarchive.hackpad.com/poG8vKTC16J">Cloud Transcode project</a> on Hackpad.</div></noscript>
-
-      </section>
-
-    </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-
-  </body>
-  </html>
+---
+title: Cloud Transcode, Open source transcoding stack using AWS and FFMpeg. Run your own scalable transcoding cluster.
+layout: default
+---
+<div class='headline'>
+  <div class='logo'>
+    <h1>Cloud Transcode</h1>
+  </div>
+  <div class='clear' style=''></div>
+  <p style=''>
+    Distributed transcoding stack using Amazon AWS and FFMpeg. <b>Free and Open Source.</b>
+  </p>
+  <a class='btn btn-primary btn-large' href='/articles/get_started.html'>Get Started! »</a>
+  <a class="btn btn-large" href="/articles/full_doc.html">Full doc »</a>
+</div>
+<div class='row-fluid'>
+  <div class='span4'>
+    <h2>Control Cost</h2>
+    <p>
+      <ul>
+	<li>You deploy the stack.</li>
+	<li>You control the resources you allocate to it.</li>
+	<li>You control speed and cost.</li>
+      </ul>
+    </p>
+  </div>
+  <div class='span4'>
+    <h2>Scalable</h2>
+    <p> The stack relies heavily on cloud services:
+      <ul>
+	<li><b>AWS SWF:</b> Define your transcoding workflow dynamically and run the Activity you want in the order you want.</li>
+	<li><b>AWS SQS:</b> Send JSON input through SQS. Receive updates from SQS. Simple, asynchonous, resilient and decoupled communication with the stack.</li>
+	<li><b>AWS Ec2:</b> Add more machines == More horsepower. Transcode fast in the cloud. Spawn up to 1000 workers to transcode your jobs.</li>
+      </ul></p>
+  </div>
+  <div class='span4'>
+    <h2>Free</h2>
+    <p>It's open source and it's free.</p>
+    <p>We only ask you to send us feedback on the GitHub page: <a href="https://github.com/sportarchive/CloudTranscode" target="_blank">https://github.com/sportarchive/CloudTranscode</a>.</p> <p>Even better, participate to the development :)</p>
+  </div>
+</div>

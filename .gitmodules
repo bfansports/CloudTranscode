@@ -1,3 +1,3 @@
 [submodule "presets"]
 	path = presets
-	url = https://github.com/sportarchive/CloudTranscode-FFMpeg-preset.git
+	url = https://github.com/sportarchive/CloudTranscode-FFMpeg-presets.git

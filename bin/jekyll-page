@@ -97,7 +97,7 @@ File.open(filepath, 'w') do |file|
     file.puts content
 end
 
-File.symlink(File.absolute_path(filepath), symlink)
+File.symlink("../_posts/#{today}-#{filename}.md", symlink)
 
 if options[:edit]
     if not ENV['EDITOR']

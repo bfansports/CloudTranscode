@@ -19,11 +19,9 @@ codeurl: 'https://github.com/sportarchive/CloudTranscode'
 
 # Default categories (in order) to appear in the navigation
 sections: [
-    ['doc', 'Documentation'],
     ['start', 'Get Started'],
-    ['sdk', 'SDK'],
-    ['post', 'Posts'],
-    ['ref', '']
+    ['integrate', 'Integrate'],
+    ['infra', 'Infrastructure'],
 ]
 
 # Keep as an empty string if served up at the root. If served up at a specific

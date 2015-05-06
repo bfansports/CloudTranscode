@@ -48,5 +48,3 @@ The Docker container can play the role you want in the stack. There are 3 roles:
 ### High level architecture
 
 ![High level architecture design]({{ site.url }}./images/high_level_arch.png)
-
-<a href="/../sdk-doc/build/index.html">TEST GOGO</a>

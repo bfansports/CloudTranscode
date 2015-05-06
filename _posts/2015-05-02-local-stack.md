@@ -31,5 +31,5 @@ Each log file, contains the output of a program running.
 <br>
 
 <p>
-<h4><a href="#">Next: Pilot the stack</a></h4>
+<h4><a href="use-the-stack.html">Next: Pilot the stack</a></h4>
 </p>

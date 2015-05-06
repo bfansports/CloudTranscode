@@ -20,7 +20,7 @@ codeurl: 'https://github.com/sportarchive/CloudTranscode'
 # Default categories (in order) to appear in the navigation
 sections: [
     ['start', 'Get Started'],
-    ['integrate', 'Integrate'],
+    ['deep', 'Deep dive'],
     ['infra', 'Infrastructure'],
 ]
 

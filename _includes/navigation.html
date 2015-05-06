@@ -1,18 +1,26 @@
 <ul class="nav nav-list">
-    <li><a href="{{ site.baseurl }}/">Home</a></li>
-    {% for section in site.sections %}
-        {% assign attr = section[0] %}
-        {% assign label = section[1] %}
+  <li><a href="{{ site.baseurl }}/">Home</a></li>
+  {% for section in site.sections %}
+  {% assign attr = section[0] %}
+  {% assign label = section[1] %}
 
-        {% for page in site.categories[attr] %}
-            {% if forloop.first %}
-                <li class=nav-header>{{ label }}</li>
-            {% endif %}
-            <li data-order="{{ page.order }}"><a href="{{ site.baseurl }}{{ page.url }}">{{ page.title }}</a></li>
-        {% endfor %}
-    {% endfor %}
-    <li class=divider></li>
-    <li><a href="http://sportarchive.github.io/CloudTranscode-SDK/" target="_blank">SDK Documentation</a></li>
-<!-- List additional links. It is recommended to add a divider
-    e.g. <li class=divider></li> first to break up the content. -->
+  {% for page in site.categories[attr] %}
+  {% if forloop.first %}
+  <li class=nav-header>{{ label }}</li>
+  {% endif %}
+  <li data-order="{{ page.order }}"><a href="{{ site.baseurl }}{{ page.url }}">{{ page.title }}</a></li>
+  {% endfor %}
+  {% endfor %}
+  <li class=divider></li>
+  <li><a href="http://sportarchive.github.io/CloudTranscode-SDK/" target="_blank">SDK Documentation</a></li>
+  <!-- List additional links. It is recommended to add a divider
+  e.g. <li class=divider></li> first to break up the content. -->
 </ul>
+
+<br>
+<br>
+<h5 style="text-align: center; color: #999">Project sponsored by</h5>
+<h5 style="text-align: center;"><img src='../images/logo.png'/></h5>
+<h5 style="text-align: center; color: #999; margin-bottom: 0px;">Sport Archive Inc.</h5>
+
+<div style="text-align: center;"><a href="#">http://sportarchive.tv</a></div>

@@ -51,5 +51,5 @@ Go there to configure the stack
 <br>
 
 <p>
-<h4><a href="#">Next: Run the stack</a></h4>
+<h4><a href="local-stack.html">Next: Run the stack</a></h4>
 </p>

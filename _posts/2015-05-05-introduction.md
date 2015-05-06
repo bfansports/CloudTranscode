@@ -67,5 +67,5 @@ The first implementation of this SDK is in PHP: https://github.com/sportarchive/
 <br>
 
 <p>
-<h4><a href="#">Next: Setup AWS</a></h4>
+<h4><a href="setup-aws.html">Next: Setup AWS</a></h4>
 </p>

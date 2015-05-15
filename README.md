@@ -1,4 +1,13 @@
-# Updates [04/13/2015]: 
+## Updates [05/15/2015]
+The new Decider is pushed out as a seperate sub-module: https://github.com/sportarchive/CloudTranscode-Decider
+Written in Python this Decider will allow amazing things:
+- Arbitrary workflows processing: You describe your WF, define its tasks, set dependencies between them, pass variables along (output->input).
+- All in Python
+- Can be used to run any kind of Worker.
+
+We are working on integrating it in the Docker image and improving the documentation so you can get started. There is still a lot of work but we hope to have something usable with a month.
+
+## Updates [04/13/2015]: 
 A new decider will be pushed out soon:
 - Written in Python as AWS now provide a Python SDK.
 - Will accept arbitrary workflow, described in JSON.
@@ -6,7 +15,7 @@ A new decider will be pushed out soon:
 
 We will also create Docker images of all components for easy deployment.
 
-# Updates [01/19/2015]: 
+## Updates [01/19/2015]: 
 We are back.
 Here is what we are planning to do on the project in the coming months:
 - Allow several workflows so you can create you own Activity task and you can execute them in the order you want. All will be setup in the config file, no code change. This is a requirement to allow the creation of a Split/Merge workflow.

@@ -127,11 +127,11 @@ class BasicActivity
     public function activity_failed($task, $reason = "", $details = "")
     {
         global $swf;
-        
-        // Notify client of failure
-        $this->CTCom->activity_failed($task, $reason, $details);
 
         try {
+            // Notify client of failure
+            $this->CTCom->activity_failed($task, $reason, $details);
+            
             log_out("ERROR", basename(__FILE__), "[$reason] $details",
                 $this->activityLogKey);
             $swf->respondActivityTaskFailed(array(
@@ -152,10 +152,10 @@ class BasicActivity
     {
         global $swf;
         
-        // Notify client of failure
-        $this->CTCom->activity_completed($task);
-    
         try {
+            // Notify client of failure
+            $this->CTCom->activity_completed($task);
+        
             log_out("INFO", basename(__FILE__),
                 "Notify SWF activity is completed !",
                 $this->activityLogKey);

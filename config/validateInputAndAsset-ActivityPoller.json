@@ -1,6 +1,6 @@
 {
     "activities": 
     [
-	{ "name": "ValidateInputAndAsset", "version": "v1" }
+	{ "name": "ValidateInputAndAsset", "version": "v2" }
     ]
 }

@@ -59,7 +59,7 @@ class InputPoller
             // Long Polling messages from client input queue
             $queue = $client->{'queues'}->{'input'};
             try {
-                if ($msg = $this->SQSUtils->receive_message($queue, 1))
+                if ($msg = $this->SQSUtils->receive_message($queue, 10))
                 {
                     // Message polled. We delete it from SQS
                     $this->SQSUtils->delete_message($queue, $msg);

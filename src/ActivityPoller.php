@@ -320,7 +320,7 @@ init_aws();
 
 // Instantiate AcivityPoller
 try {
-$activityPoller = new ActivityPoller($config, $activities);
+    $activityPoller = new ActivityPoller($config, $activities);
 } 
 catch (Exception $e) {
     log_out(

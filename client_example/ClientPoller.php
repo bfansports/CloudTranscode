@@ -2,12 +2,11 @@
 
 require __DIR__ . "/../vendor/autoload.php";
 
-function poll_SQS_queues($CTCom, $clientInfoEncoded)
+function poll_SQS_queues($CTComSDK, $decodedClient)
 {
-    $queue = $clientInfoEncoded->{'queues'}->{'output'};
     try {
         // Will poll for 2 seconds
-        if ($msg = $CTCom->receive_message($queue, 10))
+        if ($msg = $CTComSDK->receive_message($decodedClient, 10))
         {
             if (!($decoded = json_decode($msg['Body'])))
                 throw new Exception("JSON output data is invalid!");
@@ -15,7 +14,7 @@ function poll_SQS_queues($CTCom, $clientInfoEncoded)
                 handle_output($decoded);
                     
             // Message polled. We delete it from SQS
-            $CTCom->delete_message($queue, $msg);
+            $CTComSDK->delete_message($decodedClient, $msg);
         }
     } catch (Exception $e) {
         print("[ERROR] " . $e->getMessage() . "\n");
@@ -111,14 +110,14 @@ check_input_parameters();
 
 // Instanciate ComSDK to communicate with the stack
 try {
-    $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
+    $CTComSDK = new SA\CTComSDK($key, $secret, $region, $debug);
 } catch (Exception $e) {
     exit($e->getMessage());
   }
 
 // You must JSON decode it
-$clientInfoDecoded = json_decode($clientInfo);
+$decodedClient = json_decode($clientInfo);
 
 // Keep polling for output messages!
 while (42)
-    poll_SQS_queues($CTCom, $clientInfoDecoded);
+    poll_SQS_queues($CTComSDK, $decodedClient);

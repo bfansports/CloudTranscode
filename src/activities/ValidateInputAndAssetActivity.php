@@ -10,7 +10,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
 {
     private $data;
     private $client;
-    private $job_id;
+    private $jobId;
 
     // Perform the activity
     public function do_activity($task)
@@ -20,8 +20,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Create a key workflowId:activityId to put in logs
         $this->activityLogKey = $task->get("workflowExecution")['workflowId'] . ":$activityId";
         
-        // Send started through CTCom to notify client
-        $this->CTCom->activity_started($task);
+        // Send started through SQSUtils to notify client
+        $this->SQSUtils->activity_started($task);
 
         // Perfom input validation
         $input = $this->do_input_validation(
@@ -30,7 +30,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
             array($this, 'validate_input')
         );
         
-        $this->job_id = $input->{'job_id'};         
+        $this->jobId = $input->{'job_id'};         
         $this->data   = $input->{'data'};  
         $this->client = $input->{'client'};
 
@@ -99,7 +99,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         
         // Create result object to be passed to next activity in the Workflow as input
         $result = [
-            "job_id"           => $this->job_id,
+            "job_id"           => $this->jobId,
             "input_json"       => $this->data, // Original JSON
             "input_asset_type" => $this->data->{'input_type'}, // Input asset detailed info
             "input_asset_info" => $assetInfo, // Input asset detailed info

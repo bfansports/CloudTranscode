@@ -6,6 +6,7 @@
  */
 
 require __DIR__ . '/utils/Utils.php';
+require __DIR__ . '/utils/SQSUtils.php';
 
 class InputPoller
 {
@@ -13,7 +14,7 @@ class InputPoller
     private $config;
     private $domain;
     private $commandsMap;
-    private $CTCom;
+    private $SQSUtils;
     
     function __construct($config)
     {
@@ -44,7 +45,7 @@ class InputPoller
 
         // Instantiating CloudTranscode Communication SDK.
         // See: https://github.com/sportarchive/CloudTranscodeComSDK
-        $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
+        $this->SQSUtils = new SQSUtils($this->debug);
     }
 
     // Poll from the 'input' SQS queue of all clients
@@ -58,10 +59,10 @@ class InputPoller
             // Long Polling messages from client input queue
             $queue = $client->{'queues'}->{'input'};
             try {
-                if ($msg = $this->CTCom->receive_message($queue, 1))
+                if ($msg = $this->SQSUtils->receive_message($queue, 1))
                 {
                     // Message polled. We delete it from SQS
-                    $this->CTCom->delete_message($queue, $msg);
+                    $this->SQSUtils->delete_message($queue, $msg);
 
                     if (!($decoded = json_decode($msg['Body'])))
                         log_out(

@@ -21,8 +21,8 @@ class TranscodeAssetActivity extends BasicActivity
             . ":$activityId";
 
         
-        // Send started through CTCom to notify client
-        $this->CTCom->activity_started($task);
+        // Send started through SQSUtils to notify client
+        $this->SQSUtils->activity_started($task);
         
         // Perfom input validation
         // Pass callback function 'validate_input' to perfrom custom validation
@@ -119,8 +119,8 @@ class TranscodeAssetActivity extends BasicActivity
         $this->upload_result_files($task, $input, $pathToOutputFiles, $outputFileInfo);
         
         $this->send_heartbeat($task);
-        // Send progress through CTCom to notify client of finishing
-        $this->CTCom->activity_finishing($task); 
+        // Send progress through SQSUtils to notify client of finishing
+        $this->SQSUtils->activity_finishing($task); 
     }
 
     // Upload all output files to destination S3 bucket
@@ -185,8 +185,8 @@ class TranscodeAssetActivity extends BasicActivity
             if ($i == 5)
             {
                 $this->send_heartbeat($task);
-                // Send progress through CTCom to notify client of finishing
-                $this->CTCom->activity_finishing($task); 
+                // Send progress through SQSUtils to notify client of finishing
+                $this->SQSUtils->activity_finishing($task); 
                 $i = 0;
             }
         }

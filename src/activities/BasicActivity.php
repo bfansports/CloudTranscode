@@ -5,6 +5,7 @@
  */
 
 require __DIR__ . '../../utils/S3Utils.php';
+require __DIR__ . '../../utils/SQSUtils.php';
 require __DIR__ . '/InputValidator.php';
 
 class BasicActivity
@@ -12,7 +13,7 @@ class BasicActivity
     private   $activityType; // Type of activity
     private   $activityResult; // Contain activity result output
     public    $activityLogKey; // Create a key workflowId:activityId to put in logs
-    public    $CTCom;
+    public    $SQSUtils;
   
     // Constants
     const NO_INPUT             = "NO_INPUT";
@@ -23,7 +24,8 @@ class BasicActivity
     const NO_ACTIVITY_NAME     = "NO_ACTIVITY_NAME";
     const NO_ACTIVITY_VERSION  = "NO_ACTIVITY_VERSION";
     const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
-    
+
+    // XXX Use EFS for storage now!
     const TMP_FOLDER           = "/tmp/CloudTranscode/";
     
     function __construct($params, $debug)
@@ -43,7 +45,7 @@ class BasicActivity
         $this->debug = $debug;
 
         // Instanciate CloudTranscode COM SDK
-        $this->CTCom = new SA\CTComSDK(false, false, false, $this->debug);
+        $this->SQSUtils = new SQSUtils($this->debug);
     }
 
     private function init_activity($params)
@@ -127,11 +129,11 @@ class BasicActivity
     public function activity_failed($task, $reason = "", $details = "")
     {
         global $swf;
-        
-        // Notify client of failure
-        $this->CTCom->activity_failed($task, $reason, $details);
 
         try {
+            // Notify client of failure
+            $this->SQSUtils->activity_failed($task, $reason, $details);
+            
             log_out("ERROR", basename(__FILE__), "[$reason] $details",
                 $this->activityLogKey);
             $swf->respondActivityTaskFailed(array(
@@ -152,10 +154,10 @@ class BasicActivity
     {
         global $swf;
         
-        // Notify client of failure
-        $this->CTCom->activity_completed($task);
-    
         try {
+            // Notify client of failure
+            $this->SQSUtils->activity_completed($task);
+        
             log_out("INFO", basename(__FILE__),
                 "Notify SWF activity is completed !",
                 $this->activityLogKey);
@@ -239,8 +241,8 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // Send progress through CTCom to notify client of download
-        $this->CTCom->activity_preparing($task);
+        // Send progress through SQSUtils to notify client of download
+        $this->SQSUtils->activity_preparing($task);
     }
 
     // Called from S3Utils while PUT to S3 is in progress
@@ -249,8 +251,8 @@ class BasicActivity
         // Tell SWF we alive !
         $this->send_heartbeat($task);
 
-        // Send progress through CTCom to notify client of upload
-        $this->CTCom->activity_finishing($task);
+        // Send progress through SQSUtils to notify client of upload
+        $this->SQSUtils->activity_finishing($task);
     }
 }
 

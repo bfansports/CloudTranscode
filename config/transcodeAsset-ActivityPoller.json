@@ -1,6 +1,6 @@
 {
     "activities": 
     [
-	{ "name": "TranscodeAsset", "version": "v1" }
+	{ "name": "TranscodeAsset", "version": "v2" }
     ]
 }

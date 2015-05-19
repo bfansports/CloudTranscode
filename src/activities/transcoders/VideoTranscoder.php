@@ -359,8 +359,8 @@ class VideoTranscoder extends BasicTranscoder
             $this->activityLogKey
         );
 
-        // Send progress through CTCom to notify client of progress
-        $this->activityObj->CTCom->activity_progress(
+        // Send progress through SQSUtils to notify client of progress
+        $this->activityObj->SQSUtils->activity_progress(
             $this->task, 
             [
                 "duration" => $duration,

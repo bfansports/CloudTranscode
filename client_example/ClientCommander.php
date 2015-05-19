@@ -4,7 +4,7 @@ require __DIR__ . "/../vendor/autoload.php";
 
 function start_job($args)
 {
-    global $CTCom;
+    global $CTComSDK;
     global $clientInfo;
 
     if (count($args) != 2)
@@ -25,7 +25,10 @@ function start_job($args)
     
     try {
         print("[INFO] Starting a new job!\n");
-        $CTCom->start_job($clientInfo, $content);
+        // You must JSON decode it
+        $decodedClient = json_decode($clientInfo);
+        
+        $CTComSDK->start_job($decodedClient, $content);
     }
     catch (Exception $e) {
         print("[ERROR] " . $e->getMessage() . "\n");
@@ -123,7 +126,7 @@ catch (Exception $e) {
 
 // Instanciate ComSDK to communicate with the stack
 try {
-    $CTCom = new SA\CTComSDK($key, $secret, $region, $debug);
+    $CTComSDK = new SA\CTComSDK($key, $secret, $region, $debug);
 } catch (Exception $e) {
     exit($e->getMessage());
   }

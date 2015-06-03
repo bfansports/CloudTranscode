@@ -1,6 +1,6 @@
 [submodule "presets"]
-	path = presets
+	path = pollers/presets
 	url = https://github.com/sportarchive/CloudTranscode-FFMpeg-presets.git
-[submodule "src/decider"]
-	path = src/decider
+[submodule "decider"]
+	path = decider
 	url = https://github.com/sportarchive/CloudTranscode-Decider

@@ -13,33 +13,34 @@ class ActivityPoller
 {
     private $debug;
     private $domain;
-    private $knownActivities;
-    private $activitiesToHandle;
-    private $activityTaskLists;
+    private $taskList;
+    private $activityName;
+    private $activityVersion;
+    private $activityHandler;
   
     const EMPTY_RESULT    = "EMPTY_RESULT";
     const ACTIVITY_FAILED = "ACTIVITY_FAILED";
   
-    function __construct($config, $activitiesToHandle)
+    function __construct($config)
     {
-        global $activities;
         global $debug;
-
-        $this->debug  = $debug;
-        $this->domain = $config->{'cloudTranscode'}->{'workflow'}->{'domain'};
-        $this->knownActivities = $config->{'cloudTranscode'}->{'activities'};
-        $this->activitiesToHandle = $activitiesToHandle->{"activities"};
-        $this->activityTaskLists = [];
-    
-        // Init domain. see: Utils.php
-        if (!init_domain($this->domain)) 
-            throw new Exception("Unable to init the domain !\n");
-
+        global $domain;
+        global $taskList;
+        global $activityName;
+        global $activityVersion;
+        
+        $this->debug    = $debug;
+        $this->domain   = $domain;
+        $this->taskList = $taskList;
+        $this->activityName    = $activityName;
+        $this->activityVersion = $activityVersion;
+        $this->knownActivities = $config->{'activities'};
+        
         // Check and load activities to handle
         if (!$this->register_activities())
             throw new Exception("No activity class registered! Exiting ...");
-    }	
-
+    }
+    
     // We poll for new activities
     // Return true to keep polling even on failure
     // Return false will stop process !
@@ -50,32 +51,29 @@ class ActivityPoller
         // Initiate polling
        
         // Poll from all the taskList registered for each activities 
-        foreach ($this->activityTaskLists as $taskList => $x)
-        {
-            if ($this->debug)
-                log_out(
-                    "DEBUG", 
-                    basename(__FILE__), 
-                    "Polling activity taskList '" . $taskList  . "' ... "
-                );
+        if ($this->debug)
+            log_out(
+                "DEBUG", 
+                basename(__FILE__), 
+                "Polling activity taskList '" . $this->taskList  . "' ... "
+            );
             
-            try {
-                // Call SWF and poll for incoming tasks
-                $activityTask = $swf->pollForActivityTask([
-                        "domain"   => $this->domain,
-                        "taskList" => array("name" => $taskList)
-                    ]);
-            } catch (Exception $e) {
-                log_out(
-                    "ERROR", 
-                    basename(__FILE__), 
-                    "Unable to poll activity tasks! " . $e->getMessage()
-                );
-            }
-
-            // Handle and process the new activity task
-            $this->process_activity_task($activityTask);
+        try {
+            // Call SWF and poll for incoming tasks
+            $activityTask = $swf->pollForActivityTask([
+                    "domain"   => $this->domain,
+                    "taskList" => array("name" => $this->taskList)
+                ]);
+        } catch (Exception $e) {
+            log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Unable to poll activity tasks! " . $e->getMessage()
+            );
         }
+
+        // Handle and process the new activity task
+        $this->process_activity_task($activityTask);
         
         return true;
     }
@@ -86,30 +84,25 @@ class ActivityPoller
         // Get activityType and WorkflowExecution info
         if (!($activityType      = $activityTask->get("activityType")) ||
             !($workflowExecution = $activityTask->get("workflowExecution")))
-            return false;
-        
-        // Can activity be handled by this poller ?
-        if (!($activity = $this->get_activity($activityType))) 
         {
             log_out(
                 "ERROR", 
                 basename(__FILE__), 
-                "This activity type is unknown ! Skipping ...",
-                $workflowExecution['workflowId']
+                "No Activity type nor Workflow execution data."
             );
             return false;
         }
-    
+        
         log_out(
             "INFO", 
             basename(__FILE__), 
             "Starting activity: name=" 
-            . $activity->{"name"} . ",version=" . $activity->{"version"},
+            . $activityType['name'] . ",version=" . $activityType['version'],
             $workflowExecution['workflowId']
         );
 
         // Has activity handler object been instantiated ?
-        if (!isset($activity->{"object"})) 
+        if (!isset($this->activityHandler)) 
         {
             log_out(
                 "ERROR", 
@@ -124,7 +117,7 @@ class ActivityPoller
         $reason = 0;
         $details = 0;
         try {
-            $result = $activity->{"object"}->do_activity($activityTask);
+            $result = $this->activityHandler->do_activity($activityTask);
         } catch (CTException $e) {
             $reason  = $e->ref;
             $details = $e->getMessage();
@@ -134,7 +127,7 @@ class ActivityPoller
         } finally {
             if ($reason && $details)
             {
-                $activity->{"object"}->activity_failed(
+                $this->activityHandler->activity_failed(
                     $activityTask, 
                     $reason, 
                     $details
@@ -144,7 +137,7 @@ class ActivityPoller
         }
     
         // Send completion msg
-        $activity->{"object"}->activity_completed($activityTask, $result);
+        $this->activityHandler->activity_completed($activityTask, $result);
         return true;
     }
   
@@ -153,35 +146,29 @@ class ActivityPoller
     {
         $registered = 0;
 
-        // Dynamically load classes responsible for handling each activity.
-        foreach ($this->activitiesToHandle as &$activityToHandle)
+        print(">>> name: $this->activityName || version: $this->activityVersion\n");
+        
+        foreach ($this->knownActivities as $knownActivity)
         {
-            foreach ($this->knownActivities as $knownActivity)
+            if ($this->activityName == $knownActivity->{"name"} &&
+                $this->activityVersion == $knownActivity->{"version"})
             {
-                if ($activityToHandle->{"name"} == $knownActivity->{"name"} &&
-                    $activityToHandle->{"version"} == $knownActivity->{"version"})
-                {
-                    $activityToHandle = $knownActivity;
-
-                    // Load the file representing the activity
-                    $file = dirname(__FILE__) . $activityToHandle->{"file"};
-                    require_once $file;
-
-                    try {
-                        // Instantiate the class
-                        $activityToHandle->{"object"} = 
-                            new $activityToHandle->{"class"}(
-                                [
-                                    "domain"  => $this->domain,
-                                    "name"    => $activityToHandle->{"name"},
-                                    "version" => $activityToHandle->{"version"}
-                                ], 
-                                $this->debug
-                            );
-                    } catch (CTException $e) {
-                        throw new Exception("Unable to load and register activity class '" 
-                            . $activityToHandle->{"class"} . "'. Abording ...");
-                    }
+                $activityToHandle = $knownActivity;
+                
+                // Load the file representing the activity
+                $file = dirname(__FILE__) . $activityToHandle->{"file"};
+                require_once $file;
+                
+                // Instantiate the Activity class that will process Tasks
+                $this->activityHandler = 
+                    new $activityToHandle->{"class"}(
+                        [
+                            "domain"  => $this->domain,
+                            "name"    => $activityToHandle->{"name"},
+                            "version" => $activityToHandle->{"version"}
+                        ], 
+                        $this->debug
+                    );
 
                     log_out(
                         "INFO", 
@@ -190,30 +177,11 @@ class ActivityPoller
                         . $activityToHandle->{"name"} . ",version=" 
                         . $activityToHandle->{"version"}
                     );
-
-                    // REgister this activity taskList is the activityTaskLists Tracker
-                    if (!isset($this->activityTaskLists[$activityToHandle->{"activityTaskList"}]))
-                        $this->activityTaskLists[$activityToHandle->{"activityTaskList"}] = true;
-
-                    $registered++;
-                    break;
-                }
+                
+                    return true;
             }
         }
-
-        return $registered;
-    }
-
-    // Get the activity from name and version
-    private function get_activity($activityType)
-    {
-        foreach ($this->activitiesToHandle as $activityToHandle)
-        {
-            if ($activityToHandle->{"name"}    == $activityType["name"] &&
-                $activityToHandle->{"version"} == $activityType["version"])
-                return $activityToHandle;
-        }
-
+        
         return false;
     }
 }
@@ -228,50 +196,36 @@ $debug = false;
 
 function usage($defaultConfigFile)
 {
-    echo("Usage: php ". basename(__FILE__) . " [-h] [-d] [-c <path to JSON config file>] -j '{inline JSON listing activities to handle}' -a <path to JSON config file listing activities to handle>\n");
+    echo("Usage: php ". basename(__FILE__) . " -D <domain> -T <task_list> -A <activity_name> -V <activity_version> [-h] [-d] [-c <path to JSON config file>]\n");
     echo("-h: Print this help\n");
     echo("-d: Debug mode\n");
     echo("-c <file path>: Optional parameter to override the default configuration file: '$defaultConfigFile'.\n");
-    echo("-a <file path>: Specify the path to JSON config file containing the list of activities this ActivityPoller can handle. (see: config/\n");
-    echo("-j '{JSON}': Specify JSON config as text inline.\n");
+    echo("-D <domain>: SWF domain for the workflow\n");
+    echo("-T <task list>: Specify the Activity Task List this activity will listen to. An Activity Task list is the queue your Activity poller will listen to for new input tasks.\n");
+    echo("-A <activity name>: Activity name this Poller can handle. This will be used to load the proper Activity code.");
+    echo("-V <activity version>: Activity version this Poller can handle. This will be used to load the proper Activity code.");
     exit(0);
 }
 
 function check_input_parameters(&$defaultConfigFile)
 {
     global $debug;
-
+    global $domain;
+    global $taskList;
+    global $activityName;
+    global $activityVersion;
+    
     // Handle input parameters
-    if (!($options = getopt("j:c:a:hd")))
+    if (!($options = getopt("D:T:A:V:c:hd")))
         usage($defaultConfigFile);
     if (!count($options) || isset($options['h']))
         usage($defaultConfigFile);
 
+    // Debug
     if (isset($options['d']))
         $debug = true;
-  
-    if (!isset($options['j']) &&
-        !isset($options['a']))
-    {
-        log_out("ERROR", basename(__FILE__), "You must provide JSON input containing the list of activities this ActivityPoller can handle. Use -a or -j option!");
-        usage($defaultConfigFile);
-    }
-  
-    if (isset($options['j']) &&
-        isset($options['a']))
-    {
-        log_out("ERROR", basename(__FILE__), "Provide only one JSON input listing of activities this ActivityPoller can handle. Can't provide both -a or -j options!");
-        usage($defaultConfigFile);
-    }
 
-    if (isset($options['j']))
-        if (!($activities = json_decode($options['j'])))
-            throw new Exception("JSON provide as part of -j option is invalid!");
-    
-    if (isset($options['a']))
-        if (!($activities = json_decode(file_get_contents($options['a']))))
-            throw new Exception("JSON provide as part of -a option is invalid!");
-
+    // OVerrride config file
     if (isset($options['c']))
     {
         log_out(
@@ -281,8 +235,55 @@ function check_input_parameters(&$defaultConfigFile)
         );
         $defaultConfigFile = $options['c'];
     }
-  
-    return $activities;
+
+    // Domain
+    if (!isset($options['D']))
+    {
+        log_out("ERROR", basename(__FILE__), "You must provide a Domain");
+        usage($defaultConfigFile);
+    }
+    $domain = $options['D'];
+
+    // Tasklist
+    if (!isset($options['T']))
+    {
+        log_out("ERROR", basename(__FILE__), "You must provide a TaskList");
+        usage($defaultConfigFile);
+    }
+    $taskList = $options['T'];
+
+    // Activity name
+    if (!isset($options['A']))
+    {
+        log_out("ERROR", basename(__FILE__), "You must provide an Activity name");
+        usage($defaultConfigFile);
+    }
+    $activityName = $options['A'];
+    
+    // Activity version
+    if (!isset($options['V']))
+    {
+        log_out("ERROR", basename(__FILE__), "You must provide an Activity version");
+        usage($defaultConfigFile);
+    }
+    $activityVersion = $options['V'];
+
+    // Check config file
+    if (!($config = json_decode(file_get_contents($defaultConfigFile))))
+    {
+        log_out(
+            "FATAL", 
+            basename(__FILE__), 
+            "Configuration file '$defaultConfigFile' invalid!"
+        );
+        exit(1);
+    }
+
+    # Validate against JSON Schemas
+    if (($err = validate_json($config, "config/mainConfig.json")))
+        exit("JSON main configuration file invalid! Details:\n".$err);
+
+    return $config;
 }
 
 
@@ -290,39 +291,25 @@ function check_input_parameters(&$defaultConfigFile)
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
 // Check input parameters
-$activities = check_input_parameters($defaultConfigFile);
-if (!($config = json_decode(file_get_contents($defaultConfigFile))))
-{
-    log_out(
-        "FATAL", 
-        basename(__FILE__), 
-        "Configuration file '$defaultConfigFile' invalid!"
-    );
-    exit(1);
-}
-
-# Validate against JSON Schemas
-if (($err = validate_json($config, "config/mainConfig.json")))
-    exit("JSON main configuration file invalid! Details:\n".$err);
+$config = check_input_parameters($defaultConfigFile);
 
 # Load AWS credentials in env vars if any
 load_aws_creds($config);
+# Init AWS connection
+init_aws();
 
 log_out(
     "INFO", 
     basename(__FILE__), 
-	"Domain: '" . $config->{'cloudTranscode'}->{'workflow'}->{'domain'} . "'"
+	"Domain: '$domain'"
 );
 log_out("INFO", basename(__FILE__), $config->{'clients'});
 
-# Init AWS connection
-init_aws();
-
 // Instantiate AcivityPoller
 try {
-    $activityPoller = new ActivityPoller($config, $activities);
+    $activityPoller = new ActivityPoller($config);
 } 
-catch (Exception $e) {
+catch (CTException $e) {
     log_out(
         "FATAL", 
         basename(__FILE__), 
@@ -331,11 +318,11 @@ catch (Exception $e) {
     exit(1);
 }
 
-// Start polling loop
 log_out(
     "INFO", 
     basename(__FILE__), 
     "Starting activity tasks polling"
 );
+// Start polling loop
 while (42)
     $activityPoller->poll_for_activities();

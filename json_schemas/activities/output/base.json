@@ -2,7 +2,6 @@
     "id": "http://sport-archive.com/input-schema/output/base#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "CT transcode output specification",
-    "type": "object",
     "properties": {
         "output_type": {
             "type": "string",

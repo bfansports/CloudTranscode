@@ -1,10 +1,10 @@
 {
-    "id": "http://sport-archive.com/input-schema/ValidateInputAsset#",
+    "id": "http://sportarchive.tv/input-schema/ValidateInputAsset#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schema for ValidateInputAndAsset activity task",
     "type": "object",
     "properties": {
-        "client": {
+	"client": {
             "$ref": "client.json"
         },
 	"time": {
@@ -24,9 +24,13 @@
 	    "pattern": "^START_JOB$"
 	},
 	"data" : {
-	    "description": "Data for the new transcoding job",
+	    "description": "Data for the new validation job",
 	    "type": "object",
 	    "properties": {
+		"workflow": {
+		    "type": "object",
+		    "$ref": "activities/Workflow.json"
+		},
 		"input_type": {
 		    "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ],
 		    "description": "Type of the input file to transcode: VIDEO, AUDIO, DOC, IMG",
@@ -45,25 +49,12 @@
 		    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
 		    "minLength": 1,
 		    "maxLength": 1024
-		},
-		"outputs": {
-		    "description": "List of all the outputs needed for that job array of max 100 entries",
-		    "type": "array",
-		    "items": {
-			"$ref": "activities/output/base.json",
-			"oneOf": [                    
-			    { "$ref": "activities/output/video.json" },
-			    { "$ref": "activities/output/thumb.json" }
-			]
-		    },
-		    "minItems": 1,
-		    "uniqueItems": true
 		}
 	    },
-	    "required": ["input_type", "input_bucket", "input_file", "outputs"],
+	    "required": ["workflow", "input_type", "input_bucket", "input_file"],
 	    "additionalProperties": false
-	}
-    },
-    "required": ["type", "data", "job_id", "time"],
-    "additionalProperties": true
+	},
+	"required": ["type", "job_id", "time", "data"],
+	"additionalProperties": false
+    }
 }

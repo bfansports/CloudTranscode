@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema/activities#",
+    "id": "http://sportarchive.tv/input-schema/activities#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schemas for activities items in activities array of main config file",
     "type": "object",
@@ -37,13 +37,6 @@
 	    "maxLength": 256,
 	    "pattern": "^[\\w\\-]+$"
 	},
-	"activityTaskList": {
-	    "description": "Tasklist (queue) where task are stacked and polled from",
-	    "type": "string",
-	    "minLength": 3,
-	    "maxLength": 64,
-	    "pattern": "^[\\w\\.\\- ]+$"
-	},
 	"scheduleToStartTimeout": {
 	    "description": "Max time from schedule to start for a task",
 	    "type": "integer",
@@ -69,6 +62,6 @@
 	    "maximum": 99999999
 	}
     },
-    "required": ["name", "version", "description", "file", "class", "activityTaskList", "scheduleToStartTimeout", "scheduleToCloseTimeout", "startToCloseTimeout", "heartbeatTimeout"],
+    "required": ["name", "version", "description", "file", "class", "scheduleToStartTimeout", "scheduleToCloseTimeout", "startToCloseTimeout", "heartbeatTimeout"],
     "additionalProperties": false
 }

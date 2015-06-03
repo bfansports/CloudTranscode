@@ -20,25 +20,13 @@
 	    },
 	    "additionalProperties": false
 	},
-	"cloudTranscode": {
-	    "description": "Main cloudTranscode configuration",
-	    "type": "object",
-	    "properties": {
-		"workflow": {
-		    "$ref": "config/workflow.json"
-		},
-		"activities": {
-		    "type": "array",
-		    "items": {
-			"$ref": "config/activities.json"
-		    },
-		    "minItems": 2,
-		    "maxItems": 2,
-		    "uniqueItems": true
-		}
+	"activities": {
+	    "type": "array",
+	    "items": {
+		"$ref": "config/activities.json"
 	    },
-	    "required": ["workflow", "activities"],
-	    "additionalProperties": false
+	    "minItems": 1,
+	    "uniqueItems": true
 	},
 	"clients": {
 	    "type": "array",
@@ -49,6 +37,6 @@
 	    "uniqueItems": true
 	}
     },
-    "required": ["cloudTranscode", "clients"],
+    "required": ["activities", "clients"],
     "additionalProperties": false
 }

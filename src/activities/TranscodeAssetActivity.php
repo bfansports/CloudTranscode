@@ -10,27 +10,27 @@ class TranscodeAssetActivity extends BasicActivity
     const CONVERSION_TYPE_ERROR = "CONVERSION_TYPE_ERROR";
     const TMP_PATH_OPEN_FAIL    = "TMP_PATH_OPEN_FAIL";
     const UNKOWN_OUTPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
+
+    private $output;
+    private $pathToOutputFiles;
     
     // Perform the activity
     public function do_activity($task)
     {
-        $activityId   = $task->get("activityId");
-        $activityType = $task->get("activityType");
-        // Create a key workflowId:activityId to put in logs
-        $this->activityLogKey = $task->get("workflowExecution")['workflowId'] 
-            . ":$activityId";
-
+        // Check input task. Set $this->input_str String
+        parent::do_task_check($task);
         
-        // Send started through SQSUtils to notify client
-        $this->SQSUtils->activity_started($task);
+        // Init Activity
+        parent::do_init($task);
         
-        // Perfom input validation
-        // Pass callback function 'validate_input' to perfrom custom validation
-        $input = $this->do_input_validation(
+        // Validate JSON. Set $this->input JSON object
+        parent::do_input_validation(
             $task, 
-            $activityType["name"],
-            array($this, 'validate_input')
+            $this->activityType["name"]
         );
+        
+        // Custom validation for transcoding. Set $this->output
+        $this->validate_input();
         
         log_out(
             "INFO", 
@@ -38,48 +38,22 @@ class TranscodeAssetActivity extends BasicActivity
             "Preparing Asset transcoding ...",
             $this->activityLogKey
         );
-
-        // Create TMP storage to store input file to transcode 
-        $inputFileInfo = pathinfo($input->{'input_json'}->{'input_file'});
-        // Use workflowID to generate a unique TMP folder localy.
-        $tmpPathInput = self::TMP_FOLDER 
-            . $task["workflowExecution"]["workflowId"] . "/" 
-            . $inputFileInfo['dirname'];
-        if (!file_exists($tmpPathInput))
-            if (!mkdir($tmpPathInput, 0750, true))
-                throw new CTException(
-                    "Unable to create temporary folder '$tmpPathInput' !",
-                    self::TMP_FOLDER_FAIL
-                );
         
-        // Download input file and store it in TMP folder
-        $saveFileTo = $tmpPathInput . "/" . $inputFileInfo['basename'];
-        $pathToInputFile = 
-            $this->get_file_to_process(
-                $task, 
-                $input->{'input_json'}->{'input_bucket'},
-                $input->{'input_json'}->{'input_file'},
-                $saveFileTo
-            );
-        
-        // Create TMP folder for output files
-        $outputFileInfo = pathinfo($input->{'output'}->{'output_file'});
-        $input->{'output'}->{'output_file_info'} = $outputFileInfo;
-        $pathToOutputFiles = $tmpPathInput . "/output/" 
-            . $task['activityId']
-            . "/" . $outputFileInfo['dirname'];
-        if (!file_exists($pathToOutputFiles))
-            if (!mkdir($pathToOutputFiles, 0750, true))
-                throw new CTException(
-                    "Unable to create temporary folder '$pathToOutputFiles' !",
-                    self::TMP_FOLDER_FAIL
-                );
+        // Call parent method for initialization.
+        // Setup TMP folder
+        // Send starting SQS message
+        // Download input file from S3
+        parent::do_activity($task);
 
+        // Set output path to store result files
+        $this->set_output_path();
+        
+        
         /**
          * TRANSCODE INPUT FILE
          */
-
-        switch ($input->{'output'}->{'output_type'}) 
+        
+        switch ($this->output->{'output_type'}) 
         {
         case VIDEO:
         case THUMB:
@@ -90,15 +64,16 @@ class TranscodeAssetActivity extends BasicActivity
             
             // Check preset file, read its content and add its data to output object
             // Only for VIDEO output. THUMB don't use presets
-            if ($input->{'output'}->{'output_type'} == VIDEO)
-                $input->{'output'}->{'preset_values'} = $videoTranscoder->get_preset_values($input->{'output'});
+            if ($this->output->{'output_type'} == VIDEO)
+                $this->output->{'preset_values'} =
+                $videoTranscoder->get_preset_values($this->output);
                 
             // Perform transcoding
             $videoTranscoder->transcode_asset(
-                $pathToInputFile,
-                $pathToOutputFiles,
-                $input->{'input_asset_info'}, 
-                $input->{'output'}
+                $this->pathToInputFile,
+                $this->pathToOutputFiles,
+                $this->data->{'input_asset_info'}, 
+                $this->output
             );            
             break;
         case IMAGE:
@@ -116,61 +91,54 @@ class TranscodeAssetActivity extends BasicActivity
         }
         
         // Upload resulting file
-        $this->upload_result_files($task, $input, $pathToOutputFiles, $outputFileInfo);
-        
-        $this->send_heartbeat($task);
-        // Send progress through SQSUtils to notify client of finishing
-        $this->SQSUtils->activity_finishing($task); 
+        $this->upload_result_files($task);
+
+        return null;
     }
 
     // Upload all output files to destination S3 bucket
-    private function upload_result_files(
-        $task,
-        $input, 
-        $pathToOutputFiles, 
-        $outputFileInfo)
+    private function upload_result_files($task)
     {
-        // Sanitize output bucket path "/"
-        $s3Bucket = str_replace("//", "/", $input->{'output'}->{"output_bucket"});
+        // Sanitize output bucket and file path "/"
+        $s3Bucket   = str_replace("//", "/", $this->output->{"output_bucket"});
 
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         // XXX: Add tmp workflowID to output bucket to seperate upload
         // XXX: For testing only !
-        //$s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
+        // $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
         // Prepare S3 options
         $options = array("rrs" => false, "encrypt" => false);
-        if (isset($input->{'output'}->{'s3_rrs'}) &&
-            $input->{'output'}->{'s3_rrs'} == true)
+        if (isset($this->output->{'s3_rrs'}) &&
+            $this->output->{'s3_rrs'} == true)
             $options['rrs'] = true;
-        if (isset($input->{'output'}->{'s3_encrypt'}) &&
-            $input->{'output'}->{'s3_encrypt'} == true)
+        if (isset($this->output->{'s3_encrypt'}) &&
+            $this->output->{'s3_encrypt'} == true)
             $options['encrypt'] = true;
 
         // S3 object to handle S3 put operations
         $s3Utils = new S3Utils();
         
         // Send all output files located in '$pathToOutputFiles' to S3 bucket
-        if (!$handle = opendir($pathToOutputFiles))
-            throw new CTException("Can't open tmp path '$pathToOutputFiles'!", 
+        if (!$handle = opendir($this->pathToOutputFiles))
+            throw new CTException("Can't open tmp path '$this->pathToOutputFiles'!", 
                 self::TMP_PATH_OPEN_FAIL);
         
         // Upload all resulting files sitting in same dir
-        $i = 0;
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") 
                 continue;
 
             // Destination path on S3. Sanitizing
-            $s3Location = $outputFileInfo['dirname'] . "/$entry";
+            $s3Location = $this->output->{'output_file_info'}['dirname'] . "/$entry";
             $s3Location = str_replace("//", "/", $s3Location);
             
             // Send to S3
             $s3Output = $s3Utils->put_file_into_s3(
                 $s3Bucket, 
                 $s3Location,
-                "$pathToOutputFiles/$entry", 
+                "$this->pathToOutputFiles/$entry", 
                 $options, 
                 array($this, "s3_put_processing_callback"), 
                 $task
@@ -179,47 +147,66 @@ class TranscodeAssetActivity extends BasicActivity
             log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $this->activityLogKey);
-            
-            $i++;
-            
-            if ($i == 5)
-            {
-                $this->send_heartbeat($task);
-                // Send progress through SQSUtils to notify client of finishing
-                $this->SQSUtils->activity_finishing($task); 
-                $i = 0;
-            }
         }
+    }
+
+    private function set_output_path()
+    {
+         // Create TMP folder for output files
+        $outputFileInfo = pathinfo($this->output->{'output_file'});
+        $this->output->{'output_file_info'} = $outputFileInfo;
+        $this->pathToOutputFiles = $this->tmpPathInput . "/output/" 
+            . $this->activityId
+            . "/" . $outputFileInfo['dirname'];
+        if (!file_exists($this->pathToOutputFiles))
+            if (!mkdir($this->pathToOutputFiles, 0750, true))
+                throw new CTException(
+                    "Unable to create temporary folder '$this->pathToOutputFiles' !",
+                    self::TMP_FOLDER_FAIL
+                );
     }
     
     // Perform custom validation on JSON input
     // Callback function used in $this->do_input_validation
-    public function validate_input($input)
+    private function validate_input()
     {
-        // VIDEO can only be transcoded into VIDEO or THUMB
+        $this->output = $this->data->{'output'};
         if ((
-                $input->{'input_asset_type'} == VIDEO &&
-                $input->{'output'}->{'output_type'} != VIDEO &&
-                $input->{'output'}->{'output_type'} != THUMB &&
-                $input->{'output'}->{'output_type'} != AUDIO
+                $this->data->{'input_type'} == VIDEO &&
+                $this->output->{'output_type'} != VIDEO &&
+                $this->output->{'output_type'} != THUMB &&
+                $this->output->{'output_type'} != AUDIO
             )
             ||
             (
-                $input->{'input_asset_type'} == IMAGE &&
-                $input->{'output'}->{'output_type'} != IMAGE
+                $this->data->{'input_type'} == IMAGE &&
+                $this->output->{'output_type'} != IMAGE
             )
             ||
             (
-                $input->{'input_asset_type'} == AUDIO &&
-                $input->{'output'}->{'output_type'} != AUDIO
+                $this->data->{'input_type'} == AUDIO &&
+                $this->output->{'output_type'} != AUDIO
             )
             ||
             (
-                $input->{'input_asset_type'} == DOC &&
-                $input->{'output'}->{'output_type'} != DOC
-            ))
-            throw new CTException("Can't convert that 'input_type' (" . $input->{'input_asset_type'} . ") into this 'output_type' (" . $input->{'output'}->{'output_type'} . ")! Abording.", 
+                $this->data->{'input_type'} == DOC &&
+                $this->output->{'output_type'} != DOC
+            )) {
+            throw new CTException("Can't convert that 'input_type' (" . $this->data->{'input_type'} . ") into this 'output_type' (" . $this->output->{'output_type'} . ")! Abording.", 
                 self::CONVERSION_TYPE_ERROR);
+        }
+        
+        // Specific tests for VIDEO
+        if ($this->output->{'output_type'} == VIDEO)
+        {
+            require_once __DIR__ . '/transcoders/VideoTranscoder.php';
+                
+            // Initiate transcoder obj
+            if (!isset($videoTranscoder))
+                $videoTranscoder = new VideoTranscoder($this, $task);
+            // Validate output preset
+            $videoTranscoder->validate_preset($this->output);
+        }
     }
 }
 

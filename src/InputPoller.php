@@ -12,27 +12,17 @@ class InputPoller
 {
     private $debug;
     private $config;
-    private $domain;
     private $commandsMap;
     private $SQSUtils;
     
     function __construct($config)
     {
         global $debug;
-
-        $this->debug  = $debug;
+        
         $this->config = $config;
-        $this->domain = $config->{'cloudTranscode'}->{'workflow'}->{'domain'};
-
-        // Init domain. see: Utils.php
-        if (!init_domain($this->domain))
-            throw new Exception("Unable to init the domain !\n");
+        $this->debug  = $debug;
         
-        // Init workflow. see: Utils.php
-        if (!init_workflow($this->config->{'cloudTranscode'}->{'workflow'}))
-            throw new Exception("Unable to init the workflow !\n");
-        
-        // Init eventMap. Maps events with callback functions.
+        // Mapping event from the ComSDK with functions to handle them
         $this->typesMap = [
             'START_JOB'            => 'start_job',
             'CANCEL_JOB'           => 'cancel_job',
@@ -42,12 +32,11 @@ class InputPoller
             'GET_JOB_STATUS'       => 'get_job_status',
             'GET_ACTIVITY_STATUS'  => 'get_activity_status',
         ];
-
-        // Instantiating CloudTranscode Communication SDK.
-        // See: https://github.com/sportarchive/CloudTranscodeComSDK
+        
+        // SQSUtils for communicating with the clients
         $this->SQSUtils = new SQSUtils($this->debug);
     }
-
+    
     // Poll from the 'input' SQS queue of all clients
     // If a msg is received, we pass it to 'handle_input' for processing
     public function poll_SQS_queues()
@@ -61,9 +50,6 @@ class InputPoller
             try {
                 if ($msg = $this->SQSUtils->receive_message($queue, 10))
                 {
-                    // Message polled. We delete it from SQS
-                    $this->SQSUtils->delete_message($queue, $msg);
-
                     if (!($decoded = json_decode($msg['Body'])))
                         log_out(
                             "ERROR", 
@@ -71,6 +57,9 @@ class InputPoller
                             "JSON data invalid in queue: '$queue'");
                     else                    
                         $this->handle_message($decoded, $client);
+                    
+                    // Message polled. We delete it from SQS
+                    $this->SQSUtils->delete_message($queue, $msg);
                 }
             } catch (Exception $e) {
                 log_out(
@@ -130,11 +119,11 @@ class InputPoller
                 basename(__FILE__),
                 "Starting new workflow!"
             );
-
+        
         // Workflow info
         $workflowType = array(
-            "name"    => $this->config->{'cloudTranscode'}->{'workflow'}->{"name"},
-            "version" => $this->config->{'cloudTranscode'}->{'workflow'}->{"version"});
+            "name"    => $message->{'data'}->{'workflow'}->{'name'},
+            "version" => $message->{'data'}->{'workflow'}->{'version'});
         
         // Append client info to message data
         $message->{"client"} = $client;
@@ -142,12 +131,17 @@ class InputPoller
         // Request start SWF workflow
         try {
             $workflowRunId = $swf->startWorkflowExecution(array(
-                    "domain"       => $this->config->{'cloudTranscode'}->{'workflow'}->{'domain'},
+                    "domain"       => $message->{'data'}->{'workflow'}->{'domain'},
                     "workflowId"   => uniqid('', true),
                     "workflowType" => $workflowType,
-                    "taskList"     => array("name" => $this->config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'}),
+                    "taskList"     => array("name" => $message->{'data'}->{'workflow'}->{'taskList'}),
                     "input"        => json_encode($message)
                 ));
+
+            log_out(
+                "INFO",
+                basename(__FILE__),
+                "New workflow submitted to SWF: ".$workflowRunId->get('runId'));
         } catch (\Aws\Swf\Exception\SwfException $e) {
             log_out(
                 "ERROR",
@@ -169,6 +163,9 @@ class InputPoller
             !isset($message->{"type"})   || $message->{"type"} == "" || 
             !isset($message->{"data"})   || $message->{"data"} == "")
             throw new Exception("'time', 'type', 'job_id' or 'data' fields missing in JSON message file!");
+        
+        if (!isset($message->{'data'}->{'workflow'}))
+            throw new Exception("Input doesn't contain any workflow information. You must provide the workflow you want to sent this job to!");
     }
 }
 
@@ -177,7 +174,6 @@ class InputPoller
  * INPUT POLLER START
  */
 
-$input_file = "";
 $debug = false;
 
 function usage($defaultConfigFile)
@@ -190,13 +186,8 @@ function usage($defaultConfigFile)
 
 function check_input_parameters(&$defaultConfigFile)
 {
-    global $input_file;
     global $debug;
-    global $argv;
     
-    if (count($argv) == 1)
-        return;
-
     // Handle input parameters
     if (!($options = getopt("c:hd")))
         usage($defaultConfigFile);
@@ -216,42 +207,34 @@ function check_input_parameters(&$defaultConfigFile)
         );
         $defaultConfigFile = $options['c'];
     }
+    
+    if (!($config = json_decode(file_get_contents($defaultConfigFile))))
+    {
+        log_out(
+            "FATAL", 
+            basename(__FILE__), 
+            "Configuration file '$defaultConfigFile' invalid!"
+        );
+        exit(1);
+    }
+
+    # Validate against JSON Schemas
+    if (($err = validate_json($config, "config/mainConfig.json")))
+        exit("JSON main configuration file invalid! Details:\n".$err);
+
+    return $config;
 }
 
 // Get config file
 $defaultConfigFile = realpath(dirname(__FILE__)) . "/../config/cloudTranscodeConfig.json";
-check_input_parameters($defaultConfigFile);
-if (!($config = json_decode(file_get_contents($defaultConfigFile))))
-{
-    log_out(
-        "FATAL", 
-        basename(__FILE__), 
-        "Configuration file '$defaultConfigFile' invalid!"
-    );
-    exit(1);
-}
-
-# Validate against JSON Schemas
-if (($err = validate_json($config, "config/mainConfig.json")))
-    exit("JSON main configuration file invalid! Details:\n".$err);
+$config = check_input_parameters($defaultConfigFile);
 
 # Load AWS credentials in env vars if any
 load_aws_creds($config);
-
-log_out(
-    "INFO", 
-    basename(__FILE__), 
-    "Domain: '" . $config->{'cloudTranscode'}->{'workflow'}->{'domain'} . "'"
-);
-log_out(
-    "INFO", 
-    basename(__FILE__), 
-    "TaskList: '" . $config->{'cloudTranscode'}->{'workflow'}->{'decisionTaskList'} . "'"
-);
-log_out("INFO", basename(__FILE__), $config->{'clients'});
-
 # Init AWS connection
 init_aws();
+
+log_out("INFO", basename(__FILE__), $config->{'clients'});
 
 // Create InputPoller object
 try {

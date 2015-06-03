@@ -142,11 +142,13 @@ class SQSUtils
         );
     }
 
-    public function activity_completed($task)
+    public function activity_completed($task, $result = null)
     {
         $this->send_activity_updates(
             $task, 
-            self::ACTIVITY_COMPLETED
+            self::ACTIVITY_COMPLETED,
+            false,
+            $result
         );
     }
 

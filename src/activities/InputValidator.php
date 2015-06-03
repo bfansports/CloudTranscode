@@ -12,6 +12,8 @@ class InputValidator
     // Decode provided JSON
     public function decode_json_format($input)
     {
+        print_r($input);
+        
         // Validate JSON data and Decode as an array !
         if (!($decoded = json_decode($input)))
             throw new CTException("JSON input is invalid !", 

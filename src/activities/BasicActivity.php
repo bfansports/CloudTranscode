@@ -10,10 +10,22 @@ require __DIR__ . '/InputValidator.php';
 
 class BasicActivity
 {
-    private   $activityType; // Type of activity
-    private   $activityResult; // Contain activity result output
-    public    $activityLogKey; // Create a key workflowId:activityId to put in logs
-    public    $SQSUtils;
+    public   $input_str; // Complete activity input string
+    public   $input; // Complete activity input JSON object
+    public   $time; // Time of the activity. Comes from $input
+    public   $data; // Data input for the activity. The job we got to do. Comes from $input
+    public   $client; // The client that request this activity. Comes from $input
+    public   $jobId; // The Activity ID. Comes from $input
+    
+    public   $tmpPathInput; // PAth to directory containing TMP file
+    public   $pathToInputFile; // PAth to input file locally
+    
+    public   $activityId; // ID of the activity
+    public   $activityType; // Type of activity
+    public   $activityResult; // Contain activity result output
+    public   $activityLogKey; // Create a key workflowId:activityId to put in logs
+    
+    public   $SQSUtils; // Used to communicate
   
     // Constants
     const NO_INPUT             = "NO_INPUT";
@@ -26,6 +38,8 @@ class BasicActivity
     const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
 
     // XXX Use EFS for storage now!
+    // Nico: Expensive though.
+    // This is where we store temporary files for transcoding
     const TMP_FOLDER           = "/tmp/CloudTranscode/";
     
     function __construct($params, $debug)
@@ -48,6 +62,7 @@ class BasicActivity
         $this->SQSUtils = new SQSUtils($this->debug);
     }
 
+    // Init activity in SWF. REgister it if not existing.
     private function init_activity($params)
     {
         global $swf;
@@ -84,45 +99,76 @@ class BasicActivity
 
         return true;
     }
-  
+
+    // Init some Activity data
+    protected function do_init($task)
+    {
+        $this->activityId     = $task->get("activityId");
+        $this->activityType   = $task->get("activityType");
+        // Create a key workflowId:activityId to put in logs
+        $this->activityLogKey = $task->get("workflowExecution")['workflowId'] 
+            . ":$this->activityId";
+    }
+    
     // Perform the activity
     protected function do_activity($task)
     {
-        // To be implemented in class that extends this class
+        // Send started through SQSUtils to notify client
+        $this->SQSUtils->activity_started($task);
+        
+        // Create TMP storage to store input file to transcode 
+        $inputFileInfo = pathinfo($this->data->{'input_file'});
+        // Use workflowID to generate a unique TMP folder localy.
+        $this->tmpPathInput = self::TMP_FOLDER 
+            . $task["workflowExecution"]["workflowId"] . "/" 
+            . $inputFileInfo['dirname'];
+        if (!file_exists($this->tmpPathInput))
+            if (!mkdir($this->tmpPathInput, 0750, true))
+                throw new CTException(
+                    "Unable to create temporary folder '$this->tmpPathInput' !",
+                    self::TMP_FOLDER_FAIL
+                );
+
+        // Download input file and store it in TMP folder
+        $saveFileTo = $this->tmpPathInput . "/" . $inputFileInfo['basename'];
+        $this->pathToInputFile = 
+            $this->get_file_to_process(
+                $task, 
+                $this->data->{'input_bucket'},
+                $this->data->{'input_file'},
+                $saveFileTo
+            );
     }
 
     // Perform JSON input validation
-    public function do_input_validation(
+    protected function do_input_validation(
         $task, 
-        $taskType, 
-        $callback = false, 
-        $callbackParams = false)
+        $taskType)
     {
-        // Check Task integrity
-        $input = $this->check_task_basics($task);
-
         // Check JSON input
         $validator = new InputValidator();
-        $decoded = $validator->decode_json_format($input);
-        $validator->validate_input($decoded, $taskType);
-
-        if (isset($callback) && $callback)
-            call_user_func($callback, $decoded, $task, $callbackParams);
-    
-        return ($decoded);
+        $this->input = $validator->decode_json_format($this->input_str);
+        $validator->validate_input($this->input, $taskType);
+        
+        $this->time   = $this->input->{'time'};  
+        $this->jobId  = $this->input->{'job_id'};         
+        $this->data   = $this->input->{'data'};  
+        $this->client = $this->input->{'client'};
     }
-
-    protected function check_task_basics($task)
+    
+    // Check basic Task info
+    protected function do_task_check($task)
     {
         if (!$task)
             throw new CTException("Activity Task empty !", 
 			    self::ACTIVITY_TASK_EMPTY); 
-
-        if (!isset($task["input"]) || !$task["input"] || $task["input"] == "")
+        
+        if (!isset($task["input"]) || !$task["input"] ||
+            $task["input"] == "")
             throw new CTException("No input provided to 'ValidateInputAndAsset'", 
 			    self::NO_INPUT);
-    
-        return $task["input"];
+
+        $this->input_str = $task["input"];
     }
 
     // Send activity failed to SWF
@@ -131,6 +177,8 @@ class BasicActivity
         global $swf;
 
         try {
+            print_r($task);
+            
             // Notify client of failure
             $this->SQSUtils->activity_failed($task, $reason, $details);
             
@@ -150,13 +198,13 @@ class BasicActivity
     }
 
     // Send activity completed to SWF
-    public function activity_completed($task, $result)
+    public function activity_completed($task, $result = null)
     {
         global $swf;
         
         try {
             // Notify client of failure
-            $this->SQSUtils->activity_completed($task);
+            $this->SQSUtils->activity_completed($task, $result);
         
             log_out("INFO", basename(__FILE__),
                 "Notify SWF activity is completed !",
@@ -238,7 +286,7 @@ class BasicActivity
     // Called from S3Utils while GET from S3 is in progress
     public function s3_get_processing_callback($task)
     {
-        // Tell SWF we alive !
+        // Tells SWF we're alive !
         $this->send_heartbeat($task);
 
         // Send progress through SQSUtils to notify client of download
@@ -248,7 +296,7 @@ class BasicActivity
     // Called from S3Utils while PUT to S3 is in progress
     public function s3_put_processing_callback($task)
     {
-        // Tell SWF we alive !
+        // Tells SWF we're alive !
         $this->send_heartbeat($task);
 
         // Send progress through SQSUtils to notify client of upload

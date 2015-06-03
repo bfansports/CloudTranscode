@@ -1,5 +1,5 @@
 {
-    "id": "http://sport-archive.com/input-schema/TranscodeAsset#",
+    "id": "http://sportarchive.tv/input-schema/TranscodeAsset#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Schema for TranscodeAsset activity task",
     "type": "object",
@@ -7,40 +7,66 @@
 	"client": {
             "$ref": "client.json"
         },
-        "input_json": {
-            "description": "Original JSON input submitted to the Workflow",
-            "type": "object"
-        },
-        "input_asset_type": {
-            "description": "Type of the input asset",
+	"time": {
+	    "description": "Timestamp of the command",
+            "type": "number"
+	},
+	"job_id": {
+	    "description": "ID of the new job",
             "type": "string",
-	    "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ]
-        },
-        "input_asset_info": {
-            "description": "Information about the input file to transcode",
-            "type": "object",
-            "properties": {
-                "duration": { "type": "number" },
-                "vcodec": { "type": "string" },
-                "color": { "type": "string" },
-                "size": { "type": "string" },
-                "vbitrate": { "type": "string" },
-                "fps": { "type": "string" },
-                "ratio": { "type": "string" },
-                "acodec": { "type": "string" },
-                "freq": { "type": "string" },
-                "mode": { "type": "string" },
-                "abitrate": { "type": "string" }
-            }
-        },
-        "output": {
-            "$ref": "activities/output/base.json",
-            "oneOf": [                    
-                { "$ref": "activities/output/video.json" },
-		{ "$ref": "activities/output/thumb.json" }
-            ]
-        }
+	    "pattern": "^[0-9a-z]+$",
+	    "maxLength": 32,
+	    "minLength": 32
+	},
+	"type": {
+	    "description": "Type of message",
+            "type": "string",
+	    "pattern": "^START_JOB$"
+	},
+	"data" : {
+	    "description": "Data for the new transcoding job",
+	    "type": "object",
+	    "properties": {
+		"workflow": {
+		    "type": "object",
+		    "$ref": "activities/Workflow.json"
+		},
+		"input_type": {
+		    "enum": [ "VIDEO", "AUDIO", "IMG", "DOC" ],
+		    "description": "Type of the input file to transcode: VIDEO, AUDIO, DOC, IMG",
+		    "type": "string"
+		},
+		"input_bucket": {
+		    "description": "S3 bucket where the file is located",
+		    "type": "string",
+		    "pattern": "^[0-9a-zA-Z\\.\\-_]+$",
+		    "minLength": 3,
+		    "maxLength": 63
+		},
+		"input_file": {
+		    "description": "Path to the file to process",
+		    "type": "string",
+		    "pattern": "^[\\w /-]+\\.[0-9a-zA-Z]+$",
+		    "minLength": 1,
+		    "maxLength": 1024
+		},
+		"input_asset_info": {
+		    "description": "Detailed info about the input file. Gathered from ValidateInputAndAssetActivity.",
+		    "type": "object"
+		},
+		"output": {
+		    "type": "object",
+		    "$ref": "activities/output/base.json",
+		    "oneOf": [                    
+			{ "$ref": "activities/output/video.json" },
+			{ "$ref": "activities/output/thumb.json" }
+		    ]
+		}
+	    },
+	    "required": ["workflow", "input_type", "input_bucket", "input_file", "output"],
+	    "additionalProperties": false
+	}
     },
-    "required": ["output", "input_asset_type", "input_asset_info", "input_json"],
-    "additionalProperties": true
+    "required": ["type", "job_id", "time", "data"],
+    "additionalProperties": false
 }

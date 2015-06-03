@@ -1,0 +1,54 @@
+{
+    "aws": {
+        "region": "${AWS_REGION}",
+        "key": "${AWS_ACCESS_KEY_ID}",
+        "secret": "${AWS_SECRET_KEY}"
+    },
+    "clients": [
+        {
+            "name": "${CLIENT_NAME}",
+            "queues": {
+                "input": "${CLIENT_INPUT_QUEUE}",
+                "output": "${CLIENT_OUTPUT_QUEUE}"
+            }
+        }
+    ],
+    "cloudTranscode": {
+        "workflow": {
+            "domain": "${WORKFLOW_DOMAIN}",
+            "decisionTaskList": "${WORKFLOW_TASKLIST}",
+            "name": "${WORKFLOW_NAME}",
+            "version": "v1",
+            "description": "${WORKFLOW_DESCRIPTION}",
+            "defaultExecutionStartToCloseTimeout": 86400,
+            "defaultTaskStartToCloseTimeout": 60,
+            "defaultChildPolicy": "TERMINATE"
+        },
+        "activities": [
+            {
+                "name": "ValidateInputAndAsset",
+                "version": "v1",
+                "description": "Check input command and asset to be transcoded.",
+                "file": "/activities/ValidateInputAndAssetActivity.php",
+                "class": "ValidateInputAndAssetActivity",
+                "activityTaskList": "MyValidatorTaskList",
+                "scheduleToStartTimeout": 3600,
+                "scheduleToCloseTimeout": 4200,
+                "startToCloseTimeout": 600,
+                "heartbeatTimeout": 60
+            },
+            {
+                "name": "TranscodeAsset",
+                "version": "v1",
+                "description": "Perform transcoding on input asset and generate output file(s)",
+                "file": "/activities/TranscodeAssetActivity.php",
+                "class": "TranscodeAssetActivity",
+                "activityTaskList": "MyTranscoderTaskList",
+                "scheduleToStartTimeout": 68400,
+                "scheduleToCloseTimeout": 86400,
+                "startToCloseTimeout": 18000,
+                "heartbeatTimeout": 60
+            }
+        ]
+    }
+}

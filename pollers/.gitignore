@@ -1,0 +1,10 @@
+# Created by https://www.gitignore.io
+
+.env*
+
+### Composer ###
+composer.phar
+vendor/
+
+### Vagrant ###
+.vagrant/

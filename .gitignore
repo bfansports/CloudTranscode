@@ -1,6 +1,6 @@
 # Ignore the local config
-config/awsConfig.json
-config/cloudTranscodeConfig.json
+poller/config/awsConfig.json
+poller/config/cloudTranscodeConfig.json
 client_example/clientConfig.json
 
 # Vagrant

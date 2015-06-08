@@ -13,42 +13,20 @@
             }
         }
     ],
-    "cloudTranscode": {
-        "workflow": {
-            "domain": "${WORKFLOW_DOMAIN}",
-            "decisionTaskList": "${WORKFLOW_TASKLIST}",
-            "name": "${WORKFLOW_NAME}",
+    "activities": [
+        {
+            "name": "ValidateInputAndAsset",
             "version": "v1",
-            "description": "${WORKFLOW_DESCRIPTION}",
-            "defaultExecutionStartToCloseTimeout": 86400,
-            "defaultTaskStartToCloseTimeout": 60,
-            "defaultChildPolicy": "TERMINATE"
+            "description": "Check input command and asset to be transcoded.",
+            "file": "/activities/ValidateInputAndAssetActivity.php",
+            "class": "ValidateInputAndAssetActivity",
         },
-        "activities": [
-            {
-                "name": "ValidateInputAndAsset",
-                "version": "v1",
-                "description": "Check input command and asset to be transcoded.",
-                "file": "/activities/ValidateInputAndAssetActivity.php",
-                "class": "ValidateInputAndAssetActivity",
-                "activityTaskList": "MyValidatorTaskList",
-                "scheduleToStartTimeout": 3600,
-                "scheduleToCloseTimeout": 4200,
-                "startToCloseTimeout": 600,
-                "heartbeatTimeout": 60
-            },
-            {
-                "name": "TranscodeAsset",
-                "version": "v1",
-                "description": "Perform transcoding on input asset and generate output file(s)",
-                "file": "/activities/TranscodeAssetActivity.php",
-                "class": "TranscodeAssetActivity",
-                "activityTaskList": "MyTranscoderTaskList",
-                "scheduleToStartTimeout": 68400,
-                "scheduleToCloseTimeout": 86400,
-                "startToCloseTimeout": 18000,
-                "heartbeatTimeout": 60
-            }
-        ]
-    }
+        {
+            "name": "TranscodeAsset",
+            "version": "v1",
+            "description": "Perform transcoding on input asset and generate output file(s)",
+            "file": "/activities/TranscodeAssetActivity.php",
+            "class": "TranscodeAssetActivity"
+        }
+    ]
 }

@@ -18,6 +18,7 @@ class VideoTranscoder extends BasicTranscoder
     const GET_AUDIO_INFO_FAILED = "GET_AUDIO_INFO_FAILED";
     const GET_DURATION_FAILED   = "GET_DURATION_FAILED";
     const NO_OUTPUT             = "NO_OUTPUT";
+    const BAD_OUTPUT            = "BAD_OUTPUT";
     const NO_PRESET             = "NO_PRESET";
     const BAD_PRESETS_DIR       = "BAD_PRESETS_DIR";
     const UNKNOWN_PRESET        = "UNKNOWN_PRESET";
@@ -437,11 +438,6 @@ class VideoTranscoder extends BasicTranscoder
             self::UNKNOWN_PRESET);
     }
     
-
-
-
-
-
     
     /**************************************
      * GET VIDEO INFORMATION AND VALIDATION
@@ -455,7 +451,7 @@ class VideoTranscoder extends BasicTranscoder
         $assetInfo = array();
         
         // Execute FFMpeg to validate and get information about input video
-        $out = $this->executer->execute("ffmpeg -i $pathToInputFile", 1, 
+        $out = $this->executer->execute("ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile", 1, 
             array(2 => array("pipe", "w")),
             false, false, 
             false, 1);
@@ -465,86 +461,10 @@ class VideoTranscoder extends BasicTranscoder
                 self::EXEC_VALIDATE_FAILED);
         
         // FFmpeg writes on STDERR ...
-        $ffmpegInfoOut = $out['outErr'];
+        if (!($assetInfo = json_decode($out['out'])))
+            throw new CTException("FFProbe returned invalid JSON!",
+                self::EXEC_VALIDATE_FAILED);
         
-        // get Duration
-        if (!$this->get_duration($ffmpegInfoOut, $assetInfo))
-            throw new CTException("Unable to extract video duration !",
-                self::GET_DURATION_FAILED);
-      
-        // get Video info
-        if (!$this->get_video_info($ffmpegInfoOut, $assetInfo))
-            throw new CTException("Unable to find video information !",
-                self::GET_VIDEO_INFO_FAILED);
-      
-        // get Audio Info
-        if (!$this->get_audio_info($ffmpegInfoOut, $assetInfo))
-            throw new CTException("Unable to find audio information !",
-                self::GET_AUDIO_INFO_FAILED);
-
         return ($assetInfo);
-    }
-
-    // Extract video info
-    private function get_video_info($ffmpegInfoOut, &$assetInfo)
-    {
-        preg_match("/: Video: (.+?) .+?, (.+?), (.+?), (.+?), (.+?),/", 
-            $ffmpegInfoOut, $matches);
-        if ($matches) {
-            $assetInfo['vcodec'] = $matches[1];
-            $assetInfo['color'] = $matches[2];
-            $assetInfo['size'] = $matches[3];
-            $assetInfo['vbitrate'] = $matches[4];
-            $assetInfo['fps'] = $matches[5];
-      
-            $assetInfo['ratio'] = $this->get_ratio($assetInfo['size']);
-                
-            return true;
-        }
-    
-        return false;
-    }
-    
-    // Calculate ratio based on the size provided
-    private function get_ratio($size)
-    {
-        // Calculate ratio
-        $sizeSplit = explode("x", $size);
-        return (number_format($sizeSplit[0] / $sizeSplit[1], 1));
-    }
-    
-    // Extract audio info
-    private function get_audio_info($ffmpegInfoOut, &$assetInfo)
-    {
-        preg_match("/: Audio: (.+?) .+?, (.+?), (.+?), (.+?), ([0-9]+ kb\/s).*?/", 
-            $ffmpegInfoOut, $matches);
-        if ($matches) {
-            $assetInfo['acodec'] = $matches[1];
-            $assetInfo['freq'] = $matches[2];
-            $assetInfo['mode'] = $matches[3];
-            // Ignore match 4
-            $assetInfo['abitrate'] = $matches[5];
-
-            return true;
-        }
-    
-        return false;
-    }
-  
-    // Extract Duration
-    private function get_duration($ffmpegInfoOut, &$assetInfo)
-    {
-        preg_match("/Duration: (.*?), start:/", $ffmpegInfoOut, $matches);
-        if (!$matches)
-            return false;
-
-        $rawDuration = $matches[1];
-        $ar = array_reverse(explode(":", $rawDuration));
-        $duration = floatval($ar[0]);
-        if (!empty($ar[1])) $duration += intval($ar[1]) * 60;
-        if (!empty($ar[2])) $duration += intval($ar[2]) * 60 * 60;
-        $assetInfo['duration'] = $duration;
-
-        return true;
     }
 }

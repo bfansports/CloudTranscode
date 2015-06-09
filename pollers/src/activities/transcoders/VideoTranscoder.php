@@ -452,7 +452,10 @@ class VideoTranscoder extends BasicTranscoder
         
         // Execute FFMpeg to validate and get information about input video
         $out = $this->executer->execute("ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile", 1, 
-            array(2 => array("pipe", "w")),
+            array(
+                1 => array("pipe", "w"),
+                2 => array("pipe", "w")
+            ),
             false, false, 
             false, 1);
         

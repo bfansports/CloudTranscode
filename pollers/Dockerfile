@@ -19,22 +19,11 @@ RUN apt-get update && apt-get install -y \
   libfdk-aac0 \
   nano
 
-RUN docker-php-ext-install curl
-
 COPY . /usr/src/cloudtranscode
 WORKDIR /usr/src/cloudtranscode
 
 ENV AWS_REGION xyz
 ENV AWS_ACCESS_KEY_ID xyz
-ENV AWS_SECRET_KEY xyz
-
-ENV CLIENT_NAME xyz
-ENV CLIENT_INPUT_QUEUE xyz
-ENV CLIENT_OUTPUT_QUEUE xyz
-
-ENV WORKFLOW_NAME xyz
-ENV WORKFLOW_DESCRIPTION xyz
-ENV WORKFLOW_DOMAIN xyz
-ENV WORKFLOW_TASKLIST xyz
+ENV AWS_SECRET_ACCESS_KEY xyz
 
 ENTRYPOINT ["/usr/src/cloudtranscode/bootstrap.sh"]

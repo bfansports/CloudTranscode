@@ -36,30 +36,6 @@
 	    "minLength": 8,
 	    "maxLength": 256,
 	    "pattern": "^[\\w\\-]+$"
-	},
-	"scheduleToStartTimeout": {
-	    "description": "Max time from schedule to start for a task",
-	    "type": "integer",
-	    "minimum": 1,
-	    "maximum": 31536000
-	},
-	"scheduleToCloseTimeout": {
-	    "description": "Max time from schedule to close for a task",
-	    "type": "integer",
-	    "minimum": 1,
-	    "maximum": 31536000
-	},
-	"startToCloseTimeout": {
-	    "description": "Max time from start to close for a task",
-	    "type": "integer",
-	    "minimum": 1,
-	    "maximum": 31536000
-	},
-	"heartbeatTimeout": {
-	    "description": "Max time between heartbeat",
-	    "type": "integer",
-	    "minimum": 1,
-	    "maximum": 99999999
 	}
     },
     "required": ["name", "version", "description", "file", "class", "scheduleToStartTimeout", "scheduleToCloseTimeout", "startToCloseTimeout", "heartbeatTimeout"],

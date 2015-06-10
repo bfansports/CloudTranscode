@@ -70,7 +70,7 @@ function log_out($type, $source, $message, $workflowId = 0)
         $toPrint .= "[$workflowId] ";
     $toPrint .= $log['message'] . "\n";
             
-    echo($toPrint);
+    file_put_contents('/var/log/cloudtranscode/poller.log', $toPrint, FILE_APPEND);
     
     syslog($priority, $out);
 }

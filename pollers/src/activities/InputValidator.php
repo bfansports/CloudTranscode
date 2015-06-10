@@ -26,7 +26,7 @@ class InputValidator
     public function validate_input($decoded, $taskType)
     {
         // From Utils.php
-        if (!($err = validate_json($decoded, "activities/$taskType.json")))
+        //if (!($err = validate_json($decoded, "activities/$taskType.json")))
             return true;
 
         throw new CTException("JSON input format is not valid! Details:\n".$err, 

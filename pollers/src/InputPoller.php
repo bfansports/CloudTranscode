@@ -219,8 +219,8 @@ function check_input_parameters(&$defaultConfigFile)
     }
 
     # Validate against JSON Schemas
-    if (($err = validate_json($config, "config/mainConfig.json")))
-        exit("JSON main configuration file invalid! Details:\n".$err);
+    # if (($err = validate_json($config, "config/mainConfig.json")))
+        # exit("JSON main configuration file invalid! Details:\n".$err);
 
     return $config;
 }

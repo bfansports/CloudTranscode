@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV TERM screen
 
 # Add non-free and media repositories
-ADD http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2015.6_all.deb /usr/share/deb-multimedia-keyring.deb
+ADD http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2015.6.1_all.deb /usr/share/deb-multimedia-keyring.deb
 RUN dpkg -i /usr/share/deb-multimedia-keyring.deb
 RUN echo "deb http://httpredir.debian.org/debian jessie non-free" >> /etc/apt/sources.list
 RUN echo "deb http://www.deb-multimedia.org jessie main non-free" >> /etc/apt/sources.list

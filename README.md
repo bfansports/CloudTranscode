@@ -3,8 +3,6 @@
 > We are now wrapping up everything and will update the documentation accrodingly. 
 > Couple more weeks and we should have a usable product
 
-We are working on integrating it in the Docker image and improving the documentation so you can get started. There is still a lot of work but we hope to have something usable with a month.
-
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.
 

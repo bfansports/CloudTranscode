@@ -1,9 +1,7 @@
-## Updates [05/15/2015]
-> The new Decider is pushed out as a seperate sub-module: https://github.com/sportarchive/CloudTranscode-Decider
-> Written in Python this Decider will allow amazing things:
-> - Arbitrary workflows processing: You describe your WF, define its tasks, set dependencies between them, pass variables along (output->input).
-> - All in Python
-> - Can be used to run any kind of Worker.
+## Updates [06/27/2015]
+> We have Docker and Vagrant images working locally.
+> We are now wrapping up everything and will update the documentation accrodingly. 
+> Couple more weeks and we should have a usable product
 
 We are working on integrating it in the Docker image and improving the documentation so you can get started. There is still a lot of work but we hope to have something usable with a month.
 

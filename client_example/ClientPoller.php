@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . "/../vendor/autoload.php";
+require __DIR__ . "/vendor/autoload.php";
 
 function poll_SQS_queues($CTComSDK, $decodedClient)
 {
@@ -51,9 +51,9 @@ function usage()
     echo("-h: Print this help\n");
     echo("-d: Debug mode\n");
     echo("-c: configFile\n");
-    echo("-k <AWS key>: \n");
-    echo("-s <AWS secret>: \n");
-    echo("-r <AWS region>: \n");
+    echo("-k <AWS key>\n");
+    echo("-s <AWS secret>\n");
+    echo("-r <AWS region>\n");
     exit(0);
 }
 
@@ -67,9 +67,7 @@ function check_input_parameters()
     global $argv;
     
     // Handle input parameters
-    if (count($argv) == 1)
-        $options = array();
-    else if (!($options = getopt("c:k::s::r::hd")))
+    if (!($options = getopt("c:k::s::r::hd")))
         usage();
     if (isset($options['h']))
         usage();

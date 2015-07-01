@@ -1,7 +1,0 @@
-{
-    "name": "ClientA",
-    "queues": {
-	"input": "https://sqs.us-east-1.amazonaws.com/441276146445/cloudtranscode-test-input",
-	"output": "https://sqs.us-east-1.amazonaws.com/441276146445/cloudtranscode-test-output"
-    }
-}

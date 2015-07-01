@@ -1,7 +1,6 @@
 <?php
 
 // Interface with SQS
-// Depends on Utils.php
 
 // Amazon libraries
 use Aws\Common\Aws;

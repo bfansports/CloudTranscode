@@ -6,7 +6,6 @@
 
 require __DIR__ . '../../utils/S3Utils.php';
 require __DIR__ . '../../utils/SQSUtils.php';
-require __DIR__ . '/InputValidator.php';
 
 class BasicActivity
 {
@@ -37,7 +36,11 @@ class BasicActivity
     const NO_ACTIVITY_VERSION  = "NO_ACTIVITY_VERSION";
     const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
 
-    // XXX Use EFS for storage now!
+    // JSON checks
+    const INPUT_INVALID        = "INPUT_INVALID";
+    const FORMAT_INVALID       = "FORMAT_INVALID";
+
+    // XXX Use EFS for storage
     // Nico: Expensive though.
     // This is where we store temporary files for transcoding
     const TMP_FOLDER           = "/tmp/CloudTranscode/";
@@ -146,9 +149,19 @@ class BasicActivity
         $taskType)
     {
         // Check JSON input
-        $validator = new InputValidator();
-        $this->input = $validator->decode_json_format($this->input_str);
-        $validator->validate_input($this->input, $taskType);
+        if (!($this->input = json_decode($this->input_str)))
+            throw new CTException("JSON input is invalid !", 
+			    self::INPUT_INVALID);
+
+        /*
+         * Nico: Reactivate JSON Schema
+         *       Remove dependency from Utils.php for when we split the Engine from the Activities
+         *       We need an Activity SDK.
+         */
+        // From Utils.php
+        //if (($err = validate_json($decoded, "activities/$taskType.json")))
+        /*   throw new CTException("JSON input format is not valid! Details:\n".$err,  */
+        /*       self::FORMAT_INVALID); */
         
         $this->time   = $this->input->{'time'};  
         $this->jobId  = $this->input->{'job_id'};         
@@ -156,7 +169,7 @@ class BasicActivity
         $this->client = $this->input->{'client'};
     }
     
-    // Check basic Task info
+    // Check basic Task data
     protected function do_task_check($task)
     {
         if (!$task)
@@ -177,12 +190,11 @@ class BasicActivity
         global $swf;
 
         try {
-            print_r($task);
-            
             // Notify client of failure
             $this->SQSUtils->activity_failed($task, $reason, $details);
             
-            log_out("ERROR", basename(__FILE__), "[$reason] $details",
+            log_out("ERROR", basename(__FILE__),
+                "[$reason] $details",
                 $this->activityLogKey);
             $swf->respondActivityTaskFailed(array(
                     "taskToken" => $task["taskToken"],
@@ -209,7 +221,6 @@ class BasicActivity
             log_out("INFO", basename(__FILE__),
                 "Notify SWF activity is completed !",
                 $this->activityLogKey);
-            
             $swf->respondActivityTaskCompleted(array(
                     "taskToken" => $task["taskToken"],
                     "result"    => json_encode($result),

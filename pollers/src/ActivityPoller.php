@@ -2,8 +2,9 @@
 
 /**
  * The activity poller listen for "activity tasks" 
- * Stuff to do, compute, process, whatever.
- * We do transcoding
+ * Stuff to do for this worker: compute, process, whatever.
+ * The ActivityPoller can be configued to listen on a particular SWF TaskList (queue)
+ * It will process tasks only coming in the TaskList
  */
 
 require __DIR__ . "/utils/Utils.php";
@@ -29,9 +30,9 @@ class ActivityPoller
         global $activityName;
         global $activityVersion;
         
-        $this->debug    = $debug;
-        $this->domain   = $domain;
-        $this->taskList = $taskList;
+        $this->debug           = $debug;
+        $this->domain          = $domain;
+        $this->taskList        = $taskList;
         $this->activityName    = $activityName;
         $this->activityVersion = $activityVersion;
         $this->knownActivities = $config->{'activities'};
@@ -127,6 +128,8 @@ class ActivityPoller
         } finally {
             if ($reason && $details)
             {
+                // Activity has failed!
+                // We send back to SWF the reason and details about the failure
                 $this->activityHandler->activity_failed(
                     $activityTask, 
                     $reason, 
@@ -136,7 +139,7 @@ class ActivityPoller
             }
         }
     
-        // Send completion msg
+        // Activity has completed!
         $this->activityHandler->activity_completed($activityTask, $result);
         return true;
     }

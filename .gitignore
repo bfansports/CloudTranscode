@@ -8,7 +8,8 @@ client_example/clientConfig.json
 .vagrant
 
 # Ignore vendor tree
-vendor/*
+pollers/vendor/*
+client_example/vendor/*
 composer.phar
 composer.lock
 

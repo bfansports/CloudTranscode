@@ -24,13 +24,6 @@ class ValidateInputAndAssetActivity extends BasicActivity
             $this->activityType["name"]
         );
         
-        log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "Preparing Asset validation of: '$this->pathToInputFile'",
-            $this->activityLogKey
-        );
-        
         // Call parent method for initialization.
         // Setup TMP folder
         // Send starting SQS message

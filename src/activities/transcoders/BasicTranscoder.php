@@ -8,27 +8,20 @@
 class BasicTranscoder 
 {
     public $activityLogKey; // Valling activity loggin key
-    public $activityObj; // Calling activity object
+    public $activityObj;    // Calling activity object
+    public $task;           // Activity TASK
+
+    public $s3Utils;  // Used to manipulate S3
     public $executer; // Executer obj
-    public $task; // Activity TASK
+    
     
     function __construct($activityObj, $task) 
     { 
-        $this->activityObj = $activityObj;
+        $this->activityObj    = $activityObj;
         $this->activityLogKey = $activityObj->activityLogKey;
-        $this->task = $task;
+        $this->task           = $task;
+        
         $this->executer = new CommandExecuter();
-    }
-
-    // Function used by ValidationActivity. To implement
-    protected function get_asset_info($pathToFile)
-    {
-        
-    }
-
-    // Function used by TranscodeActivity. To implement
-    protected function transcode_asset($inputAssetInfo, $outputDetails)
-    {
-        
+        $this->s3Utils  = new S3Utils();
     }
 }

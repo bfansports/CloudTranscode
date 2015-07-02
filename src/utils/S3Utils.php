@@ -1,6 +1,13 @@
 <?php
+/**
+ * This class allows you to call the two S3 scripts
+ * to download and upload files.
+ * The scripts are executed using the CommandExecuter
+  */
 
-require __DIR__ . '/CommandExecuter.php';
+require_once __DIR__ . '/CommandExecuter.php';
+
+use SA\CpeSdk;
 
 class S3Utils
 {
@@ -8,11 +15,12 @@ class S3Utils
     const NO_OUTPUT_DATA       = "NO_OUTPUT_DATA";
     
     // External S3 Scripts
-    const GET_FROM_S3 = "/../scripts/getFromS3.php";
-    const PUT_IN_S3   = "/../scripts/putInS3.php";
+    const GET_FROM_S3          = "/../scripts/getFromS3.php";
+    const PUT_IN_S3            = "/../scripts/putInS3.php";
     
     // Get a file from S3 using external script localted in "scripts" folder
-    public function get_file_from_s3($bucket, 
+    public function get_file_from_s3(
+        $bucket, 
         $filename, 
         $saveFileTo,
         $callback = false, 
@@ -24,19 +32,23 @@ class S3Utils
         $cmd .= " --to $saveFileTo";
     
         // HAndle execution
-        return ($this->handle_s3_ops(self::GET_FROM_S3, $cmd, 
-                $callback, $callbackParams));
+        return ($this->handle_s3_ops(
+                self::GET_FROM_S3,
+                $cmd, 
+                $callback,
+                $callbackParams));
     }
 
     // Get a file from S3 using external script localted in "scripts" folder
-    public function put_file_into_s3($bucket, 
+    public function put_file_into_s3(
+        $bucket, 
         $filename, 
         $pathToFileToSend, 
         $options, 
         $callback = false, 
         $callbackParams = false)
     {
-        $cmd = "php " . __DIR__ . self::PUT_IN_S3;
+        $cmd  = "php " . __DIR__ . self::PUT_IN_S3;
         $cmd .= " --bucket $bucket";
         $cmd .= " --file $filename";
         $cmd .= " --from $pathToFileToSend";
@@ -46,8 +58,12 @@ class S3Utils
             $cmd .= " --encrypt";
     
         // HAndle execution
-        return ($this->handle_s3_ops(self::PUT_IN_S3, $cmd, 
-                $callback, $callbackParams));
+        return ($this->handle_s3_ops(
+                self::PUT_IN_S3,
+                $cmd, 
+                $callback,
+                $callbackParams)
+        );
     }
 
     // Execute S3 $cmd and capture output
@@ -56,25 +72,30 @@ class S3Utils
         // Use executer to start external S3 script
         // The array request listening to 1 (STDOUT) and 2 (STDERR)
         $executer = new CommandExecuter();
-        $out = $executer->execute($cmd, 2,
-            array(1 => array("pipe", "w"), 2 => array("pipe", "w")),
-            $callback, $callbackParams, 
-            true, 5);
+        $out = $executer->execute(
+            $cmd,
+            2,
+            array(1 => array("pipe", "w"),
+                  2 => array("pipe", "w")),
+            $callback,
+            $callbackParams, 
+            true,
+            5);
         
         if ($out['outErr'])
-            throw new CTException($out['outErr'],
+            throw new CpeSdk\CpeException($out['outErr'],
                 self::S3_OPS_FAILED);
 
         if (!$out['out'])
-            throw new CTException("Script '$caller' didn't return any data !",
+            throw new CpeSdk\CpeException("Script '$caller' didn't return any data !",
                 self::NO_OUTPUT_DATA);
     
         if (!($decoded = json_decode($out['out'], true)))
-            throw new CTException($out['out'],
+            throw new CpeSdk\CpeException($out['out'],
                 self::S3_OPS_FAILED);
     
         if ($decoded["status"] == "ERROR")
-            throw new CTException($decoded["msg"],
+            throw new CpeSdk\CpeException($decoded["msg"],
                 self::S3_OPS_FAILED);
 
         return ($decoded);

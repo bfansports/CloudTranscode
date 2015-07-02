@@ -2,22 +2,33 @@
 
 /**
  * This class help for executing external programs
+ * This is necessary as PHP Threads are not very popular
+ * It also requires an extra dependency
+ * Relying on system execution
  */
+
+use SA\CpeSdk;
 
 class CommandExecuter
 {
     const EXEC_FAILED = "EXEC_FAILED";
     
-    public function execute($cmd, $sleep, $descriptors,
-        $progressCallback, $progressCallbackParams,
-        $showProgress = false, $callbackTurns = 0)
+    public function execute(
+        $cmd,
+        $sleep,
+        $descriptors,
+        $progressCallback,
+        $progressCallbackParams,
+        $showProgress = false,
+        $callbackTurns = 0)
     {
-        log_out("INFO", basename(__FILE__), "Executing: $cmd");
+        $this->cpeLogger = new CpeSdk\CpeLogger();
+        $this->cpeLogger->log_out("INFO", basename(__FILE__), "Executing: $cmd");
         
         // Start execution of $cmd
         if (!($process = proc_open($cmd, $descriptors, $pipes)) ||
             !is_resource($process))
-            throw new CTException("Unable to execute command:\n$cmd\n",
+            throw new CpeSdk\CpeException("Unable to execute command:\n$cmd\n",
                 self::EXEC_FAILED);
 
         // Set the pipes as non-blocking

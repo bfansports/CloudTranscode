@@ -1,10 +1,11 @@
 <?php
 
-require_once __DIR__ . '/transcoders/BasicTranscoder.php';
-
 /**
  * This class handle the transcoding activity
  */
+
+require_once __DIR__ . '/BasicActivity.php';
+
 class TranscodeAssetActivity extends BasicActivity
 {
     const CONVERSION_TYPE_ERROR = "CONVERSION_TYPE_ERROR";
@@ -32,7 +33,7 @@ class TranscodeAssetActivity extends BasicActivity
         // Custom validation for transcoding. Set $this->output
         $this->validate_input();
         
-        log_out(
+        $this->cpeLogger->log_out(
             "INFO", 
             basename(__FILE__), 
             "Preparing Asset transcoding ...",
@@ -55,18 +56,25 @@ class TranscodeAssetActivity extends BasicActivity
         
         switch ($this->output->{'output_type'}) 
         {
-        case VIDEO:
-        case THUMB:
+            // If Thumb or VIDEO we load the VideoTranscoder
+        case self::VIDEO:
+        case self::THUMB:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
 
             // Instanciate transcoder to output Videos
             $videoTranscoder = new VideoTranscoder($this, $task);
             
+            
             // Check preset file, read its content and add its data to output object
             // Only for VIDEO output. THUMB don't use presets
-            if ($this->output->{'output_type'} == VIDEO)
+            if ($this->output->{'output_type'} == self::VIDEO)
+            {
+                // Validate output preset
+                $videoTranscoder->validate_preset($this->output);
+            
                 $this->output->{'preset_values'} =
-                $videoTranscoder->get_preset_values($this->output);
+                    $videoTranscoder->get_preset_values($this->output);
+            }
                 
             // Perform transcoding
             $videoTranscoder->transcode_asset(
@@ -76,17 +84,17 @@ class TranscodeAssetActivity extends BasicActivity
                 $this->output
             );            
             break;
-        case IMAGE:
+        case self::IMAGE:
                 
             break;
-        case AUDIO:
+        case self::AUDIO:
                 
             break;
-        case DOC:
+        case self::DOC:
                 
             break;
         default:
-            throw new CTException("Unknown 'output_type'! Abording ...", 
+            throw new CpeSdk\CpeException("Unknown 'output_type'! Abording ...", 
                 self::UNKOWN_OUTPUT_TYPE);
         }
         
@@ -100,7 +108,8 @@ class TranscodeAssetActivity extends BasicActivity
     private function upload_result_files($task)
     {
         // Sanitize output bucket and file path "/"
-        $s3Bucket   = str_replace("//", "/", $this->output->{"output_bucket"});
+        $s3Bucket = str_replace("//", "/",
+            $this->output->{"output_bucket"});
 
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         // XXX: Add tmp workflowID to output bucket to seperate upload
@@ -116,13 +125,10 @@ class TranscodeAssetActivity extends BasicActivity
         if (isset($this->output->{'s3_encrypt'}) &&
             $this->output->{'s3_encrypt'} == true)
             $options['encrypt'] = true;
-
-        // S3 object to handle S3 put operations
-        $s3Utils = new S3Utils();
         
         // Send all output files located in '$pathToOutputFiles' to S3 bucket
         if (!$handle = opendir($this->pathToOutputFiles))
-            throw new CTException("Can't open tmp path '$this->pathToOutputFiles'!", 
+            throw new CpeSdk\CpeException("Can't open tmp path '$this->pathToOutputFiles'!", 
                 self::TMP_PATH_OPEN_FAIL);
         
         // Upload all resulting files sitting in same dir
@@ -135,7 +141,7 @@ class TranscodeAssetActivity extends BasicActivity
             $s3Location = str_replace("//", "/", $s3Location);
             
             // Send to S3
-            $s3Output = $s3Utils->put_file_into_s3(
+            $s3Output = $this->s3Utils->put_file_into_s3(
                 $s3Bucket, 
                 $s3Location,
                 "$this->pathToOutputFiles/$entry", 
@@ -144,7 +150,7 @@ class TranscodeAssetActivity extends BasicActivity
                 $task
             );
         
-            log_out("INFO", basename(__FILE__), 
+            $this->cpeLogger->log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $this->activityLogKey);
         }
@@ -152,15 +158,16 @@ class TranscodeAssetActivity extends BasicActivity
 
     private function set_output_path()
     {
-         // Create TMP folder for output files
+        // Create TMP folder for output files
         $outputFileInfo = pathinfo($this->output->{'output_file'});
         $this->output->{'output_file_info'} = $outputFileInfo;
         $this->pathToOutputFiles = $this->tmpPathInput . "/output/" 
             . $this->activityId
             . "/" . $outputFileInfo['dirname'];
+        
         if (!file_exists($this->pathToOutputFiles))
             if (!mkdir($this->pathToOutputFiles, 0750, true))
-                throw new CTException(
+                throw new CpeSdk\CpeException(
                     "Unable to create temporary folder '$this->pathToOutputFiles' !",
                     self::TMP_FOLDER_FAIL
                 );
@@ -172,40 +179,28 @@ class TranscodeAssetActivity extends BasicActivity
     {
         $this->output = $this->data->{'output'};
         if ((
-                $this->data->{'input_type'} == VIDEO &&
-                $this->output->{'output_type'} != VIDEO &&
-                $this->output->{'output_type'} != THUMB &&
-                $this->output->{'output_type'} != AUDIO
+                $this->data->{'input_type'} == self::VIDEO &&
+                $this->output->{'output_type'} != self::VIDEO &&
+                $this->output->{'output_type'} != self::THUMB &&
+                $this->output->{'output_type'} != self::AUDIO
             )
             ||
             (
-                $this->data->{'input_type'} == IMAGE &&
-                $this->output->{'output_type'} != IMAGE
+                $this->data->{'input_type'} == self::IMAGE &&
+                $this->output->{'output_type'} != self::IMAGE
             )
             ||
             (
-                $this->data->{'input_type'} == AUDIO &&
-                $this->output->{'output_type'} != AUDIO
+                $this->data->{'input_type'} == self::AUDIO &&
+                $this->output->{'output_type'} != self::AUDIO
             )
             ||
             (
-                $this->data->{'input_type'} == DOC &&
-                $this->output->{'output_type'} != DOC
+                $this->data->{'input_type'} == self::DOC &&
+                $this->output->{'output_type'} != self::DOC
             )) {
-            throw new CTException("Can't convert that 'input_type' (" . $this->data->{'input_type'} . ") into this 'output_type' (" . $this->output->{'output_type'} . ")! Abording.", 
+            throw new CpeSdk\CpeException("Can't convert that 'input_type' (" . $this->data->{'input_type'} . ") into this 'output_type' (" . $this->output->{'output_type'} . ")! Abording.", 
                 self::CONVERSION_TYPE_ERROR);
-        }
-        
-        // Specific tests for VIDEO
-        if ($this->output->{'output_type'} == VIDEO)
-        {
-            require_once __DIR__ . '/transcoders/VideoTranscoder.php';
-                
-            // Initiate transcoder obj
-            if (!isset($videoTranscoder))
-                $videoTranscoder = new VideoTranscoder($this, $task);
-            // Validate output preset
-            $videoTranscoder->validate_preset($this->output);
         }
     }
 }

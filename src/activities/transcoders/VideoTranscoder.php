@@ -1,14 +1,13 @@
 <?php
 
-require_once __DIR__ . '/../../utils/S3Utils.php';
-require_once __DIR__ . '/../../utils/CommandExecuter.php';
-
 /**
  * This class handled Video transcoding
  * Here we the input video
  * We transcode and generate output videos
  * We use ffprobe, ffmpeg and convert to analyse, transcode and manipulate videos and images (watermark)
  */
+
+require_once __DIR__ . '/BasicTranscoder.php';
 
 class VideoTranscoder extends BasicTranscoder
 {
@@ -61,12 +60,12 @@ class VideoTranscoder extends BasicTranscoder
                 $outputDetails
             );
         
-        /* $this->cpeLogger->log_out( */
-        /*     "INFO",  */
-        /*     basename(__FILE__),  */
-        /*     "FFMPEG CMD:\n$ffmpegCmd\n", */
-        /*     $this->activityLogKey */
-        /* ); */
+        $this->cpeLogger->log_out(
+            "INFO",
+            basename(__FILE__),
+            "FFMPEG CMD:\n$ffmpegCmd\n",
+            $this->activityLogKey
+        );
         
         $this->cpeLogger->log_out(
             "INFO", 
@@ -77,7 +76,7 @@ class VideoTranscoder extends BasicTranscoder
         $this->cpeLogger->log_out(
             "INFO", 
             basename(__FILE__), 
-            "Video duration (sec): " . $inputAssetInfo->{'duration'},
+            "Input Video Info: " . print_r($inputAssetInfo, true),
             $this->activityLogKey
         );
     

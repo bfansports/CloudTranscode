@@ -1,6 +1,12 @@
 <?php
 
-require __DIR__ . "/../utils/Utils.php";
+/**
+ * Script used to put a file in AWS S3
+ **/
+
+require __DIR__ . "/../../vendor/autoload.php";
+
+use Aws\S3\S3Client;
 
 function usage()
 {
@@ -40,12 +46,10 @@ $options = getopt("h", [
         "encrypt::"]);
 check_input_parameters($options);
 
-# Init AWS connection
-init_aws();
-
 try {
     // Get S3 client
-    $s3 = $aws->get('S3');
+    $s3 = S3Client::factory();
+    
     $params = array(
         'Bucket'     => $options['bucket'],
         'Key'        => $options['file'],
@@ -71,4 +75,6 @@ catch (Exception $e) {
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
             "msg" => "[".__FILE__."] $err" ]);
+
+    die("[".__FILE__."] $err");
 }

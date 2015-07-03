@@ -45,6 +45,13 @@ class BasicActivity
     const INPUT_INVALID        = "INPUT_INVALID";
     const FORMAT_INVALID       = "FORMAT_INVALID";
 
+    // Types
+    const VIDEO                = "VIDEO";
+    const THUMB                = "THUMB";
+    const AUDIO                = "AUDIO";
+    const DOC                  = "DOC";
+    const IMAGE                = "IMAGE";
+
     // XXX Use EFS for storage
     // Nico: Expensive though.
     // This is where we store temporary files for transcoding
@@ -53,14 +60,16 @@ class BasicActivity
     function __construct($params, $debug)
     {
         $this->debug         = $debug;
-        $this->s3Utils       = new S3Utils();
-        $this->cpeLogger     = new CpeSdk\CpeLogger();                    // Logger
+        $this->s3Utils       = new S3Utils();                   // Logger
         $this->cpeSqsWriter  = new CpeSdk\Sqs\CpeSqsWriter($this->debug); // For listening to the Input SQS queue
         $this->cpeSwfHandler = new CpeSdk\Swf\CpeSwfHandler();            // For listening to the Input SQS queue
         
         if (!isset($params["name"]) || !$params["name"])
             throw new CpeSdk\CpeException("Can't instantiate BasicActivity: 'name' is not provided or empty !\n", 
 			    Self::NO_ACTIVITY_NAME);
+
+        // Use activity name for logger
+        $this->cpeLogger     = new CpeSdk\CpeLogger(null, $params["name"]); 
     
         if (!isset($params["version"]) || !$params["version"])
             throw new CpeSdk\CpeException("Can't instantiate BasicActivity: 'version' is not provided or empty !\n", 
@@ -114,7 +123,8 @@ class BasicActivity
         $this->activityType   = $task->get("activityType");
         
         // Create a key workflowId:activityId to put in logs
-        $this->activityLogKey = $task->get("workflowExecution")['workflowId'] 
+        $this->activityLogKey =
+            $task->get("workflowExecution")['workflowId'] 
             . ":$this->activityId";
     }
     

@@ -1,6 +1,12 @@
 <?php
 
-require __DIR__ . "/../utils/Utils.php";
+/**
+ * Script used to get a file in AWS S3
+ **/
+
+require __DIR__ . "/../../vendor/autoload.php";
+
+use Aws\S3\S3Client;
 
 function usage()
 {
@@ -30,9 +36,6 @@ function check_input_parameters($options)
 $options = getopt("h", array("bucket:", "file:", "to:", "force::", "help::"));
 check_input_parameters($options);
 
-# Init AWS connection
-init_aws();
-
 // If local file already exists. We don't download unless --force
 if (!isset($options['force']) && 
     file_exists($options['to']) &&
@@ -45,7 +48,8 @@ if (!isset($options['force']) &&
 
 try {
     // Get S3 client
-    $s3 = $aws->get('S3');
+    $s3 = S3Client::factory();
+    
     // Download and Save object to a local file.
     $s3->getObject(array(
             'Bucket' => $options['bucket'],
@@ -62,4 +66,6 @@ catch (Exception $e) {
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
             "msg" => "[".__FILE__."] $err" ]);
+    
+    die("[".__FILE__."] $err");
 }

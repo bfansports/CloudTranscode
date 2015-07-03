@@ -29,7 +29,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Send starting SQS message
         // Download input file from S3
         parent::do_activity($task);
-
+        
         /**
          * PROCESS FILE
          */
@@ -38,7 +38,7 @@ class ValidateInputAndAssetActivity extends BasicActivity
         // Get asset detailed info
         switch ($this->data->{'input_type'}) 
         {
-        case VIDEO:
+        case self::VIDEO:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
             
             // Initiate transcoder obj
@@ -46,13 +46,13 @@ class ValidateInputAndAssetActivity extends BasicActivity
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
             break;
-        case IMAGE:
+        case self::IMAGE:
                 
             break;
-        case AUDIO:
+        case self::AUDIO:
                 
             break;
-        case DOC:
+        case self::DOC:
                 
             break;
         }

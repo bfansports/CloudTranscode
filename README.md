@@ -1,3 +1,5 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
+
 ## Updates [06/27/2015]
 > We have Docker and Vagrant images working locally.
 > We are now wrapping up everything and will update the documentation accrodingly. 

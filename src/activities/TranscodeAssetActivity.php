@@ -21,14 +21,14 @@ class TranscodeAssetActivity extends BasicActivity
         // Check input task. Set $this->input_str String
         parent::do_task_check($task);
         
-        // Init Activity
-        parent::do_init($task);
-        
         // Validate JSON. Set $this->input JSON object
         parent::do_input_validation(
             $task, 
             $this->activityType["name"]
         );
+        
+        // Init Activity
+        parent::do_init($task);
         
         // Custom validation for transcoding. Set $this->output
         $this->validate_input();

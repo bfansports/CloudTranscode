@@ -1,7 +1,8 @@
 <?php
 
 /**
- * This class handle the transcoding activity
+ * This class handles the transcoding activity
+ * Based on the input file type we lunch the proper transcoder
  */
 
 require_once __DIR__ . '/BasicActivity.php';
@@ -10,7 +11,6 @@ class TranscodeAssetActivity extends BasicActivity
 {
     const CONVERSION_TYPE_ERROR = "CONVERSION_TYPE_ERROR";
     const TMP_PATH_OPEN_FAIL    = "TMP_PATH_OPEN_FAIL";
-    const UNKOWN_OUTPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
 
     private $output;
     private $pathToOutputFiles;
@@ -18,18 +18,6 @@ class TranscodeAssetActivity extends BasicActivity
     // Perform the activity
     public function do_activity($task)
     {
-        // Check input task. Set $this->input_str String
-        parent::do_task_check($task);
-        
-        // Validate JSON. Set $this->input JSON object
-        parent::do_input_validation(
-            $task, 
-            $this->activityType["name"]
-        );
-        
-        // Init Activity
-        parent::do_init($task);
-        
         // Custom validation for transcoding. Set $this->output
         $this->validate_input();
         
@@ -40,38 +28,30 @@ class TranscodeAssetActivity extends BasicActivity
             $this->activityLogKey
         );
         
-        // Call parent method for initialization.
-        // Setup TMP folder
-        // Send starting SQS message
-        // Download input file from S3
+        // Call parent do_activity:
+        // It download the input file we will process.
         parent::do_activity($task);
 
         // Set output path to store result files
         $this->set_output_path();
         
-        
-        /**
-         * TRANSCODE INPUT FILE
-         */
-        
-        switch ($this->output->{'output_type'}) 
+        // Load the right transcoder base on input_type
+        // Get asset detailed info
+        switch ($this->data->{'input_type'}) 
         {
-            // If Thumb or VIDEO we load the VideoTranscoder
         case self::VIDEO:
-        case self::THUMB:
             require_once __DIR__ . '/transcoders/VideoTranscoder.php';
 
             // Instanciate transcoder to output Videos
             $videoTranscoder = new VideoTranscoder($this, $task);
             
-            
             // Check preset file, read its content and add its data to output object
-            // Only for VIDEO output. THUMB don't use presets
             if ($this->output->{'output_type'} == self::VIDEO)
             {
                 // Validate output preset
                 $videoTranscoder->validate_preset($this->output);
-            
+
+                // Set preset value
                 $this->output->{'preset_values'} =
                     $videoTranscoder->get_preset_values($this->output);
             }
@@ -94,8 +74,8 @@ class TranscodeAssetActivity extends BasicActivity
                 
             break;
         default:
-            throw new CpeSdk\CpeException("Unknown 'output_type'! Abording ...", 
-                self::UNKOWN_OUTPUT_TYPE);
+            throw new CpeSdk\CpeException("Unknown 'input_type'! Abording ...", 
+                self::UNKOWN_INPUT_TYPE);
         }
         
         // Upload resulting file
@@ -117,7 +97,7 @@ class TranscodeAssetActivity extends BasicActivity
         // $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-        // Prepare S3 options
+        // Set S3 options
         $options = array("rrs" => false, "encrypt" => false);
         if (isset($this->output->{'s3_rrs'}) &&
             $this->output->{'s3_rrs'} == true)
@@ -126,12 +106,12 @@ class TranscodeAssetActivity extends BasicActivity
             $this->output->{'s3_encrypt'} == true)
             $options['encrypt'] = true;
         
-        // Send all output files located in '$pathToOutputFiles' to S3 bucket
+        // Open '$pathToOutputFiles' to read it and send all files to S3 bucket
         if (!$handle = opendir($this->pathToOutputFiles))
             throw new CpeSdk\CpeException("Can't open tmp path '$this->pathToOutputFiles'!", 
                 self::TMP_PATH_OPEN_FAIL);
         
-        // Upload all resulting files sitting in same dir
+        // Upload all resulting files sitting in $pathToOutputFiles to S3
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") 
                 continue;
@@ -140,7 +120,8 @@ class TranscodeAssetActivity extends BasicActivity
             $s3Location = $this->output->{'output_file_info'}['dirname'] . "/$entry";
             $s3Location = str_replace("//", "/", $s3Location);
             
-            // Send to S3
+            // Send to S3. We reference the callback s3_put_processing_callback
+            // The callback ping back SWF so we stay alive
             $s3Output = $this->s3Utils->put_file_into_s3(
                 $s3Bucket, 
                 $s3Location,
@@ -178,6 +159,7 @@ class TranscodeAssetActivity extends BasicActivity
     private function validate_input()
     {
         $this->output = $this->data->{'output'};
+        
         if ((
                 $this->data->{'input_type'} == self::VIDEO &&
                 $this->output->{'output_type'} != self::VIDEO &&
@@ -198,7 +180,8 @@ class TranscodeAssetActivity extends BasicActivity
             (
                 $this->data->{'input_type'} == self::DOC &&
                 $this->output->{'output_type'} != self::DOC
-            )) {
+            ))
+        {
             throw new CpeSdk\CpeException("Can't convert that 'input_type' (" . $this->data->{'input_type'} . ") into this 'output_type' (" . $this->output->{'output_type'} . ")! Abording.", 
                 self::CONVERSION_TYPE_ERROR);
         }

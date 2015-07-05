@@ -1,38 +1,28 @@
 <?php
 
-require_once __DIR__ . '/BasicActivity.php';
-require_once __DIR__ . '/transcoders/BasicTranscoder.php';
-
 /**
- * This class validate JSON input. 
- * Makes sure the input files to be transcoded exists and is valid.
+ * This class validate input assets and get metadata about them 
+ * It makes sure the input files to be transcoded exists and is valid.
+ * Based on the input file type we lunch the proper transcoder
  */
+
+require_once __DIR__ . '/BasicActivity.php';
+
 class ValidateInputAndAssetActivity extends BasicActivity
 {
     // Perform the activity
     public function do_activity($task)
     {
-        // Check input task. Set $this->input_str String
-        parent::do_task_check($task);
-        
-        // Validate JSON. Set $this->input JSON object
-        parent::do_input_validation(
-            $task, 
-            $this->activityType["name"]
+        $this->cpeLogger->log_out(
+            "INFO", 
+            basename(__FILE__), 
+            "Preparing Asset validation ...",
+            $this->activityLogKey
         );
         
-        // Init Activity
-        parent::do_init($task);
-        
-        // Call parent method for initialization.
-        // Setup TMP folder
-        // Send starting SQS message
-        // Download input file from S3
+        // Call parent do_activity:
+        // It download the input file we will process.
         parent::do_activity($task);
-        
-        /**
-         * PROCESS FILE
-         */
         
         // Load the right transcoder base on input_type
         // Get asset detailed info
@@ -55,6 +45,9 @@ class ValidateInputAndAssetActivity extends BasicActivity
         case self::DOC:
                 
             break;
+        default:
+            throw new CpeSdk\CpeException("Unknown 'input_type'! Abording ...", 
+                self::UNKOWN_INPUT_TYPE);
         }
         
         return ["result" => $assetInfo ];

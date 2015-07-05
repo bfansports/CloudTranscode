@@ -36,6 +36,7 @@ class BasicActivity extend CpeSdk\CpeActivity
     const NO_ACTIVITY_NAME     = "NO_ACTIVITY_NAME";
     const NO_ACTIVITY_VERSION  = "NO_ACTIVITY_VERSION";
     const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
+    const UNKOWN_INPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
 
     // JSON checks
     const INPUT_INVALID        = "INPUT_INVALID";
@@ -88,10 +89,12 @@ class BasicActivity extend CpeSdk\CpeActivity
         
         // Create TMP storage to store input file to transcode 
         $inputFileInfo = pathinfo($this->data->{'input_file'});
+        
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpPathInput = self::TMP_FOLDER 
             . $task["workflowExecution"]["workflowId"] . "/" 
             . $inputFileInfo['dirname'];
+        
         if (!file_exists($this->tmpPathInput))
             if (!mkdir($this->tmpPathInput, 0750, true))
                 throw new CpeSdk\CpeException(

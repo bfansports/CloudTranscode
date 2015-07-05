@@ -8,23 +8,10 @@ require __DIR__ . '/../utils/S3Utils.php';
 
 use SA\CpeSdk;
 
-class BasicActivity extend CpeSdk\CpeActivity
+class BasicActivity extends CpeSdk\CpeActivity
 {
-    public $input_str;       // Complete activity input string
-    public $input;           // Complete activity input JSON object
-    public $time;            // Time of the activity. Comes from $input
-    public $data;            // Data input for the activity. The job we got to do. Comes from $input
-    public $client;          // The client that request this activity. Comes from $input
-    public $jobId;           // The Activity ID. Comes from $input
-    
     public $tmpPathInput;    // PAth to directory containing TMP file
     public $pathToInputFile; // PAth to input file locally
-    
-    public $activityId;      // ID of the activity
-    public $activityType;    // Type of activity
-    public $activityResult;  // Contain activity result output
-    public $activityLogKey;  // Create a key workflowId:activityId to put in logs
-    
     public $s3Utils;         // Used to manipulate S3. Download/Upload
   
     // Constants
@@ -101,7 +88,7 @@ class BasicActivity extend CpeSdk\CpeActivity
                     "Unable to create temporary folder '$this->tmpPathInput' !",
                     self::TMP_FOLDER_FAIL
                 );
-
+        
         // Download input file and store it in TMP folder
         $saveFileTo = $this->tmpPathInput . "/" . $inputFileInfo['basename'];
         $this->pathToInputFile = 

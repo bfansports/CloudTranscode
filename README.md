@@ -1,7 +1,12 @@
-## Updates [06/27/2015]
-> We have Docker and Vagrant images working locally.
-> We are now wrapping up everything and will update the documentation accrodingly. 
-> Couple more weeks and we should have a usable product
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
+
+## Updates [07/05/2015]
+> Cloud Transcode will receive a major update in the coming days.<br>
+> The core of CT will move away from this repo to the Cloud Process Engine repo. See: https://github.com/sportarchive/CloudProcessingEngine <br>
+> As the engine could be used for other purposes than just transcoding we created a project just for that.<br>
+> Cloud Transcode will contain only the Activity Workers code responsible for transcoding.<br>
+> The documentation is also in work as well as the packaging (Vagrant & Docker) <br>
+> Stay tune
 
 # What is Cloud Transcode ?
 Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.

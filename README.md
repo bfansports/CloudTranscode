@@ -14,17 +14,16 @@ Detailed changes:
 Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 
 ## Goal
-The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over
-performance and cost. 
+The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over performance and cost. 
 
-We start with video transcoding which is the most costly, but the goal is to transcode any media (audio, documents and images). We use FFMpeg for video transcoding.
+We started with video transcoding as it is the most costly, but the goal is to transcode any type media files (audio, documents and images). We use FFMpeg for video transcoding.
 
-Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of videos at the pace you want, thus controling your cost. 
+Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of files at the pace you want, thus controling your cost. 
 
 ## Benefits
-With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. You only need an Amazon AWS account and an Internet connection to use the required Amazon services: SWF, SQS and S3. 
+With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. Or you can deploy on AWS EC2, Beanstalk or Docker containers. 
 
-It means that you can have a local, hybrid or full cloud setup on Amazon Ec2 instances, it's up to you.
+Your workers only need an Internet connection to use the required Amazon services: SWF, SQS and S3. It means that you can have a local, hybrid or full cloud setup. It's up to you.
 
 ## Transcoding supported
 
@@ -32,18 +31,20 @@ It means that you can have a local, hybrid or full cloud setup on Amazon Ec2 ins
    - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
    - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency.
 
-More FFMpeg options will be supported. The help of the community is welcome to implement other type of transcoding as well. (Audio, Image, etc)
+We are working to support ALL FFmpeg options.
 
 # How to use CT ?
 
-Cloud Transcode is a set of "activities" that can be executed by the Cloud Processing Engine (CPE) project which allows processing at scale. Using CPE you can execute workflows (chain of tasks) in a distributed way and execute tasks at scale, locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
+Cloud Transcode is a set of "activities" that are executed by the Cloud Processing Engine (CPE) project. 
 
-CPE allows the execution of arbitrary workflow that you define yourself. Any type of batch processing that needs to span over several workers can fit in CPE. 
+CPE you can execute workflows (chain of tasks) in a distributed way using the SWF cloud service. It initiate tasks executions on workers that you deploy. You can deploy your workers anywhere: locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
 
-CPE uses the following AWS services:
+CPE allows the execution of arbitrary workflow that you define yourself. CPE is a good fit for any type of orchestrated batch processing that needs to span over several workers.
 
-   - SWF: Simple Workflow. Define your own workflow and let SWF track its progress and initiate tasks.
-   - SQS: Simple Queue Messaging. HAve your client application communicate with the CPE stack simply through SQS messages.
+CPE makes use of the following AWS services:
+
+   - SWF (Simple Workflow): Define your own workflow and let SWF track its progress and initiate tasks.
+   - SQS (Simple Queue Messaging): Your client applications communicate with the CPE stack simply using SQS messages.
 
 **You need to clone the CPE project to get going with Cloud Transcode.**
 
@@ -54,9 +55,9 @@ The CPE detailed documentation is here: http://sportarchive.github.io/CloudProce
 ## CT Documentation
 
 To understand all about Cloud Transcode and the transcoding activities,
-head to the CT detailed documentation here: http://sportarchive.github.io/CloudTranscode/
+head to the CT documentation here: http://sportarchive.github.io/CloudTranscode/
 
-We explain how to create transcoding jobs and all available transcoding options.
+We explain how to create transcoding jobs and detail all available transcoding options.
 
 # Contributing
 

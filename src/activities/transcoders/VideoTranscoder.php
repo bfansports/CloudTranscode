@@ -44,6 +44,8 @@ class VideoTranscoder extends BasicTranscoder
         $inputAssetInfo, 
         $outputDetails)
     {
+        $ffmpegCmd;
+        
         // Generate formatted FFMpeg CMD for VIDEO or THUMB output
         if ($outputDetails->{'output_type'} == VIDEO)
             $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
@@ -85,7 +87,7 @@ class VideoTranscoder extends BasicTranscoder
         // Pass video 'duration' as parameter
         // Sleep 1sec between turns and callback every 10 turns
         // Output progression logs (true)
-        $out = $this->executer->execute(
+        $this->executer->execute(
             $ffmpegCmd, 
             1, 
             array(2 => array("pipe", "w")),
@@ -140,11 +142,13 @@ class VideoTranscoder extends BasicTranscoder
         $frameRate = $outputDetails->{'preset_values'}->{'frame_rate'};
         if (isset($outputDetails->{'frame_rate'}))
             $frameRate = $outputDetails->{'frame_rate'};
-        
+
+        $formattedOptions = "";
         if (isset($outputDetails->{'preset_values'}->{'video_codec_options'}))
             $formattedOptions = 
                 $this->set_output_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
-        
+
+        $watermarkOptions = "";
         // Process options for watermark
         if (isset($outputDetails->{'watermark'}) && $outputDetails->{'watermark'})
             $watermarkOptions = 
@@ -177,6 +181,10 @@ class VideoTranscoder extends BasicTranscoder
         $inputAssetInfo, 
         $outputDetails)
     {
+        // FIXME: Use $inputAssetInfo to improve the FFMpeg command
+        // inputAssetInfo contains FFprobe output
+
+        $frameOptions   = "";
         $outputFileInfo = pathinfo($outputDetails->{'output_file'});
         if ($outputDetails->{'mode'} == 'snapshot')
         {
@@ -308,14 +316,16 @@ class VideoTranscoder extends BasicTranscoder
         if (!isset($outputDetails->{'keep_ratio'}) || 
             $outputDetails->{'keep_ratio'} == 'true')
         {
-            $outputRatio = floatval($this->get_ratio($size));
-            $inputRatio  = floatval($inputAssetInfo->{'ratio'});
+            // FIXME: Improve ratio check
+            
+            /* $outputRatio = floatval($this->get_ratio($size)); */
+            /* $inputRatio  = floatval($inputAssetInfo->{'ratio'}); */
 
-            if ($outputRatio != $inputRatio)
-                throw new CpeSdk\CpeException(
-                    "Output video ratio is different from input video: input_ratio: '$inputRatio' / output_ratio: '$outputRatio'. 'keep_ratio' option is enabled (default). Disable it to allow ratio change.",
-                    self::RATIO_ERROR
-                );
+            /* if ($outputRatio != $inputRatio) */
+            /*     throw new CpeSdk\CpeException( */
+            /*         "Output video ratio is different from input video: input_ratio: '$inputRatio' / output_ratio: '$outputRatio'. 'keep_ratio' option is enabled (default). Disable it to allow ratio change.", */
+            /*         self::RATIO_ERROR */
+            /*     ); */
         }
         
         // Enlargement check
@@ -463,8 +473,6 @@ class VideoTranscoder extends BasicTranscoder
     // Execute FFMpeg to get video information
     public function get_asset_info($pathToInputFile)
     {
-        $assetInfo = array();
-        
         // Execute FFMpeg to validate and get information about input video
         $out = $this->executer->execute(
             "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile",

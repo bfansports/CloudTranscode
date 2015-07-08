@@ -11,6 +11,8 @@ use SA\CpeSdk;
 
 class CommandExecuter
 {
+    private $cpeLogger;
+    
     const EXEC_FAILED = "EXEC_FAILED";
     
     public function execute(
@@ -33,14 +35,13 @@ class CommandExecuter
 
         // Set the pipes as non-blocking
         if (isset($descriptors[1]) &&
-                $descriptors[1])
+            $descriptors[1])
             stream_set_blocking($pipes[1], FALSE);
         if (isset($descriptors[2]) &&
-                $descriptors[2])
+            $descriptors[2])
             stream_set_blocking($pipes[2], FALSE);
         
-        if ($callbackTurns)
-            $i = 0;
+        $i = 0;
         
         // Used to store all output
         $allOut = "";
@@ -67,26 +68,12 @@ class CommandExecuter
             }
 
             // If callback only after N turns
-            if ($callbackTurns)
+            if (!$callbackTurns ||
+                $i == $callbackTurns)
             {
-                if ($i == $callbackTurns)
-                {
-                    if ($showProgress)
-                        echo ".\n";
+                if ($showProgress)
+                    echo ".\n";
 
-                    // Call user provided callback.
-                    // Callback should be an array as per doc here: 
-                    // http://www.php.net/manual/en/language.types.callable.php
-                    // Type 3: Object method call
-                    if (isset($progressCallback) && $progressCallback){
-                        call_user_func($progressCallback, $progressCallbackParams, 
-                            $allOut, $allOutErr);
-                    }
-                    
-                    $i = 0;
-                }
-            }
-            else {
                 // Call user provided callback.
                 // Callback should be an array as per doc here: 
                 // http://www.php.net/manual/en/language.types.callable.php
@@ -95,6 +82,8 @@ class CommandExecuter
                     call_user_func($progressCallback, $progressCallbackParams, 
                         $allOut, $allOutErr);
                 }
+                    
+                $i = 0;
             }
 
             // Get latest status
@@ -106,9 +95,7 @@ class CommandExecuter
                 flush();
             }
             
-            if ($callbackTurns)
-                $i++;
-            
+            $i++;
             sleep($sleep);
         }
         

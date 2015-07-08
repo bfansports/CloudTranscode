@@ -11,8 +11,9 @@ Detailed changes:
 > If you have forked this project, you will need to update your fork.
 
 # What is Cloud Transcode ?
-Cloud Transcode is a set of transcoding activities for transcoding media files at scale. It is your own distributed transcoding stack.
+Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 
+## Goal
 The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over
 performance and cost. 
 
@@ -20,6 +21,7 @@ We start with video transcoding which is the most costly, but the goal is to tra
 
 Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of videos at the pace you want, thus controling your cost. 
 
+## Benefits
 With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. You only need an Amazon AWS account and an Internet connection to use the required Amazon services: SWF, SQS and S3. 
 
 It means that you can have a local, hybrid or full cloud setup on Amazon Ec2 instances, it's up to you.
@@ -30,25 +32,31 @@ It means that you can have a local, hybrid or full cloud setup on Amazon Ec2 ins
    - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
    - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency.
 
+More FFMpeg options will be supported. The help of the community is welcome to implement other type of transcoding as well. (Audio, Image, etc)
+
 # How to use CT ?
 
-Cloud Transcode relies on the Cloud Processing Engine (CPE) project which allows processing at scale. Using CPE you can execute workflows (chain of tasks) in a distributed way and at scale locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
+Cloud Transcode is a set of "activities" that can be executed by the Cloud Processing Engine (CPE) project which allows processing at scale. Using CPE you can execute workflows (chain of tasks) in a distributed way and execute tasks at scale, locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
 
-CPE allow any type of batch processing at scale and relies on two AWS services:
+CPE allows the execution of arbitrary workflow that you define yourself. Any type of batch processing that needs to span over several workers can fit in CPE. 
 
-   - SWF: Simple Workflow
-   - SQS: Simple Queue Messaging
+CPE uses the following AWS services:
+
+   - SWF: Simple Workflow. Define your own workflow and let SWF track its progress and initiate tasks.
+   - SQS: Simple Queue Messaging. HAve your client application communicate with the CPE stack simply through SQS messages.
 
 **You need to clone the CPE project to get going with Cloud Transcode.**
 
-So head to the project page and see what you can do with CPE: https://github.com/sportarchive/CloudProcessingEngine
+So head to the CPE project page, clone it and discover what you can do with CPE: https://github.com/sportarchive/CloudProcessingEngine
 
 The CPE detailed documentation is here: http://sportarchive.github.io/CloudProcessingEngine/
 
 ## CT Documentation
 
 To understand all about Cloud Transcode and the transcoding activities,
-head to the detailed documentation here: http://sportarchive.github.io/CloudTranscode/
+head to the CT detailed documentation here: http://sportarchive.github.io/CloudTranscode/
+
+We explain how to create transcoding jobs and all available transcoding options.
 
 # Contributing
 
@@ -58,7 +66,7 @@ We need help from the community to develop other types of transcoding:
    - Image
    - Document
 
-The transcoders PHP files are already created, they just need to be implemented. (Check the src/activities folder)
+The transcoders classes are already created, they just need to be implemented. (Check the `src/activities/transcoders/` folder)
 
 Thanks for contributing !
 

@@ -1,15 +1,17 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
-## Updates [07/05/2015]
-> Cloud Transcode will receive a major update in the coming days.<br>
-> The core of CT will move away from this repo to the Cloud Process Engine repo. See: https://github.com/sportarchive/CloudProcessingEngine <br>
-> As the engine could be used for other purposes than just transcoding we created a project just for that.<br>
-> Cloud Transcode will contain only the Activity Workers code responsible for transcoding.<br>
-> The documentation is also in work as well as the packaging (Vagrant & Docker) <br>
-> Stay tune
+## Updates [07/07/2015]
+> The first major Beta community release is out<br>
+> We're refactor this project to make it more generic and more usable.
+
+Detailed changes:
+   - The Core (Pollers and Decider) has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine
+   - This repo only retains the actual transcoding code executed by your workers.
+
+> If you have forked this project, you will need to update your fork.
 
 # What is Cloud Transcode ?
-Cloud Transcode is a custom distributed transcoding stack using Amazon AWS services.
+Cloud Transcode is a set of transcoding activities for transcoding media files at scale. It is your own distributed transcoding stack.
 
 The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over
 performance and cost. 
@@ -22,27 +24,45 @@ With Cloud Transcode, you control: scale, speed and cost. You can run everything
 
 It means that you can have a local, hybrid or full cloud setup on Amazon Ec2 instances, it's up to you.
 
-# Transcoding supported
-- **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
-- **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
-- **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency.
+## Transcoding supported
 
-# High Level Architecture
-![Alt text](/../images/high_level_arch.png?raw=true "High Level Architecture")
+   - **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
+   - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
+   - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency.
 
-# Quick start with Vagrant
-A Vagrant box (Virtual Machine) which provides pre-configured environment to run the stack has been created to help you test the stack and work on it. You can use Vagrant on any OS and quickly bootstrap.
+# How to use CT ?
 
-See: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J#:h=Quick-start-with-Vagrant
+Cloud Transcode relies on the Cloud Processing Engine (CPE) project which allows processing at scale. Using CPE you can execute workflows (chain of tasks) in a distributed way and at scale locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
 
-# Deep dive
-Find the detailed documentation here: https://sportarchive.hackpad.com/Cloud-Transcode-project-poG8vKTC16J
+CPE allow any type of batch processing at scale and relies on two AWS services:
 
-# Task tracking
-Check the project status and tasks in the pipe on Pivotal Tracker:
-- https://www.pivotaltracker.com/n/projects/1044000
+   - SWF: Simple Workflow
+   - SQS: Simple Queue Messaging
+
+**You need to clone the CPE project to get going with Cloud Transcode.**
+
+So head to the project page here and see what you can do with CPE: https://github.com/sportarchive/CloudProcessingEngine<br>
+The CPE detailed documentation is here: http://sportarchive.github.io/CloudProcessingEngine/
+
+## CT Documentation
+
+To understand all about Cloud Transcode and the transcoding activities,
+head to the detailed documentation here: http://sportarchive.github.io/CloudTranscode/
+
+# Contributing
+
+We need help from the community to develop other type of transcoding:
+
+   - Audio
+   - Image
+   - Document
+
+The transcoders PHP files are already created, they just need to be implemented.
+
+Thanks for contributing !
 
 # FFMpeg performance benchmark on Amazon EC2
-Download the spreadsheet to compare the different Amazon EC2 instances cost and performances:
+
+Download the spreadsheet to compare the different Amazon EC2 instances cost and performances running FFMpeg:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
 

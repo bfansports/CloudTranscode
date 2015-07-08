@@ -1,15 +1,11 @@
 # Ignore the local config
-pollers/.env.dev
-pollers/config/cloudTranscodeConfig.json
-pollers/vendor/*
-client_example/clientConfig.json
+.env.dev
+vendor/*
 
 # Vagrant
 .vagrant
 
 # Ignore vendor tree
-pollers/vendor/*
-client_example/vendor/*
 composer.phar
 composer.lock
 

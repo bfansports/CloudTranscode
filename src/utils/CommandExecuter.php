@@ -29,17 +29,20 @@ class CommandExecuter
         
         // Start execution of $cmd
         if (!($process = proc_open($cmd, $descriptors, $pipes)) ||
-            !is_resource($process))
-            throw new CpeSdk\CpeException("Unable to execute command:\n$cmd\n",
+            !is_resource($process)) {
+                    throw new CpeSdk\CpeException("Unable to execute command:\n$cmd\n",
                 self::EXEC_FAILED);
+        }
 
         // Set the pipes as non-blocking
         if (isset($descriptors[1]) &&
-            $descriptors[1])
-            stream_set_blocking($pipes[1], FALSE);
+            $descriptors[1]) {
+                    stream_set_blocking($pipes[1], FALSE);
+        }
         if (isset($descriptors[2]) &&
-            $descriptors[2])
-            stream_set_blocking($pipes[2], FALSE);
+            $descriptors[2]) {
+                    stream_set_blocking($pipes[2], FALSE);
+        }
         
         $i = 0;
         
@@ -55,7 +58,7 @@ class CommandExecuter
             if (isset($descriptors[1]) &&
                 $descriptors[1])
             {
-                $out    = fread($pipes[1], 8192); 
+                $out = fread($pipes[1], 8192); 
                 $allOut .= $out;
             }
             
@@ -71,8 +74,9 @@ class CommandExecuter
             if (!$callbackTurns ||
                 $i == $callbackTurns)
             {
-                if ($showProgress)
-                    echo ".\n";
+                if ($showProgress) {
+                                    echo ".\n";
+                }
 
                 // Call user provided callback.
                 // Callback should be an array as per doc here: 
@@ -99,8 +103,9 @@ class CommandExecuter
             sleep($sleep);
         }
         
-        if ($showProgress)
-            echo "\n";
+        if ($showProgress) {
+                    echo "\n";
+        }
     
         // Process is over
         proc_close($process);

@@ -2,7 +2,7 @@
 
 ## Updates [07/07/2015]
 > The first major Beta community release is out<br>
-> We're refactor this project to make it more generic and more usable.
+> We've refactor this project to make it more generic and more usable.
 
 Detailed changes:
    - The Core (Pollers and Decider) has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine

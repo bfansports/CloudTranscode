@@ -50,6 +50,6 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 self::UNKOWN_INPUT_TYPE);
         }
         
-        return ["result" => $assetInfo ];
+        return [ "result" => $assetInfo ];
     }
 }

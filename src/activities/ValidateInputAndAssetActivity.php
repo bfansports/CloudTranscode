@@ -6,7 +6,7 @@
  * Based on the input file type we lunch the proper transcoder
  */
 
-require_once __DIR__ . '/BasicActivity.php';
+require_once __DIR__.'/BasicActivity.php';
 
 class ValidateInputAndAssetActivity extends BasicActivity
 {
@@ -29,14 +29,14 @@ class ValidateInputAndAssetActivity extends BasicActivity
         switch ($this->data->{'input_type'}) 
         {
         case self::VIDEO:
-            require_once __DIR__ . '/transcoders/VideoTranscoder.php';
+            require_once __DIR__.'/transcoders/VideoTranscoder.php';
             
             // Initiate transcoder obj
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
 
-            return [ "result" => $assetInfo ];
+            return ["result" => $assetInfo];
         case self::IMAGE:
                 
             break;

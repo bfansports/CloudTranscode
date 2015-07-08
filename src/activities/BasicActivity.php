@@ -4,15 +4,15 @@
  * This class serves as a skeleton for classes implementing actual activity
  */
 
-require __DIR__ . '/../utils/S3Utils.php';
+require __DIR__.'/../utils/S3Utils.php';
 
 use SA\CpeSdk;
 
 class BasicActivity extends CpeSdk\CpeActivity
 {
-    public $tmpPathInput;    // PAth to directory containing TMP file
+    public $tmpPathInput; // PAth to directory containing TMP file
     public $pathToInputFile; // PAth to input file locally
-    public $s3Utils;         // Used to manipulate S3. Download/Upload
+    public $s3Utils; // Used to manipulate S3. Download/Upload
   
     // Constants
     const NO_INPUT             = "NO_INPUT";
@@ -39,7 +39,7 @@ class BasicActivity extends CpeSdk\CpeActivity
     // XXX Use EFS for storage
     // Nico: Expensive though.
     // This is where we store temporary files for transcoding
-    const TMP_FOLDER           = "/tmp/CloudTranscode/";
+    const TMP_FOLDER = "/tmp/CloudTranscode/";
     
     function __construct($params, $debug)
     {
@@ -79,18 +79,19 @@ class BasicActivity extends CpeSdk\CpeActivity
         
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpPathInput = self::TMP_FOLDER 
-            . $task["workflowExecution"]["workflowId"] . "/" 
+            . $task["workflowExecution"]["workflowId"]."/" 
             . $inputFileInfo['dirname'];
         
-        if (!file_exists($this->tmpPathInput))
-            if (!mkdir($this->tmpPathInput, 0750, true))
+        if (!file_exists($this->tmpPathInput)) {
+                    if (!mkdir($this->tmpPathInput, 0750, true))
                 throw new CpeSdk\CpeException(
                     "Unable to create temporary folder '$this->tmpPathInput' !",
                     self::TMP_FOLDER_FAIL
                 );
+        }
         
         // Download input file and store it in TMP folder
-        $saveFileTo = $this->tmpPathInput . "/" . $inputFileInfo['basename'];
+        $saveFileTo = $this->tmpPathInput."/".$inputFileInfo['basename'];
         $this->pathToInputFile = 
             $this->get_file_to_process(
                 $task, 

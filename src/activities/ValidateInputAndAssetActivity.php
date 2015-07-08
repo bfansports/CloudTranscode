@@ -35,7 +35,8 @@ class ValidateInputAndAssetActivity extends BasicActivity
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
-            break;
+
+            return [ "result" => $assetInfo ];
         case self::IMAGE:
                 
             break;
@@ -50,6 +51,5 @@ class ValidateInputAndAssetActivity extends BasicActivity
                 self::UNKOWN_INPUT_TYPE);
         }
         
-        return [ "result" => $assetInfo ];
     }
 }

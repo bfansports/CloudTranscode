@@ -23,8 +23,8 @@ class S3Utils
         $bucket, 
         $filename, 
         $saveFileTo,
-        $callback = false, 
-        $callbackParams = false)
+        $callback = null, 
+        $callbackParams = null)
     {   
         $cmd = "php " . __DIR__ . self::GET_FROM_S3;
         $cmd .= " --bucket $bucket";
@@ -45,8 +45,8 @@ class S3Utils
         $filename, 
         $pathToFileToSend, 
         $options, 
-        $callback = false, 
-        $callbackParams = false)
+        $callback = null, 
+        $callbackParams = null)
     {
         $cmd  = "php " . __DIR__ . self::PUT_IN_S3;
         $cmd .= " --bucket $bucket";

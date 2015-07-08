@@ -26,7 +26,7 @@ class BasicTranscoder
     const DOC   = "DOC";
     const IMAGE = "IMAGE";
     
-    function __construct($activityObj, $task) 
+    public function __construct($activityObj, $task) 
     { 
         $this->activityObj    = $activityObj;
         $this->activityLogKey = $activityObj->activityLogKey;

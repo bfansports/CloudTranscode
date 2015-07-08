@@ -5,7 +5,7 @@
  * Based on the input file type we lunch the proper transcoder
  */
 
-require_once __DIR__ . '/BasicActivity.php';
+require_once __DIR__.'/BasicActivity.php';
 
 class TranscodeAssetActivity extends BasicActivity
 {
@@ -40,7 +40,7 @@ class TranscodeAssetActivity extends BasicActivity
         switch ($this->data->{'input_type'}) 
         {
         case self::VIDEO:
-            require_once __DIR__ . '/transcoders/VideoTranscoder.php';
+            require_once __DIR__.'/transcoders/VideoTranscoder.php';
 
             // Instanciate transcoder to output Videos
             $videoTranscoder = new VideoTranscoder($this, $task);
@@ -100,24 +100,28 @@ class TranscodeAssetActivity extends BasicActivity
         // Set S3 options
         $options = array("rrs" => false, "encrypt" => false);
         if (isset($this->output->{'s3_rrs'}) &&
-            $this->output->{'s3_rrs'} == true)
-            $options['rrs'] = true;
+            $this->output->{'s3_rrs'} == true) {
+                    $options['rrs'] = true;
+        }
         if (isset($this->output->{'s3_encrypt'}) &&
-            $this->output->{'s3_encrypt'} == true)
-            $options['encrypt'] = true;
+            $this->output->{'s3_encrypt'} == true) {
+                    $options['encrypt'] = true;
+        }
         
         // Open '$pathToOutputFiles' to read it and send all files to S3 bucket
-        if (!$handle = opendir($this->pathToOutputFiles))
-            throw new CpeSdk\CpeException("Can't open tmp path '$this->pathToOutputFiles'!", 
+        if (!$handle = opendir($this->pathToOutputFiles)) {
+                    throw new CpeSdk\CpeException("Can't open tmp path '$this->pathToOutputFiles'!", 
                 self::TMP_PATH_OPEN_FAIL);
+        }
         
         // Upload all resulting files sitting in $pathToOutputFiles to S3
         while ($entry = readdir($handle)) {
-            if ($entry == "." || $entry == "..") 
-                continue;
+            if ($entry == "." || $entry == "..") {
+                            continue;
+            }
 
             // Destination path on S3. Sanitizing
-            $s3Location = $this->output->{'output_file_info'}['dirname'] . "/$entry";
+            $s3Location = $this->output->{'output_file_info'}['dirname']."/$entry";
             $s3Location = str_replace("//", "/", $s3Location);
             
             // Send to S3. We reference the callback s3_put_processing_callback
@@ -142,16 +146,17 @@ class TranscodeAssetActivity extends BasicActivity
         // Create TMP folder for output files
         $outputFileInfo = pathinfo($this->output->{'output_file'});
         $this->output->{'output_file_info'} = $outputFileInfo;
-        $this->pathToOutputFiles = $this->tmpPathInput . "/output/" 
+        $this->pathToOutputFiles = $this->tmpPathInput."/output/" 
             . $this->activityId
-            . "/" . $outputFileInfo['dirname'];
+            . "/".$outputFileInfo['dirname'];
         
-        if (!file_exists($this->pathToOutputFiles))
-            if (!mkdir($this->pathToOutputFiles, 0750, true))
+        if (!file_exists($this->pathToOutputFiles)) {
+                    if (!mkdir($this->pathToOutputFiles, 0750, true))
                 throw new CpeSdk\CpeException(
                     "Unable to create temporary folder '$this->pathToOutputFiles' !",
                     self::TMP_FOLDER_FAIL
                 );
+        }
     }
     
     // Perform custom validation on JSON input
@@ -182,7 +187,7 @@ class TranscodeAssetActivity extends BasicActivity
                 $this->output->{'output_type'} != self::DOC
             ))
         {
-            throw new CpeSdk\CpeException("Can't convert that 'input_type' (" . $this->data->{'input_type'} . ") into this 'output_type' (" . $this->output->{'output_type'} . ")! Abording.", 
+            throw new CpeSdk\CpeException("Can't convert that 'input_type' (".$this->data->{'input_type'}.") into this 'output_type' (".$this->output->{'output_type'}.")! Abording.", 
                 self::CONVERSION_TYPE_ERROR);
         }
     }

@@ -5,19 +5,19 @@
  * You must extend this class to create a new transcoder
  */
 
-require_once __DIR__ . '/../../utils/S3Utils.php';
+require_once __DIR__.'/../../utils/S3Utils.php';
 
 use SA\CpeSdk;
 
 class BasicTranscoder 
 {
     public $activityLogKey; // Valling activity loggin key
-    public $activityObj;    // Calling activity object
-    public $task;           // Activity TASK
+    public $activityObj; // Calling activity object
+    public $task; // Activity TASK
 
     public $cpeLogger; // Logger
-    public $s3Utils;   // Used to manipulate S3
-    public $executer;  // Executer obj
+    public $s3Utils; // Used to manipulate S3
+    public $executer; // Executer obj
 
     // Types
     const VIDEO = "VIDEO";

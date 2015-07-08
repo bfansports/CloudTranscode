@@ -41,7 +41,8 @@ CPE allow any type of batch processing at scale and relies on two AWS services:
 
 **You need to clone the CPE project to get going with Cloud Transcode.**
 
-So head to the project page here and see what you can do with CPE: https://github.com/sportarchive/CloudProcessingEngine<br>
+So head to the project page and see what you can do with CPE: https://github.com/sportarchive/CloudProcessingEngine
+
 The CPE detailed documentation is here: http://sportarchive.github.io/CloudProcessingEngine/
 
 ## CT Documentation
@@ -51,13 +52,13 @@ head to the detailed documentation here: http://sportarchive.github.io/CloudTran
 
 # Contributing
 
-We need help from the community to develop other type of transcoding:
+We need help from the community to develop other types of transcoding:
 
    - Audio
    - Image
    - Document
 
-The transcoders PHP files are already created, they just need to be implemented.
+The transcoders PHP files are already created, they just need to be implemented. (Check the src/activities folder)
 
 Thanks for contributing !
 

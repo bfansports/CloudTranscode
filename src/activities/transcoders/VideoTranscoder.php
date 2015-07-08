@@ -44,7 +44,7 @@ class VideoTranscoder extends BasicTranscoder
         $inputAssetInfo, 
         $outputDetails)
     {
-        $ffmpegCmd;
+        $ffmpegCmd = "";
         
         // Generate formatted FFMpeg CMD for VIDEO or THUMB output
         if ($outputDetails->{'output_type'} == VIDEO) {

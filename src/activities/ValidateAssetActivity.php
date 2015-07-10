@@ -8,7 +8,7 @@
 
 require_once __DIR__.'/BasicActivity.php';
 
-class ValidateInputAndAssetActivity extends BasicActivity
+class ValidateAssetActivity extends BasicActivity
 {
     // Perform the activity
     public function do_activity($task)

@@ -4,6 +4,8 @@
  * This class serves as a skeleton for classes implementing actual activity
  */
 
+require __DIR__."/../../vendor/autoload.php";
+
 require __DIR__.'/../utils/S3Utils.php';
 
 use SA\CpeSdk;

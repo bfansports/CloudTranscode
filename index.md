@@ -7,6 +7,10 @@ title: "Cloud Transcode documentation"
 
 Here you will find the necessary information to get going with Cloud Transcode (CT).
 
+
+> **IMPORTANT: This documentation is not yet finalized.** We are actively working on it.
+
+
 <br>
 
 ### What is CT?

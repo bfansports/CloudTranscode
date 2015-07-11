@@ -109,7 +109,7 @@ class VideoTranscoder extends BasicTranscoder
                 10
             );
         }
-        catch (\Exeception $e) {
+        catch (\Exception $e) {
             $this->cpeLogger->log_out(
                 "ERROR", 
                 basename(__FILE__), 
@@ -287,7 +287,7 @@ class VideoTranscoder extends BasicTranscoder
             $this->cpeLogger->log_out(
                 "ERROR", 
                 basename(__FILE__), 
-                "Execution of command '".$convertCmd."' failed: " . print_r($metadata, true),
+                "Execution of command '".$convertCmd."' failed",
                 $this->activityLogKey
             );
             return false;
@@ -560,13 +560,13 @@ class VideoTranscoder extends BasicTranscoder
             $this->cpeLogger->log_out(
                 "ERROR", 
                 basename(__FILE__), 
-                "Execution of command '".$ffprobeCmd."' failed: " . print_r($metadata, true),
+                "Execution of command '".$ffprobeCmd."' failed.",
                 $this->activityLogKey
             );
             return false;
         }
         
-        if (!$out) {
+        if (empty($out)) {
             throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$pathToInputFile'!",
                 self::EXEC_VALIDATE_FAILED);
         }

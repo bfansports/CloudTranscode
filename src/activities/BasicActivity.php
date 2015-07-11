@@ -4,9 +4,9 @@
  * This class serves as a skeleton for classes implementing actual activity
  */
 
-require __DIR__."/../../vendor/autoload.php";
+require_once __DIR__."/../../vendor/autoload.php";
 
-require __DIR__.'/../utils/S3Utils.php';
+require_once __DIR__.'/../utils/S3Utils.php';
 
 use SA\CpeSdk;
 
@@ -17,18 +17,10 @@ class BasicActivity extends CpeSdk\CpeActivity
     public $s3Utils; // Used to manipulate S3. Download/Upload
   
     // Constants
-    const NO_INPUT             = "NO_INPUT";
-    const NO_WF_EXECUTION      = "NO_WF_EXECUTION";
-    const ACTIVITY_TASK_EMPTY  = "ACTIVITY_TASK_EMPTY";
-    const HEARTBEAT_FAILED     = "HEARTBEAT_FAILED";
     const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
-    const NO_ACTIVITY_NAME     = "NO_ACTIVITY_NAME";
-    const NO_ACTIVITY_VERSION  = "NO_ACTIVITY_VERSION";
-    const ACTIVITY_INIT_FAILED = "ACTIVITY_INIT_FAILED";
     const UNKOWN_INPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
 
     // JSON checks
-    const INPUT_INVALID        = "INPUT_INVALID";
     const FORMAT_INVALID       = "FORMAT_INVALID";
 
     // Types
@@ -48,7 +40,7 @@ class BasicActivity extends CpeSdk\CpeActivity
         parent::__construct($params, $debug);
         
         // S3 utils
-        $this->s3Utils = new S3Utils();  
+        $this->s3Utils = new S3Utils($this->cpeLogger);
     }
 
     /**
@@ -56,10 +48,9 @@ class BasicActivity extends CpeSdk\CpeActivity
      */
     
     // Perform JSON input validation
-    public function do_input_validation($task)
+    public function do_input_validation()
     {
-        parent::do_input_validation($task);
-        
+        parent::do_input_validation();
         /*
          * Nico: Reactivate JSON Schema
          *       Remove dependency from Utils.php for when we split the Engine from the Activities
@@ -77,15 +68,22 @@ class BasicActivity extends CpeSdk\CpeActivity
         parent::do_activity($task);
         
         // Create TMP storage to store input file to transcode 
-        $inputFileInfo = pathinfo($this->data->{'input_file'});
+        $inputFileInfo = pathinfo($this->input->{'input_asset'}->{'file'});
         
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpPathInput = self::TMP_FOLDER 
             . $task["workflowExecution"]["workflowId"]."/" 
             . $inputFileInfo['dirname'];
         
-        if (!file_exists($this->tmpPathInput)) {
-                    if (!mkdir($this->tmpPathInput, 0750, true))
+        // Create the tmp folder if doesn't exist
+        if (!file_exists($this->tmpPathInput)) 
+        {
+            if ($this->debug)
+                $this->cpeLogger->log_out("INFO", basename(__FILE__), 
+                    "Creating TMP input folder '".$this->tmpPathInput."'",
+                    $this->activityLogKey);
+            
+            if (!mkdir($this->tmpPathInput, 0750, true))
                 throw new CpeSdk\CpeException(
                     "Unable to create temporary folder '$this->tmpPathInput' !",
                     self::TMP_FOLDER_FAIL
@@ -97,8 +95,8 @@ class BasicActivity extends CpeSdk\CpeActivity
         $this->pathToInputFile = 
             $this->get_file_to_process(
                 $task, 
-                $this->data->{'input_bucket'},
-                $this->data->{'input_file'},
+                $this->input->{'input_asset'}->{'bucket'},
+                $this->input->{'input_asset'}->{'file'},
                 $saveFileTo
             );
     }

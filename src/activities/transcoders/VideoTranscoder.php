@@ -9,6 +9,8 @@
 
 require_once __DIR__ . '/BasicTranscoder.php';
 
+use SA\CpeSdk;
+
 class VideoTranscoder extends BasicTranscoder
 {
     // Errors
@@ -41,25 +43,31 @@ class VideoTranscoder extends BasicTranscoder
     public function transcode_asset(
         $pathToInputFile, 
         $pathToOutputFiles,
-        $inputAssetInfo, 
-        $outputDetails)
+        $metadata = null, 
+        $outputWanted)
     {
+        if (!$metadata)
+            throw new CpeSdk\CpeException(
+                "NO Input Video metadata! We can't transcode an asset without probing it first. Use ValidateAsset activity to probe it and pass a 'metadata' field containing the input metadata to this TranscodeAsset activity.",
+                self::TRANSCODE_FAIL
+            );
+
         $ffmpegCmd = "";
         
         // Generate formatted FFMpeg CMD for VIDEO or THUMB output
-        if ($outputDetails->{'output_type'} == VIDEO) {
-                    $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
+        if ($outputWanted->{'type'} == self::VIDEO) {
+            $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
                 $pathToInputFile,
                 $pathToOutputFiles,
-                $inputAssetInfo, 
-                $outputDetails
+                $metadata, 
+                $outputWanted
             );
-        } else if ($outputDetails->{'output_type'} == THUMB) {
-                    $ffmpegCmd = $this->craft_ffmpeg_cmd_thumb(
+        } else if ($outputWanted->{'type'} == self::THUMB) {
+            $ffmpegCmd = $this->craft_ffmpeg_cmd_thumb(
                 $pathToInputFile,
                 $pathToOutputFiles,
-                $inputAssetInfo, 
-                $outputDetails
+                $metadata, 
+                $outputWanted
             );
         }
         
@@ -76,31 +84,45 @@ class VideoTranscoder extends BasicTranscoder
             "Start Transcoding Asset '$pathToInputFile' ...",
             $this->activityLogKey
         );
-        $this->cpeLogger->log_out(
-            "INFO", 
-            basename(__FILE__), 
-            "Input Video Info: " . print_r($inputAssetInfo, true),
-            $this->activityLogKey
-        );
-    
-        // Use executer to start FFMpeg command
-        // Use 'capture_progression' function as callback
-        // Pass video 'duration' as parameter
-        // Sleep 1sec between turns and callback every 10 turns
-        // Output progression logs (true)
-        $this->executer->execute(
-            $ffmpegCmd, 
-            1, 
-            array(2 => array("pipe", "w")),
-            array($this, "capture_progression"), 
-            $inputAssetInfo->{'duration'}, 
-            true, 
-            10
-        );
         
+        if ($metadata)
+            $this->cpeLogger->log_out(
+                "INFO", 
+                basename(__FILE__), 
+                "Input Video metadata: " . print_r($metadata, true),
+                $this->activityLogKey
+            );
+        
+        try {
+            // Use executer to start FFMpeg command
+            // Use 'capture_progression' function as callback
+            // Pass video 'duration' as parameter
+            // Sleep 1sec between turns and callback every 10 turns
+            // Output progression logs (true)
+            $this->executer->execute(
+                $ffmpegCmd, 
+                1, 
+                array(2 => array("pipe", "w")),
+                array($this, "capture_progression"), 
+                $metadata->{'format'}->{'duration'}, 
+                true, 
+                10
+            );
+        }
+        catch (\Exeception $e) {
+            $this->cpeLogger->log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Execution of command '".$ffmpegCmd."' failed: " . print_r($metadata, true),
+                $this->activityLogKey
+            );
+            return false;
+        }
+
         // Test if we have an output file !
-        if (!file_exists($pathToOutputFiles) || is_dir_empty($pathToOutputFiles)) {
-                    throw new CpeSdk\CpeException(
+        if (!file_exists($pathToOutputFiles) || 
+            $this->is_dir_empty($pathToOutputFiles)) {
+            throw new CpeSdk\CpeException(
                 "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
                 self::TRANSCODE_FAIL
             );
@@ -119,49 +141,49 @@ class VideoTranscoder extends BasicTranscoder
     private function craft_ffmpeg_cmd_video(
         $pathToInputFile,
         $pathToOutputFiles,
-        $inputAssetInfo, 
-        $outputDetails)
+        $metadata, 
+        $outputWanted)
     {
         // Check if a size is provided to override preset size
-        $size = $this->set_output_video_size($inputAssetInfo, $outputDetails);
+        $size = $this->set_output_video_size($metadata, $outputWanted);
         
-        $videoCodec = $outputDetails->{'preset_values'}->{'video_codec'};
-        if (isset($outputDetails->{'video_codec'})) {
-                    $videoCodec = $outputDetails->{'video_codec'};
+        $videoCodec = $outputWanted->{'preset_values'}->{'video_codec'};
+        if (isset($outputWanted->{'video_codec'})) {
+            $videoCodec = $outputWanted->{'video_codec'};
         }
         
-        $audioCodec = $outputDetails->{'preset_values'}->{'audio_codec'};
-        if (isset($outputDetails->{'audio_codec'})) {
-                    $audioCodec = $outputDetails->{'audio_codec'};
+        $audioCodec = $outputWanted->{'preset_values'}->{'audio_codec'};
+        if (isset($outputWanted->{'audio_codec'})) {
+            $audioCodec = $outputWanted->{'audio_codec'};
         }
 
-        $videoBitrate = $outputDetails->{'preset_values'}->{'video_bitrate'};
-        if (isset($outputDetails->{'video_bitrate'})) {
-                    $videoBitrate = $outputDetails->{'video_bitrate'};
+        $videoBitrate = $outputWanted->{'preset_values'}->{'video_bitrate'};
+        if (isset($outputWanted->{'video_bitrate'})) {
+            $videoBitrate = $outputWanted->{'video_bitrate'};
         }
         
-        $audioBitrate = $outputDetails->{'preset_values'}->{'audio_bitrate'};
-        if (isset($outputDetails->{'audio_bitrate'})) {
-                    $audioBitrate = $outputDetails->{'audio_bitrate'};
+        $audioBitrate = $outputWanted->{'preset_values'}->{'audio_bitrate'};
+        if (isset($outputWanted->{'audio_bitrate'})) {
+            $audioBitrate = $outputWanted->{'audio_bitrate'};
         }
 
-        $frameRate = $outputDetails->{'preset_values'}->{'frame_rate'};
-        if (isset($outputDetails->{'frame_rate'})) {
-                    $frameRate = $outputDetails->{'frame_rate'};
+        $frameRate = $outputWanted->{'preset_values'}->{'frame_rate'};
+        if (isset($outputWanted->{'frame_rate'})) {
+            $frameRate = $outputWanted->{'frame_rate'};
         }
 
         $formattedOptions = "";
-        if (isset($outputDetails->{'preset_values'}->{'video_codec_options'})) {
-                    $formattedOptions = 
-                $this->set_output_video_codec_options($outputDetails->{'preset_values'}->{'video_codec_options'});
+        if (isset($outputWanted->{'preset_values'}->{'video_codec_options'})) {
+            $formattedOptions = 
+                $this->set_output_video_codec_options($outputWanted->{'preset_values'}->{'video_codec_options'});
         }
 
         $watermarkOptions = "";
         // Process options for watermark
-        if (isset($outputDetails->{'watermark'}) && $outputDetails->{'watermark'}) {
-                    $watermarkOptions = 
+        if (isset($outputWanted->{'watermark'}) && $outputWanted->{'watermark'}) {
+            $watermarkOptions = 
                 $this->get_watermark_options($pathToInputFile,
-                    $outputDetails->{'watermark'});
+                    $outputWanted->{'watermark'});
         }
         
         // Create FFMpeg arguments
@@ -176,7 +198,7 @@ class VideoTranscoder extends BasicTranscoder
         $ffmpegArgs .= " $watermarkOptions";
         
         // Append output filename to path
-        $pathToOutputFiles .= "/" . $outputDetails->{'output_file_info'}['basename'];
+        $pathToOutputFiles .= "/" . $outputWanted->{'output_file_info'}['basename'];
         // Final command
         $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFiles";
             
@@ -187,31 +209,31 @@ class VideoTranscoder extends BasicTranscoder
     private function craft_ffmpeg_cmd_thumb(
         $pathToInputFile,
         $pathToOutputFiles,
-        $inputAssetInfo, 
-        $outputDetails)
+        $metadata, 
+        $outputWanted)
     {
-        // FIXME: Use $inputAssetInfo to improve the FFMpeg command
+        // FIXME: Use $metadata to improve the FFMpeg command
         // inputAssetInfo contains FFprobe output
 
         $frameOptions   = "";
-        $outputFileInfo = pathinfo($outputDetails->{'output_file'});
-        if ($outputDetails->{'mode'} == 'snapshot')
+        $outputFileInfo = pathinfo($outputWanted->{'file'});
+        if ($outputWanted->{'mode'} == 'snapshot')
         {
             $snapshot_sec = self::SNAPSHOT_SEC_DEFAULT;
-            if (isset($outputDetails->{'snapshot_sec'}) &&
-                $outputDetails->{'snapshot_sec'} > 0) {
-                            $snapshot_sec = $outputDetails->{'snapshot_sec'};
+            if (isset($outputWanted->{'snapshot_sec'}) &&
+                $outputWanted->{'snapshot_sec'} > 0) {
+                $snapshot_sec = $outputWanted->{'snapshot_sec'};
             }
                 
             $time = gmdate("H:i:s", $snapshot_sec) . ".000";
             $pathToOutputFiles .= "/" . $outputFileInfo['basename'];
             $frameOptions = " -ss $time -vframes 1";
-        } else if ($outputDetails->{'mode'} == 'intervals')
+        } else if ($outputWanted->{'mode'} == 'intervals')
         {
             $intervals = self::INTERVALS_DEFAULT;
-            if (isset($outputDetails->{'intervals'}) &&
-                $outputDetails->{'intervals'} > 0) {
-                            $intervals = $outputDetails->{'intervals'};
+            if (isset($outputWanted->{'intervals'}) &&
+                $outputWanted->{'intervals'} > 0) {
+                $intervals = $outputWanted->{'intervals'};
             }
             
             $pathToOutputFiles .= "/" . $outputFileInfo['filename'] . "%06d." 
@@ -221,7 +243,7 @@ class VideoTranscoder extends BasicTranscoder
 
         // Create FFMpeg arguments
         $ffmpegArgs  =  " -i $pathToInputFile -y -threads 0";
-        $ffmpegArgs .= " -s " . $outputDetails->{'size'};
+        $ffmpegArgs .= " -s " . $outputWanted->{'size'};
         $ffmpegArgs .= " $frameOptions -f image2 -q:v 8";
 
         // Final command
@@ -237,14 +259,14 @@ class VideoTranscoder extends BasicTranscoder
     {
         // Get info about the video in order to save the watermark in same location
         $videoFileInfo     = pathinfo($pathToVideo);
-        $watermarkFileInfo = pathinfo($watermarkOptions->{'input_file'});
+        $watermarkFileInfo = pathinfo($watermarkOptions->{'file'});
         $watermarkPath     = $videoFileInfo['dirname']."/".$watermarkFileInfo['basename'];
         $newWatermarkPath  = $videoFileInfo['dirname']."/new-".$watermarkFileInfo['basename'];
         
         // Get watermark image from S3
         $s3Output = $this->s3Utils->get_file_from_s3(
-            $watermarkOptions->{'input_bucket'}, 
-            $watermarkOptions->{'input_file'},
+            $watermarkOptions->{'bucket'}, 
+            $watermarkOptions->{'file'},
             $watermarkPath);
         
         $this->cpeLogger->log_out("INFO",
@@ -254,15 +276,27 @@ class VideoTranscoder extends BasicTranscoder
 
         // Transform watermark for opacity
         $convertCmd = "convert $watermarkPath -alpha on -channel A -evaluate Multiply " . $watermarkOptions->{'opacity'} . " +channel $newWatermarkPath";
-        $out = $this->executer->execute($convertCmd, 1, 
-            array(1 => array("pipe", "w"), 2 => array("pipe", "w")),
-            false, false, 
-            false, 1);
+
+        try {
+            $out = $this->executer->execute($convertCmd, 1, 
+                array(1 => array("pipe", "w"), 2 => array("pipe", "w")),
+                false, false, 
+                false, 1);
+        }
+        catch (\Exception $e) {
+            $this->cpeLogger->log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Execution of command '".$convertCmd."' failed: " . print_r($metadata, true),
+                $this->activityLogKey
+            );
+            return false;
+        }
         
         // Any error ?
         if (isset($out['outErr']) && $out['outErr'] != "" &&
             (!file_exists($newWatermarkPath) || !filesize($newWatermarkPath))) {
-                    throw new CpeSdk\CpeException(
+            throw new CpeSdk\CpeException(
                 "Error transforming watermark file '$watermarkPath'!",
                 self::WATERMARK_ERROR);
         }
@@ -283,16 +317,16 @@ class VideoTranscoder extends BasicTranscoder
         $positions = array('x' => 0, 'y' => 0);
         
         if ($watermarkOptions->{'x'} >= 0) {
-                    $positions['x'] = $watermarkOptions->{'x'};
+            $positions['x'] = $watermarkOptions->{'x'};
         }
         if ($watermarkOptions->{'y'} >= 0) {
-                    $positions['y'] = $watermarkOptions->{'y'};
+            $positions['y'] = $watermarkOptions->{'y'};
         }
         if ($watermarkOptions->{'x'} < 0) {
-                    $positions['x'] = 'main_w-overlay_w' . $watermarkOptions->{'x'};
+            $positions['x'] = 'main_w-overlay_w' . $watermarkOptions->{'x'};
         }
         if ($watermarkOptions->{'y'} < 0) {
-                    $positions['y'] = 'main_h-overlay_h' . $watermarkOptions->{'y'};
+            $positions['y'] = 'main_h-overlay_h' . $watermarkOptions->{'y'};
         }
 
         return ($positions);
@@ -308,11 +342,11 @@ class VideoTranscoder extends BasicTranscoder
         {
             $keyVal = explode("=", $option);
             if ($keyVal[0] === 'Profile') {
-                            $formattedOptions .= " -profile:v ".$keyVal[1];
+                $formattedOptions .= " -profile:v ".$keyVal[1];
             } else if ($keyVal[0] === 'Level') {
-                            $formattedOptions .= " -level ".$keyVal[1];
+                $formattedOptions .= " -level ".$keyVal[1];
             } else if ($keyVal[0] === 'MaxReferenceFrames') {
-                            $formattedOptions .= " -refs ".$keyVal[1];
+                $formattedOptions .= " -refs ".$keyVal[1];
             }
         }
 
@@ -321,22 +355,22 @@ class VideoTranscoder extends BasicTranscoder
 
     // Verify Ratio and Size of output file to ensure it respect restrictions
     // Return the output video size
-    private function set_output_video_size($inputAssetInfo, $outputDetails)
+    private function set_output_video_size($metadata, $outputWanted)
     {
         // Handle video size
-        $size = $outputDetails->{'preset_values'}->{'size'};
-        if (isset($outputDetails->{'size'})) {
-                    $size = $outputDetails->{'size'};
+        $size = $outputWanted->{'preset_values'}->{'size'};
+        if (isset($outputWanted->{'size'})) {
+            $size = $outputWanted->{'size'};
         }
         
         // Ratio check
-        if (!isset($outputDetails->{'keep_ratio'}) || 
-            $outputDetails->{'keep_ratio'} == 'true')
+        if (!isset($outputWanted->{'keep_ratio'}) || 
+            $outputWanted->{'keep_ratio'} == 'true')
         {
             // FIXME: Improve ratio check
             
             /* $outputRatio = floatval($this->get_ratio($size)); */
-            /* $inputRatio  = floatval($inputAssetInfo->{'ratio'}); */
+            /* $inputRatio  = floatval($metadata->{'ratio'}); */
 
             /* if ($outputRatio != $inputRatio) */
             /*     throw new CpeSdk\CpeException( */
@@ -346,21 +380,23 @@ class VideoTranscoder extends BasicTranscoder
         }
         
         // Enlargement check
-        if (!isset($outputDetails->{'no_enlarge'}) || 
-            $outputDetails->{'no_enlarge'} == 'true')
-        {
-            $inputSize       = $inputAssetInfo->{'size'};
-            $inputSizeSplit  = explode("x", $inputSize);
-            $outputSizeSplit = explode("x", $size);
+        // FIXME: Size information in metadata is not the same anymore
+        //        We need to parse the metadata and extract the VIDEO stream
+        /* if (!isset($outputWanted->{'no_enlarge'}) ||  */
+        /*     $outputWanted->{'no_enlarge'} == 'true') */
+        /* { */
+        /*     $inputSize       = $metadata->{'format'}->{'size'}; */
+        /*     $inputSizeSplit  = explode("x", $inputSize); */
+        /*     $outputSizeSplit = explode("x", $size); */
 
-            if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
-                intval($outputSizeSplit[1]) > intval($inputSizeSplit[1])) {
-                            throw new CpeSdk\CpeException(
-                    "Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.",
-                    self::ENLARGEMENT_ERROR
-                );
-            }
-        }
+        /*     if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) || */
+        /*         intval($outputSizeSplit[1]) > intval($inputSizeSplit[1])) { */
+        /*         throw new CpeSdk\CpeException( */
+        /*             "Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.", */
+        /*             self::ENLARGEMENT_ERROR */
+        /*         ); */
+        /*     } */
+        /* } */
 
         return ($size);
     }
@@ -374,14 +410,14 @@ class VideoTranscoder extends BasicTranscoder
         // This way we notify SWF that we are alive !
         call_user_func(array($this->activityObj, 'send_heartbeat'), 
             $this->task);
-
+        
         // # get the current time
         preg_match_all("/time=(.*?) bitrate/", $outErr, $matches); 
 
         $last = array_pop($matches);
         // # this is needed if there is more than one match
         if (is_array($last)) {
-                    $last = array_pop($last);
+            $last = array_pop($last);
         }
 
         // Perform Time transformation to get seconds
@@ -397,7 +433,7 @@ class VideoTranscoder extends BasicTranscoder
         // # finally, progress is easy
         $progress = 0;
         if ($done) {
-                    $progress = round(($done/$duration)*100);
+            $progress = round(($done/$duration)*100);
         }
         
         $this->cpeLogger->log_out(
@@ -408,7 +444,7 @@ class VideoTranscoder extends BasicTranscoder
         );
 
         // Send progress through SQSUtils to notify client of progress
-        $this->activityObj->SQSUtils->activity_progress(
+        $this->cpeSqsWriter->activity_progress(
             $this->task, 
             [
                 "duration" => $duration,
@@ -422,12 +458,12 @@ class VideoTranscoder extends BasicTranscoder
     public function get_preset_values($output_wanted)
     {
         if (!$output_wanted) {
-                    throw new CpeSdk\CpeException("No output data provided to transcoder !",
+            throw new CpeSdk\CpeException("No output data provided to transcoder !",
                 self::NO_OUTPUT);
         }
 
         if (!isset($output_wanted->{"preset"})) {
-                    throw new CpeSdk\CpeException("No preset selected for output !",
+            throw new CpeSdk\CpeException("No preset selected for output !",
                 self::BAD_PRESETS_DIR);
         }
         
@@ -435,12 +471,12 @@ class VideoTranscoder extends BasicTranscoder
         $presetPath = __DIR__ . '/../../../presets/';
 
         if (!($presetContent = file_get_contents($presetPath.$preset.".json"))) {
-                    throw new CpeSdk\CpeException("Can't open preset file !",
+            throw new CpeSdk\CpeException("Can't open preset file !",
                 self::OPEN_PRESET_FAILED);
         }
         
         if (!($decodedPreset = json_decode($presetContent))) {
-                    throw new CpeSdk\CpeException("Bad preset JSON format !",
+            throw new CpeSdk\CpeException("Bad preset JSON format !",
                 self::BAD_PRESET_FORMAT);
         }
         
@@ -451,7 +487,7 @@ class VideoTranscoder extends BasicTranscoder
     public function validate_preset($output)
     {
         if (!isset($output->{"preset"})) {
-                    throw new CpeSdk\CpeException("No preset selected for output !",
+            throw new CpeSdk\CpeException("No preset selected for output !",
                 self::BAD_PRESETS_DIR);
         }
 
@@ -459,7 +495,7 @@ class VideoTranscoder extends BasicTranscoder
         $presetPath = __DIR__ . '/../../../presets/';
         
         if (!($files = scandir($presetPath))) {
-                    throw new CpeSdk\CpeException("Unable to open preset directory '$presetPath' !",
+            throw new CpeSdk\CpeException("Unable to open preset directory '$presetPath' !",
                 self::BAD_PRESETS_DIR);
         }
         
@@ -472,20 +508,20 @@ class VideoTranscoder extends BasicTranscoder
                 if ($preset === pathinfo($presetFile)["filename"])
                 {
                     if (!($presetContent = file_get_contents("$presetPath/$presetFile"))) {
-                                            throw new CpeSdk\CpeException("Can't open preset file '$presetPath/$presetFile'!",
+                        throw new CpeSdk\CpeException("Can't open preset file '$presetPath/$presetFile'!",
                             self::OPEN_PRESET_FAILED);
                     }
                     
                     if (!($decodedPreset = json_decode($presetContent))) {
-                                            throw new CpeSdk\CpeException("Bad preset JSON format '$presetPath/$presetFile'!",
+                        throw new CpeSdk\CpeException("Bad preset JSON format '$presetPath/$presetFile'!",
                             self::BAD_PRESET_FORMAT);
                     }
 
                     # Validate against JSON Schemas
-                    if (($err = validate_json($decodedPreset, "presets.json"))) {
-                                            throw new CpeSdk\CpeException("JSON preset file '$presetPath/$presetFile' invalid! Details:\n".$err,
-                            self::BAD_PRESET_FORMAT);
-                    }
+                    /* if (($err = ($decodedPreset, "presets.json"))) { */
+                    /*     throw new CpeSdk\CpeException("JSON preset file '$presetPath/$presetFile' invalid! Details:\n".$err, */
+                    /*         self::BAD_PRESET_FORMAT); */
+                    /* } */
                     
                     return true;
                 }
@@ -506,26 +542,38 @@ class VideoTranscoder extends BasicTranscoder
     // Execute FFMpeg to get video information
     public function get_asset_info($pathToInputFile)
     {
-        // Execute FFMpeg to validate and get information about input video
-        $out = $this->executer->execute(
-            "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile",
-            1, 
-            array(
-                1 => array("pipe", "w"),
-                2 => array("pipe", "w")
-            ),
-            false, false, 
-            false, 1
-        );
+        $ffprobeCmd = "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile";
+        try {
+            // Execute FFMpeg to validate and get information about input video
+            $out = $this->executer->execute(
+                $ffprobeCmd,
+                1, 
+                array(
+                    1 => array("pipe", "w"),
+                    2 => array("pipe", "w")
+                ),
+                false, false, 
+                false, 1
+            );
+        }
+        catch (\Exception $e) {
+            $this->cpeLogger->log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Execution of command '".$ffprobeCmd."' failed: " . print_r($metadata, true),
+                $this->activityLogKey
+            );
+            return false;
+        }
         
-        if (!$out['outErr'] && !$out['out']) {
-                    throw new CpeSdk\CpeException("Unable to execute FFMpeg to get information about '$pathToInputFile'! FFMpeg didn't return anything!",
+        if (!$out) {
+            throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$pathToInputFile'!",
                 self::EXEC_VALIDATE_FAILED);
         }
         
         // FFmpeg writes on STDERR ...
         if (!($assetInfo = json_decode($out['out']))) {
-                    throw new CpeSdk\CpeException("FFProbe returned invalid JSON!",
+            throw new CpeSdk\CpeException("FFProbe returned invalid JSON!",
                 self::EXEC_VALIDATE_FAILED);
         }
         

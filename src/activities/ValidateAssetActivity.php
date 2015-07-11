@@ -8,6 +8,8 @@
 
 require_once __DIR__.'/BasicActivity.php';
 
+use SA\CpeSdk;
+
 class ValidateAssetActivity extends BasicActivity
 {
     // Perform the activity
@@ -26,7 +28,7 @@ class ValidateAssetActivity extends BasicActivity
         
         // Load the right transcoder base on input_type
         // Get asset detailed info
-        switch ($this->data->{'input_type'}) 
+        switch ($this->input->{'input_asset'}->{'type'}) 
         {
         case self::VIDEO:
             require_once __DIR__.'/transcoders/VideoTranscoder.php';
@@ -35,8 +37,8 @@ class ValidateAssetActivity extends BasicActivity
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
-
-            return ["result" => $assetInfo];
+            
+            return $assetInfo;
         case self::IMAGE:
                 
             break;
@@ -47,9 +49,8 @@ class ValidateAssetActivity extends BasicActivity
                 
             break;
         default:
-            throw new CpeSdk\CpeException("Unknown 'input_type'! Abording ...", 
+            throw new CpeSdk\CpeException("Unknown input asset 'type'! Abording ...", 
                 self::UNKOWN_INPUT_TYPE);
         }
-        
     }
 }

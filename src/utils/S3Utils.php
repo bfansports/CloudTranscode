@@ -11,6 +11,8 @@ use SA\CpeSdk;
 
 class S3Utils
 {
+    public $cpeLogger;
+
     const S3_OPS_FAILED        = "S3_OPS_FAILED";
     const NO_OUTPUT_DATA       = "NO_OUTPUT_DATA";
     
@@ -18,6 +20,13 @@ class S3Utils
     const GET_FROM_S3          = "/../scripts/getFromS3.php";
     const PUT_IN_S3            = "/../scripts/putInS3.php";
     
+    public function __construct($cpeLogger = null)
+    {
+        if (!$cpeLogger)
+            $this->cpeLogger = new CpeSdk\CpeLogger(null, 'S3Utils');
+        $this->cpeLogger = $cpeLogger;
+    }
+
     // Get a file from S3 using external script localted in "scripts" folder
     public function get_file_from_s3(
         $bucket, 
@@ -71,7 +80,7 @@ class S3Utils
     {
         // Use executer to start external S3 script
         // The array request listening to 1 (STDOUT) and 2 (STDERR)
-        $executer = new CommandExecuter();
+        $executer = new CommandExecuter($this->cpeLogger);
         $out = $executer->execute(
             $cmd,
             2,

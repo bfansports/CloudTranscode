@@ -15,6 +15,13 @@ class CommandExecuter
     
     const EXEC_FAILED = "EXEC_FAILED";
     
+    public function __construct($cpeLogger = null)
+    {
+        if (!$cpeLogger)
+            $this->cpeLogger = new CpeSdk\CpeLogger(null, 'CommandExecuter');
+        $this->cpeLogger = $cpeLogger;
+    }
+    
     public function execute(
         $cmd,
         $sleep,
@@ -24,24 +31,23 @@ class CommandExecuter
         $showProgress = false,
         $callbackTurns = 0)
     {
-        $this->cpeLogger = new CpeSdk\CpeLogger();
         $this->cpeLogger->log_out("INFO", basename(__FILE__), "Executing: $cmd");
         
         // Start execution of $cmd
         if (!($process = proc_open($cmd, $descriptors, $pipes)) ||
             !is_resource($process)) {
-                    throw new CpeSdk\CpeException("Unable to execute command:\n$cmd\n",
+            throw new CpeSdk\CpeException("Unable to execute command:\n$cmd\n",
                 self::EXEC_FAILED);
         }
 
         // Set the pipes as non-blocking
         if (isset($descriptors[1]) &&
             $descriptors[1]) {
-                    stream_set_blocking($pipes[1], FALSE);
+            stream_set_blocking($pipes[1], FALSE);
         }
         if (isset($descriptors[2]) &&
             $descriptors[2]) {
-                    stream_set_blocking($pipes[2], FALSE);
+            stream_set_blocking($pipes[2], FALSE);
         }
         
         $i = 0;
@@ -75,7 +81,7 @@ class CommandExecuter
                 $i == $callbackTurns)
             {
                 if ($showProgress) {
-                                    echo ".\n";
+                    echo ".\n";
                 }
 
                 // Call user provided callback.
@@ -102,9 +108,18 @@ class CommandExecuter
             $i++;
             sleep($sleep);
         }
+
+        if ($procStatus['exitcode'] > 0)
+        {
+            $this->cpeLogger->log_out("ERROR", basename(__FILE__), "Can't execute: $cmd. Exit Code: ".$procStatus['exitcode']);
+            if ($allOut)
+                $this->cpeLogger->log_out("ERROR", basename(__FILE__), "COMMAND STDOUT: ".$allOut);
+            if ($allOutErr)
+                $this->cpeLogger->log_out("ERROR", basename(__FILE__), "COMMAND STDERR: ".$allOutErr);
+        }
         
         if ($showProgress) {
-                    echo "\n";
+            echo "\n";
         }
     
         // Process is over

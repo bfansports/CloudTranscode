@@ -8,7 +8,7 @@
 
 > MAJOR PROJECT UPDATE:
 >   - The Framework has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine
->   - This repo only retains the code performing the transcoding which executed by your workers (ActivityPoller).
+>   - This repo only retains the code performing the transcoding which is executed by your workers (ActivityPoller).
 >
 > If you have forked this project, you will need to update your fork.
 

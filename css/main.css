@@ -87,3 +87,6 @@ blockquote p {
     font-size: 14px;
     padding: 10px;
 }
+td,th {
+    padding: 5px 10px;
+}

@@ -2,14 +2,14 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
 
 ## Updates [07/14/2015]
-> Happy Bastille day to my all French Folks<br>
+> Happy Bastille day to all French Folks<br>
 > The documentation has been updated. You should be able to get CT to work by following the doc. <br>
 > The Docker images are being finalized.<br>
 
-Detailed changes:
-   - The Core (Pollers and Decider) has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine
-   - This repo only retains the actual transcoding code executed by your workers.
-
+> MAJOR PROJECT UPDATE:
+>   - The Framework has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine
+>   - This repo only retains the code performing the transcoding which executed by your workers (ActivityPoller).
+>
 > If you have forked this project, you will need to update your fork.
 
 # What is Cloud Transcode ?

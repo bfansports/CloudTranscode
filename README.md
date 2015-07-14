@@ -1,9 +1,10 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
 
-## Updates [07/07/2015]
-> The first major Beta community release is out<br>
-> We've refactor this project to make it more generic and more usable.
+## Updates [07/14/2015]
+> Happy Bastille day to my all French Folks<br>
+> The documentation has been updated. You should be able to get CT to work by following the doc. <br>
+> The Docker images are being finalized.<br>
 
 Detailed changes:
    - The Core (Pollers and Decider) has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine
@@ -29,8 +30,8 @@ Your workers only need an Internet connection to use the required Amazon service
 ## Transcoding supported
 
    - **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
-   - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds.
-   - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency.
+   - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds. Keep image ratio.
+   - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency. Keep image ratio.
 
 We are working to support ALL FFmpeg options.
 

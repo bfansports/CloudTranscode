@@ -77,3 +77,13 @@ body.rtl .row-fluid [class*="span"]:first-child {
 body.rtl ul, body.rtl ol {
     margin: 0 25px 10px 0;
 }
+
+/** SA doc custom **/
+blockquote {
+    border-left: 5px solid #E18020;
+    background-color: #cacaca;
+}
+blockquote p {
+    font-size: 14px;
+    padding: 10px;
+}

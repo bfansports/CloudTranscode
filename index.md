@@ -25,16 +25,20 @@ To use Cloud Transcode you need to reference the activities it provides in your 
 
 ### What can I do with it?
 
-With CT you can run the following tasks at scale:
+With CT you can transcode media files. For now we handle videos only but the stage is set for other type of transcodings.
 
-   - FFProbe: Probe your video assets and gather metadata
-   - FFMpeg: Transcode your video assets to alternative formats, generate thumbnails  
+For Videos, you can run the following tasks at scale:
 
-To execute and orchestrate your transcoding tasks, you must write a workflow Plan that the CPE Decider can interprete. CPE allows you to create workflow Plans that describes your workflow execution. It's a "simple" YAML file that defines your workflow steps and activities that execute them.
+   - **FFProbe:** Probe your video assets and gather metadata
+   - **FFMpeg:** Transcode your video assets to alternative formats, generate thumbnails  
 
-For more information about the Decider plan syntax, see: http://sportarchive.github.io/CloudProcessingEngine-Decider/
+To execute and orchestrate your transcoding tasks, you must write a workflow Plan that can be interpreted by CPE Decider. CPE allows you to create Plans that describes your workflow execution. A Plan is a "simple" YAML file that defines your workflow steps and activities that execute them.
 
-Once the CPE stack is running with your activities, your client applications can start sending transcoding jobs to the CPE stack. 
+For more information about the Decider plan syntax, see the CPE documentation: http://sportarchive.github.io/CloudProcessingEngine/comp/decider.html
+
+Also check the Decider syntax doc: http://sportarchive.github.io/CloudProcessingEngine-Decider/
+
+Once the CPE stack is running with your activities, your client applications can start sending transcoding jobs to the CPE stack. Jobs are sent through AWS SQS using a JSON format that describe the transcoding job you want to perform.
 
 ### Task Tracking
 

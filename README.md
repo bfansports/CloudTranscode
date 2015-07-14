@@ -39,7 +39,7 @@ We are working to support ALL FFmpeg options.
 
 Cloud Transcode is a set of "activities" that are executed by the Cloud Processing Engine (CPE) project. 
 
-CPE you can execute workflows (chain of tasks) in a distributed way using the SWF cloud service. It initiate tasks executions on workers that you deploy. You can deploy your workers anywhere: locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
+With CPE you can execute workflows (chain of tasks) in a distributed way using the SWF cloud service. It initiate tasks executions on workers that you deploy. You can deploy your workers anywhere: locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
 
 CPE allows the execution of arbitrary workflow that you define yourself. CPE is a good fit for any type of orchestrated batch processing that needs to span over several workers.
 

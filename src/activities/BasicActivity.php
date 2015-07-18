@@ -18,7 +18,7 @@ class BasicActivity extends CpeSdk\CpeActivity
   
     // Constants
     const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
-    const UNKOWN_INPUT_TYPE    = "UNKOWN_OUTPUT_TYPE";
+    const UNKOWN_INPUT_TYPE    = "UNKOWN_INPUT_TYPE";
 
     // JSON checks
     const FORMAT_INVALID       = "FORMAT_INVALID";

@@ -14,4 +14,4 @@ $(COMPOSER):
 
 vendor/autoload.php: $(COMPOSER) $(COMPOSER_CONF)
 	$(COMPOSER) self-update
-	$(COMPOSER) install -o --prefer-dist
+	$(COMPOSER) install -o --prefer-dist --ignore-platform-reqs

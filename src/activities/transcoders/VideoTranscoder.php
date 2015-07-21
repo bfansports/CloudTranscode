@@ -243,7 +243,7 @@ class VideoTranscoder extends BasicTranscoder
 
         // Create FFMpeg arguments
         $ffmpegArgs  =  " -i $pathToInputFile -y -threads 0";
-        $ffmpegArgs .= " -s " . $outputWanted->{'size'};
+        $ffmpegArgs .= " -vf scale=" . $outputWanted->{'size'};
         $ffmpegArgs .= " $frameOptions -f image2 -q:v 8";
 
         // Final command
@@ -302,11 +302,9 @@ class VideoTranscoder extends BasicTranscoder
         }
         
         // Format options for FFMpeg
-        $size   = explode('x', $watermarkOptions->{'size'});
-        $width  = $size[0];
-        $height = $size[1];
+        $size      = $watermarkOptions->{'size'};
         $positions = $this->get_watermark_position($watermarkOptions);
-        $formattedOptions = "-vf \"movie=$newWatermarkPath, scale=$width:$height [wm]; [in][wm] overlay=" . $positions['x'] . ':' . $positions['y'] . " [out]\"";
+        $formattedOptions = "-vf \"movie=$newWatermarkPath, scale=$size [wm]; [in][wm] overlay=" . $positions['x'] . ':' . $positions['y'] . " [out]\"";
         
         return ($formattedOptions);
     }

@@ -1,4 +1,4 @@
-FROM sportarc/cloudtranscode-base:latest
+FROM sportarc/cloudprocessingengine-pollers
 MAINTAINER SportArchive, Inc.
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -12,3 +12,6 @@ COPY build.sh /usr/local/bin/build-cloudtranscode.sh
 RUN /usr/local/bin/build-cloudtranscode.sh
 
 COPY src /usr/src/cloudprocessingengine/src/
+
+WORKDIR /usr/src/cloudprocessingengine
+ENTRYPOINT ["/usr/src/cloudprocessingengine/bootstrap.sh"]

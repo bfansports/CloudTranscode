@@ -8,11 +8,9 @@ RUN echo "deb http://httpredir.debian.org/debian stable non-free" >> /etc/apt/so
 
 # Run build script in one step to avoid bloating the image size
 # See: https://www.dajobe.org/blog/2015/04/18/making-debian-docker-images-smaller/
-COPY build.sh /usr/local/bin/build-cloudtranscode.sh
-RUN /usr/local/bin/build-cloudtranscode.sh
-
-COPY src /usr/src/cloudprocessingengine/src/
-WORKDIR /usr/src/cloudprocessingengine
+COPY . /usr/src/cloudtranscode
+RUN /usr/src/cloudtranscode/build.sh
+WORKDIR /usr/src/cloudtranscode
 RUN apt-get update \
     && apt-get install -y git \
     && make \

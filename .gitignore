@@ -7,7 +7,6 @@ vendor/*
 
 # Ignore vendor tree
 composer.phar
-composer.lock
 
 # Ignore any build output
 build/*

@@ -108,26 +108,30 @@ class VideoTranscoder extends BasicTranscoder
                 true, 
                 10
             );
+
+            // Test if we have an output file !
+            if (!file_exists($pathToOutputFiles) || 
+                $this->is_dir_empty($pathToOutputFiles)) {
+                throw new CpeSdk\CpeException(
+                    "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
+                    self::TRANSCODE_FAIL
+                );
+            }
+
+            // FFProbe the output file and return its information
+            $output_info =
+                $this->get_asset_info($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
             $this->cpeLogger->log_out(
                 "ERROR", 
                 basename(__FILE__), 
-                "Execution of command '".$ffmpegCmd."' failed: " . print_r($metadata, true),
+                "Execution of command '".$ffmpegCmd."' failed: " . print_r($metadata, true). ". ".$e->getMessage(),
                 $this->activityLogKey
             );
             return false;
         }
-
-        // Test if we have an output file !
-        if (!file_exists($pathToOutputFiles) || 
-            $this->is_dir_empty($pathToOutputFiles)) {
-            throw new CpeSdk\CpeException(
-                "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
-                self::TRANSCODE_FAIL
-            );
-        }
-    
+        
         // No error. Transcode successful
         $this->cpeLogger->log_out(
             "INFO", 
@@ -135,6 +139,8 @@ class VideoTranscoder extends BasicTranscoder
             "Transcoding successfull !",
             $this->activityLogKey
         );
+
+        return $output_info;
     }
 
     // Generate FFmpeg command for video transcoding

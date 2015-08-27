@@ -39,7 +39,10 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Set output path to store result files
         $this->set_output_path();
-        
+
+        // Result output
+        $result = null;
+
         // Load the right transcoder base on input_type
         // Get asset detailed info
         switch ($this->input->{'input_asset'}->{'type'}) 
@@ -62,12 +65,13 @@ class TranscodeAssetActivity extends BasicActivity
             }
             
             // Perform transcoding
-            $videoTranscoder->transcode_asset(
+            $result = $videoTranscoder->transcode_asset(
                 $this->pathToInputFile,
                 $this->pathToOutputFiles,
                 $this->input->{'input_asset_metadata'}, 
                 $this->output
-            );            
+            );
+
             break;
         case self::IMAGE:
                 
@@ -85,8 +89,8 @@ class TranscodeAssetActivity extends BasicActivity
         
         // Upload resulting file
         $this->upload_result_files($task);
-
-        return null;
+        
+        return $result;
     }
 
     // Upload all output files to destination S3 bucket

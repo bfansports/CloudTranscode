@@ -54,7 +54,8 @@ class TranscodeAssetActivity extends BasicActivity
             $videoTranscoder = new VideoTranscoder($this, $task);
             
             // Check preset file, read its content and add its data to output object
-            if ($this->output->{'type'} == self::VIDEO)
+            if ($this->output->{'type'} == self::VIDEO &&
+                isset($this->output->{'preset'}))
             {
                 // Validate output preset
                 $videoTranscoder->validate_preset($this->output);

@@ -53,9 +53,17 @@ class VideoTranscoder extends BasicTranscoder
             );
 
         $ffmpegCmd = "";
-        
-        // Generate formatted FFMpeg CMD for VIDEO or THUMB output
-        if ($outputWanted->{'type'} == self::VIDEO) {
+
+        // Custom command
+        if (isset($outputWanted->{'custom_cmd'}) &&
+            $outputWanted->{'custom_cmd'}) {
+            $ffmpegCmd = $this->craft_ffmpeg_custom_cmd(
+                $pathToInputFile,
+                $pathToOutputFiles,
+                $metadata, 
+                $outputWanted
+            );
+        } else if ($outputWanted->{'type'} == self::VIDEO) {
             $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
                 $pathToInputFile,
                 $pathToOutputFiles,
@@ -143,6 +151,36 @@ class VideoTranscoder extends BasicTranscoder
         return $output_info;
     }
 
+    // Craft custom command
+    private function craft_ffmpeg_custom_cmd(
+        $pathToInputFile,
+        $pathToOutputFiles,
+        $metadata, 
+        $outputWanted)
+    {
+        $ffmpegCmd = $outputWanted->{'custom_cmd'};
+        
+        // Replace ${input_file} by input file path
+        $ffmpegCmd = preg_replace('/\$\{input_file\}/', $pathToInputFile, $ffmpegCmd);
+        
+        $watermarkOptions = "";
+        // Process options for watermark
+        if (isset($outputWanted->{'watermark'}) && $outputWanted->{'watermark'}) {
+            $watermarkOptions = 
+                $this->get_watermark_options($pathToInputFile,
+                    $outputWanted->{'watermark'});
+            // Replace ${watermark_options} by watermark options
+            $ffmpegCmd = preg_replace('/\$\{watermark_options\}/', $watermarkOptions, $ffmpegCmd);
+        }
+        
+        // Append output filename to path
+        $pathToOutputFiles .= "/" . $outputWanted->{'output_file_info'}['basename'];
+        // Replace ${output_file} by output filename and path to local disk
+        $ffmpegCmd = preg_replace('/\$\{output_file\}/', $pathToOutputFiles, $ffmpegCmd);
+
+        return ($ffmpegCmd);
+    }
+    
     // Generate FFmpeg command for video transcoding
     private function craft_ffmpeg_cmd_video(
         $pathToInputFile,

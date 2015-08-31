@@ -67,13 +67,15 @@ class BasicActivity extends CpeSdk\CpeActivity
     {
         parent::do_activity($task);
         
-        // Create TMP storage to store input file to transcode 
-        $inputFileInfo = pathinfo($this->input->{'input_asset'}->{'file'});
-        
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpPathInput = self::TMP_FOLDER 
             . $task["workflowExecution"]["workflowId"]."/" 
-            . $inputFileInfo['dirname'];
+            . "input";
+        
+        $inputFileInfo = null;
+        // Create TMP storage to store input file to transcode
+        if (isset($this->input->{'input_asset'}->{'file'}))
+            $inputFileInfo = pathinfo($this->input->{'input_asset'}->{'file'});
         
         // Create the tmp folder if doesn't exist
         if (!file_exists($this->tmpPathInput)) 
@@ -89,16 +91,26 @@ class BasicActivity extends CpeSdk\CpeActivity
                     self::TMP_FOLDER_FAIL
                 );
         }
-        
-        // Download input file and store it in TMP folder
-        $saveFileTo = $this->tmpPathInput."/".$inputFileInfo['basename'];
-        $this->pathToInputFile = 
-            $this->get_file_to_process(
-                $task, 
-                $this->input->{'input_asset'}->{'bucket'},
-                $this->input->{'input_asset'}->{'file'},
-                $saveFileTo
-            );
+            
+        $this->pathToInputFile = null;
+        if (isset($this->input->{'input_asset'}->{'bucket'}) &&
+            isset($this->input->{'input_asset'}->{'file'}))
+        {
+            // Download input file and store it in TMP folder
+            $saveFileTo = $this->tmpPathInput."/".$inputFileInfo['basename'];
+            $this->pathToInputFile = 
+                $this->get_file_to_process(
+                    $task, 
+                    $this->input->{'input_asset'}->{'bucket'},
+                    $this->input->{'input_asset'}->{'file'},
+                    $saveFileTo
+                );
+        }
+        else if ($this->input->{'input_asset'}->{'http'})
+        {
+            // HTPP input instead of file in bucket
+            $this->pathToInputFile = $this->input->{'input_asset'}->{'http'};
+        }
     }
     
     /**

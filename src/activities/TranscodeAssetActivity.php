@@ -38,7 +38,7 @@ class TranscodeAssetActivity extends BasicActivity
         parent::do_activity($task);
         
         // Set output path to store result files
-        $this->set_output_path();
+        $this->set_output_path($task);
 
         // Result output
         $result = null;
@@ -67,6 +67,7 @@ class TranscodeAssetActivity extends BasicActivity
             
             // Perform transcoding
             $result = $videoTranscoder->transcode_asset(
+                $this->tmpPathInput,
                 $this->pathToInputFile,
                 $this->pathToOutputFiles,
                 $this->input->{'input_asset_metadata'}, 
@@ -149,16 +150,20 @@ class TranscodeAssetActivity extends BasicActivity
                 $s3Output['msg'],
                 $this->activityLogKey);
         }
+
+        
     }
 
-    private function set_output_path()
+    private function set_output_path($task)
     {
+        $this->pathToOutputFiles = self::TMP_FOLDER 
+            . $task["workflowExecution"]["workflowId"]."/output/" 
+            . $this->activityId;
+        
         // Create TMP folder for output files
         $outputFileInfo = pathinfo($this->output->{'file'});
         $this->output->{'output_file_info'} = $outputFileInfo;
-        $this->pathToOutputFiles = $this->tmpPathInput."/output/" 
-            . $this->activityId
-            . "/".$outputFileInfo['dirname'];
+        $this->pathToOutputFiles .= "/".$outputFileInfo['dirname'];
         
         if (!file_exists($this->pathToOutputFiles)) 
         {

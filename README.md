@@ -1,16 +1,9 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
 
-## Updates [07/14/2015]
-> Happy Bastille day to all French Folks<br>
-> The documentation has been updated. You should be able to get CT to work by following the doc. <br>
-> The Docker images are being finalized.<br>
-
-> MAJOR PROJECT UPDATE:
->   - The Framework has moved out of this repo to the CPE project: https://github.com/sportarchive/CloudProcessingEngine
->   - This repo only retains the code performing the transcoding which is executed by your workers (ActivityPoller).
->
-> If you have forked this project, you will need to update your fork.
+## Updates [08/31/2015]
+> CT now supports arbitrary FFMpeg commands. So you can craft pretty much any command you'd like.<br>
+> It also supports HTTP/HTTPS input file now. So you can now probe and transcode files hosted on any webserver.
 
 # What is Cloud Transcode ?
 Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.

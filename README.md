@@ -3,7 +3,7 @@
 
 ## Updates [08/31/2015]
 > CT now supports arbitrary FFMpeg commands. So you can craft pretty much any command you'd like.<br>
-> It also supports HTTP/HTTPS input file now. So you can now probe and transcode files hosted on any webserver.
+> It also supports HTTP/HTTPS input file now. So you can probe and transcode files hosted on any webserver and save precious downloading and processing time. pretty cool :) See: http://wistia.com/blog/faster-thumbnail-extraction-ffmpeg
 
 # What is Cloud Transcode ?
 Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.

@@ -41,6 +41,7 @@ class VideoTranscoder extends BasicTranscoder
 
     // Start FFmpeg for output transcoding
     public function transcode_asset(
+        $tmpPathInput,
         $pathToInputFile, 
         $pathToOutputFiles,
         $metadata = null, 
@@ -53,10 +54,20 @@ class VideoTranscoder extends BasicTranscoder
             );
 
         $ffmpegCmd = "";
-        
-        // Generate formatted FFMpeg CMD for VIDEO or THUMB output
-        if ($outputWanted->{'type'} == self::VIDEO) {
+
+        // Custom command
+        if (isset($outputWanted->{'custom_cmd'}) &&
+            $outputWanted->{'custom_cmd'}) {
+            $ffmpegCmd = $this->craft_ffmpeg_custom_cmd(
+                $tmpPathInput,
+                $pathToInputFile,
+                $pathToOutputFiles,
+                $metadata, 
+                $outputWanted
+            );
+        } else if ($outputWanted->{'type'} == self::VIDEO) {
             $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
+                $tmpPathInput,
                 $pathToInputFile,
                 $pathToOutputFiles,
                 $metadata, 
@@ -64,6 +75,7 @@ class VideoTranscoder extends BasicTranscoder
             );
         } else if ($outputWanted->{'type'} == self::THUMB) {
             $ffmpegCmd = $this->craft_ffmpeg_cmd_thumb(
+                $tmpPathInput,
                 $pathToInputFile,
                 $pathToOutputFiles,
                 $metadata, 
@@ -143,8 +155,41 @@ class VideoTranscoder extends BasicTranscoder
         return $output_info;
     }
 
+    // Craft custom command
+    private function craft_ffmpeg_custom_cmd(
+        $tmpPathInput,
+        $pathToInputFile,
+        $pathToOutputFiles,
+        $metadata, 
+        $outputWanted)
+    {
+        $ffmpegCmd = $outputWanted->{'custom_cmd'};
+        
+        // Replace ${input_file} by input file path
+        $ffmpegCmd = preg_replace('/\$\{input_file\}/', $pathToInputFile, $ffmpegCmd);
+        
+        $watermarkOptions = "";
+        // Process options for watermark
+        if (isset($outputWanted->{'watermark'}) && $outputWanted->{'watermark'}) {
+            $watermarkOptions = 
+                $this->get_watermark_options(
+                    $tmpPathInput,
+                    $outputWanted->{'watermark'});
+            // Replace ${watermark_options} by watermark options
+            $ffmpegCmd = preg_replace('/\$\{watermark_options\}/', $watermarkOptions, $ffmpegCmd);
+        }
+        
+        // Append output filename to path
+        $pathToOutputFiles .= "/" . $outputWanted->{'output_file_info'}['basename'];
+        // Replace ${output_file} by output filename and path to local disk
+        $ffmpegCmd = preg_replace('/\$\{output_file\}/', $pathToOutputFiles, $ffmpegCmd);
+
+        return ($ffmpegCmd);
+    }
+    
     // Generate FFmpeg command for video transcoding
     private function craft_ffmpeg_cmd_video(
+        $tmpPathInput,
         $pathToInputFile,
         $pathToOutputFiles,
         $metadata, 
@@ -188,7 +233,8 @@ class VideoTranscoder extends BasicTranscoder
         // Process options for watermark
         if (isset($outputWanted->{'watermark'}) && $outputWanted->{'watermark'}) {
             $watermarkOptions = 
-                $this->get_watermark_options($pathToInputFile,
+                $this->get_watermark_options(
+                    $tmpPathInput,
                     $outputWanted->{'watermark'});
         }
         
@@ -213,6 +259,7 @@ class VideoTranscoder extends BasicTranscoder
     
     // Craft FFMpeg command to generate thumbnails
     private function craft_ffmpeg_cmd_thumb(
+        $tmpPathInput,
         $pathToInputFile,
         $pathToOutputFiles,
         $metadata, 
@@ -234,7 +281,8 @@ class VideoTranscoder extends BasicTranscoder
             $time = gmdate("H:i:s", $snapshot_sec) . ".000";
             $pathToOutputFiles .= "/" . $outputFileInfo['basename'];
             $frameOptions = " -ss $time -vframes 1";
-        } else if ($outputWanted->{'mode'} == 'intervals')
+        }
+        else if ($outputWanted->{'mode'} == 'intervals')
         {
             $intervals = self::INTERVALS_DEFAULT;
             if (isset($outputWanted->{'intervals'}) &&
@@ -260,14 +308,13 @@ class VideoTranscoder extends BasicTranscoder
 
     // Get watermark info to generate overlay options for ffmpeg
     private function get_watermark_options(
-        $pathToVideo,
+        $tmpPathInput,
         $watermarkOptions)
     {
         // Get info about the video in order to save the watermark in same location
-        $videoFileInfo     = pathinfo($pathToVideo);
         $watermarkFileInfo = pathinfo($watermarkOptions->{'file'});
-        $watermarkPath     = $videoFileInfo['dirname']."/".$watermarkFileInfo['basename'];
-        $newWatermarkPath  = $videoFileInfo['dirname']."/new-".$watermarkFileInfo['basename'];
+        $watermarkPath     = $tmpPathInput."/".$watermarkFileInfo['basename'];
+        $newWatermarkPath  = $tmpPathInput."/new-".$watermarkFileInfo['basename'];
         
         // Get watermark image from S3
         $s3Output = $this->s3Utils->get_file_from_s3(

@@ -35,9 +35,9 @@ class BasicActivity extends CpeSdk\CpeActivity
     // This is where we store temporary files for transcoding
     const TMP_FOLDER = "/tmp/CloudTranscode/";
     
-    public function __construct($params, $debug)
+    public function __construct($params, $debug, $cpeLogger = null)
     {
-        parent::__construct($params, $debug);
+        parent::__construct($params, $debug, $cpeLogger);
         
         // S3 utils
         $this->s3Utils = new S3Utils($this->cpeLogger);

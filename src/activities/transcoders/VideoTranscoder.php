@@ -166,6 +166,7 @@ class VideoTranscoder extends BasicTranscoder
         $ffmpegCmd = $outputWanted->{'custom_cmd'};
         
         // Replace ${input_file} by input file path
+        $pathToInputFile = escapeshellarg($pathToInputFile);
         $ffmpegCmd = preg_replace('/\$\{input_file\}/', $pathToInputFile, $ffmpegCmd);
         
         $watermarkOptions = "";
@@ -197,6 +198,7 @@ class VideoTranscoder extends BasicTranscoder
     {
         // Check if a size is provided to override preset size
         $size = $this->set_output_video_size($metadata, $outputWanted);
+        $pathToInputFile = escapeshellarg($pathToInputFile);
         
         $videoCodec = $outputWanted->{'preset_values'}->{'video_codec'};
         if (isset($outputWanted->{'video_codec'})) {
@@ -270,6 +272,7 @@ class VideoTranscoder extends BasicTranscoder
 
         $frameOptions   = "";
         $outputFileInfo = pathinfo($outputWanted->{'file'});
+        $pathToInputFile = escapeshellarg($pathToInputFile);
         if ($outputWanted->{'mode'} == 'snapshot')
         {
             $snapshot_sec = self::SNAPSHOT_SEC_DEFAULT;
@@ -593,6 +596,7 @@ class VideoTranscoder extends BasicTranscoder
     // Execute FFMpeg to get video information
     public function get_asset_info($pathToInputFile)
     {
+        $pathToInputFile = escapeshellarg($pathToInputFile);
         $ffprobeCmd = "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile";
         try {
             // Execute FFMpeg to validate and get information about input video

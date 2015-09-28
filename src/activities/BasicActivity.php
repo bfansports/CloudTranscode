@@ -9,6 +9,7 @@ require_once __DIR__."/../../vendor/autoload.php";
 require_once __DIR__.'/../utils/S3Utils.php';
 
 use SA\CpeSdk;
+use Aws\S3\S3Client;
 
 class BasicActivity extends CpeSdk\CpeActivity
 {
@@ -96,20 +97,17 @@ class BasicActivity extends CpeSdk\CpeActivity
         if (isset($this->input->{'input_asset'}->{'bucket'}) &&
             isset($this->input->{'input_asset'}->{'file'}))
         {
-            // Download input file and store it in TMP folder
-            $saveFileTo = $this->tmpPathInput."/".$inputFileInfo['basename'];
-            $this->pathToInputFile = 
-                $this->get_file_to_process(
-                    $task, 
-                    $this->input->{'input_asset'}->{'bucket'},
-                    $this->input->{'input_asset'}->{'file'},
-                    $saveFileTo
-                );
+            // Make pre-signed URL so ffmpeg has access to file
+            $this->pathToInputFile = 'cache:' .
+                S3Client::factory()->getCommand('GetObject', [
+                    'Bucket' => $this->input->{'input_asset'}->{'bucket'},
+                    'Key' => $this->input->{'input_asset'}->{'file'}
+                ])->createPresignedUrl('+1 day');
         }
         else if ($this->input->{'input_asset'}->{'http'})
         {
-            // HTPP input instead of file in bucket
-            $this->pathToInputFile = $this->input->{'input_asset'}->{'http'};
+            // Pad HTTP input so it is cached in case of full encodes
+            $this->pathToInputFile = 'cache:' . $this->input->{'input_asset'}->{'http'};
         }
     }
     

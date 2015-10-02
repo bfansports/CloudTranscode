@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "2.8.19",
+            "version": "2.8.21",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "282aa6e96275c49fcc363429297ddc1ba006c42a"
+                "reference": "92642ca4906e6681a1301971cf41500d7c68581c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/282aa6e96275c49fcc363429297ddc1ba006c42a",
-                "reference": "282aa6e96275c49fcc363429297ddc1ba006c42a",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/92642ca4906e6681a1301971cf41500d7c68581c",
+                "reference": "92642ca4906e6681a1301971cf41500d7c68581c",
                 "shasum": ""
             },
             "require": {
@@ -67,7 +67,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2015-08-20 23:04:59"
+            "time": "2015-09-17 00:17:24"
         },
         {
             "name": "guzzle/guzzle",
@@ -236,12 +236,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sportarchive/CloudProcessingEngine-SDK.git",
-                "reference": "37fa0a5b507f6934e0cd03099ec0469ac3dcd5d3"
+                "reference": "66bbda0c9cab698f89daf8c4ad8dd71846db23f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/37fa0a5b507f6934e0cd03099ec0469ac3dcd5d3",
-                "reference": "37fa0a5b507f6934e0cd03099ec0469ac3dcd5d3",
+                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/66bbda0c9cab698f89daf8c4ad8dd71846db23f2",
+                "reference": "66bbda0c9cab698f89daf8c4ad8dd71846db23f2",
                 "shasum": ""
             },
             "require": {
@@ -270,20 +270,20 @@
                 "Cloud Processing Engine",
                 "Cloud Transcode"
             ],
-            "time": "2015-08-03 20:41:27"
+            "time": "2015-09-02 21:59:59"
         },
         {
             "name": "symfony/event-dispatcher",
-            "version": "v2.7.3",
+            "version": "v2.7.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/EventDispatcher.git",
-                "reference": "9310b5f9a87ec2ea75d20fec0b0017c77c66dac3"
+                "url": "https://github.com/symfony/event-dispatcher.git",
+                "reference": "ae4dcc2a8d3de98bd794167a3ccda1311597c5d9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/9310b5f9a87ec2ea75d20fec0b0017c77c66dac3",
-                "reference": "9310b5f9a87ec2ea75d20fec0b0017c77c66dac3",
+                "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/ae4dcc2a8d3de98bd794167a3ccda1311597c5d9",
+                "reference": "ae4dcc2a8d3de98bd794167a3ccda1311597c5d9",
                 "shasum": ""
             },
             "require": {
@@ -328,7 +328,7 @@
             ],
             "description": "Symfony EventDispatcher Component",
             "homepage": "https://symfony.com",
-            "time": "2015-06-18 19:21:56"
+            "time": "2015-09-22 13:49:29"
         }
     ],
     "packages-dev": [],

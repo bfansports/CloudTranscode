@@ -35,6 +35,9 @@ class BasicActivity extends CpeSdk\CpeActivity
     // Nico: Expensive though.
     // This is where we store temporary files for transcoding
     const TMP_FOLDER = "/tmp/CloudTranscode/";
+
+    /** @var \Aws\S3\S3Client */
+    private $s3;
     
     public function __construct($params, $debug, $cpeLogger = null)
     {
@@ -42,6 +45,7 @@ class BasicActivity extends CpeSdk\CpeActivity
         
         // S3 utils
         $this->s3Utils = new S3Utils($this->cpeLogger);
+        $this->s3 = S3Client::factory();
     }
 
     /**
@@ -99,7 +103,7 @@ class BasicActivity extends CpeSdk\CpeActivity
         {
             // Make pre-signed URL so ffmpeg has access to file
             $this->pathToInputFile = 'cache:' .
-                S3Client::factory()->getCommand('GetObject', [
+                $this->s3->getCommand('GetObject', [
                     'Bucket' => $this->input->{'input_asset'}->{'bucket'},
                     'Key' => $this->input->{'input_asset'}->{'file'}
                 ])->createPresignedUrl('+1 day');

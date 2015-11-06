@@ -46,7 +46,7 @@ class ValidateAssetActivity extends BasicActivity
 
         // Determine file type
         $mime = $this->finfo->buffer($obj['Body']);
-        $type = substr($mine, 0, strpos($mime, '/'));
+        $type = substr($mime, 0, strpos($mime, '/'));
 
         // Load the right transcoder base on input_type
         // Get asset detailed info
@@ -62,8 +62,8 @@ class ValidateAssetActivity extends BasicActivity
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
-            $assetInfo['mime'] = $mime;
-            $assetInfo['type'] = $type;
+            $assetInfo->mime = $mime;
+            $assetInfo->type = $type;
 
             return $assetInfo;
         }

@@ -39,7 +39,7 @@ class ValidateAssetActivity extends BasicActivity
         $this->send_heartbeat($task);
         $obj = $this->s3->getObject([
             'Bucket' => $this->input->{'input_asset'}->{'bucket'},
-            'Key' => $this->input->{'input_asset'}->{'key'},
+            'Key' => $this->input->{'input_asset'}->{'file'},
             'Range' => '0-1024'
         ]);
         $this->send_heartbeat($task);

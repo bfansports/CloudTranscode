@@ -37,7 +37,7 @@ class BasicActivity extends CpeSdk\CpeActivity
     const TMP_FOLDER = "/tmp/CloudTranscode/";
 
     /** @var \Aws\S3\S3Client */
-    private $s3;
+    protected $s3;
     
     public function __construct($params, $debug, $cpeLogger = null)
     {

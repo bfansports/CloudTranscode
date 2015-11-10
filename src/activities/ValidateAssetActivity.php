@@ -48,6 +48,13 @@ class ValidateAssetActivity extends BasicActivity
         $mime = $this->finfo->buffer($obj['Body']);
         $type = substr($mime, 0, strpos($mime, '/'));
 
+        $this->cpeLogger->log_out(
+            "DEBUG",
+            basename(__FILE__),
+            "File meta information gathered. Mime: $mime | Type: $type",
+            $this->activityLogKey
+        );
+
         // Load the right transcoder base on input_type
         // Get asset detailed info
         switch ($type)

@@ -45,7 +45,10 @@ class ValidateAssetActivity extends BasicActivity
         $this->send_heartbeat($task);
 
         // Determine file type
-        $mime = $this->finfo->buffer($obj['Body']);
+        $tmpFile = tempname(sys_get_temp_dir(), 'ct');
+        file_put_contents($tmpFile, $obj['Body']);
+        $mime = trim((new CommandExecuter($this->cpeLogger))->execute(
+            'file -b --mime-type ' . escapeshellarg($tmpFile))['out']);
         $type = substr($mime, 0, strpos($mime, '/'));
 
         $this->cpeLogger->log_out(

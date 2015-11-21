@@ -1,13 +1,10 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
 
-## Updates [10/02/2015]
-> CT now uses HTTP/HTTPS protocol by default. It also makes use of the cache option in FFMpeg. 
-> This means that on a two pass encode, the file is downloaded only once from http.
-> FFProbe is also done through HTTP.
-> So probing and transcoding files is now much faster! pretty cool :) HTTP and FFMpeg article: http://wistia.com/blog/faster-thumbnail-extraction-ffmpeg
+## Updates [11/20/2015]
+> We're looking for someone interested to help on this project. If you know FFmpeg by heart and AWS services at the tip of your fingers, let's talk! 
 >
-> Coming up: Images transcoding!
+> We can pay for your services. 
 
 # What is Cloud Transcode ?
 Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.

@@ -24,10 +24,13 @@ class CommandExecuter
     
     public function execute(
         $cmd,
-        $sleep,
-        $descriptors,
-        $progressCallback,
-        $progressCallbackParams,
+        $sleep = 1,
+        $descriptors = array(
+            1 => array("pipe", "w"),
+            2 => array("pipe", "w")
+        ),
+        $progressCallback = null,
+        $progressCallbackParams = null,
         $showProgress = false,
         $callbackTurns = 0)
     {

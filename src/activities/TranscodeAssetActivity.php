@@ -74,6 +74,8 @@ class TranscodeAssetActivity extends BasicActivity
                 $this->output
             );
 
+            unset($videoTranscoder);
+
             break;
         case self::IMAGE:
                 
@@ -150,8 +152,6 @@ class TranscodeAssetActivity extends BasicActivity
                 $s3Output['msg'],
                 $this->activityLogKey);
         }
-
-        
     }
 
     private function set_output_path($task)

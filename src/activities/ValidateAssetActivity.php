@@ -40,7 +40,7 @@ class ValidateAssetActivity extends BasicActivity
         $obj = $this->s3->getObject([
             'Bucket' => $this->input->{'input_asset'}->{'bucket'},
             'Key' => $this->input->{'input_asset'}->{'file'},
-            'Range' => '0-1024'
+            'Range' => '0-10240'
         ]);
         $this->send_heartbeat($task);
 
@@ -74,6 +74,9 @@ class ValidateAssetActivity extends BasicActivity
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
             $assetInfo->mime = $mime;
             $assetInfo->type = $type;
+
+            // Liberate memory
+            unset($videoTranscoder);
 
             return $assetInfo;
         }

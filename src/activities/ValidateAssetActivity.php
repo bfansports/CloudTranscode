@@ -8,6 +8,7 @@
 
 require_once __DIR__.'/BasicActivity.php';
 
+use Guzzle\Http\EntityBody;
 use SA\CpeSdk;
 
 class ValidateAssetActivity extends BasicActivity
@@ -30,23 +31,24 @@ class ValidateAssetActivity extends BasicActivity
             "Preparing Asset validation ...",
             $this->activityLogKey
         );
+        print "fuk u\n";
 
         // Call parent do_activity:
         // It download the input file we will process.
         parent::do_activity($task);
-
+        
         // Fetch first 1 KiB of file
         $this->send_heartbeat($task);
+        $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
         $obj = $this->s3->getObject([
             'Bucket' => $this->input->{'input_asset'}->{'bucket'},
             'Key' => $this->input->{'input_asset'}->{'file'},
-            'Range' => '0-10240'
+            'Range' => 'bytes=0-1024'
         ]);
         $this->send_heartbeat($task);
 
         // Determine file type
-        $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
-        file_put_contents($tmpFile, $obj['Body']);
+        file_put_contents($tmpFile, (string) $obj['Body']);
         $mime = trim((new CommandExecuter($this->cpeLogger))->execute(
             'file -b --mime-type ' . escapeshellarg($tmpFile))['out']);
         $type = substr($mime, 0, strpos($mime, '/'));

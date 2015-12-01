@@ -31,7 +31,6 @@ class ValidateAssetActivity extends BasicActivity
             "Preparing Asset validation ...",
             $this->activityLogKey
         );
-        print "fuk u\n";
 
         // Call parent do_activity:
         // It download the input file we will process.

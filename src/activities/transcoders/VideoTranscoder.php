@@ -39,6 +39,8 @@ class VideoTranscoder extends BasicTranscoder
      * Below is the code used to transcode videos based on the JSON format
      **********************/
 
+    // $metadata should contain the ffprobe video stream array.
+
     // Start FFmpeg for output transcoding
     public function transcode_asset(
         $tmpPathInput,
@@ -116,7 +118,7 @@ class VideoTranscoder extends BasicTranscoder
                 1, 
                 array(2 => array("pipe", "w")),
                 array($this, "capture_progression"), 
-                $metadata->{'format'}->{'duration'}, 
+                $metadata->{'duration'}, 
                 true, 
                 10
             );
@@ -409,7 +411,7 @@ class VideoTranscoder extends BasicTranscoder
 
     // Verify Ratio and Size of output file to ensure it respect restrictions
     // Return the output video size
-    private function set_output_video_size($metadata, $outputWanted)
+    private function set_output_video_size(&$metadata, $outputWanted)
     {
         // Handle video size
         $size = $outputWanted->{'preset_values'}->{'size'};
@@ -436,21 +438,25 @@ class VideoTranscoder extends BasicTranscoder
         // Enlargement check
         // FIXME: Size information in metadata is not the same anymore
         //        We need to parse the metadata and extract the VIDEO stream
-        /* if (!isset($outputWanted->{'no_enlarge'}) ||  */
-        /*     $outputWanted->{'no_enlarge'} == 'true') */
-        /* { */
-        /*     $inputSize       = $metadata->{'format'}->{'size'}; */
-        /*     $inputSizeSplit  = explode("x", $inputSize); */
-        /*     $outputSizeSplit = explode("x", $size); */
+        if (!isset($outputWanted->{'allow_upscale'}) ||
+            $outputWanted->{'allow_upscale'} == 'false')
+        {
+            $metadata->{'size'} = $metadata->width . 'x' . $metadata->height;
+            $inputSize       = $metadata->{'size'};
+            $inputSizeSplit  = explode("x", $inputSize);
+            $outputSizeSplit = explode("x", $size);
 
-        /*     if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) || */
-        /*         intval($outputSizeSplit[1]) > intval($inputSizeSplit[1])) { */
-        /*         throw new CpeSdk\CpeException( */
-        /*             "Output video size is larger than input video: input_size: '$inputSize' / output_size: '$size'. 'no_enlarge' option is enabled (default). Disable it to allow enlargement.", */
-        /*             self::ENLARGEMENT_ERROR */
-        /*         ); */
-        /*     } */
-        /* } */
+            if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
+                intval($outputSizeSplit[1]) > intval($inputSizeSplit[1])) {
+                $this->cpeLogger->log_out(
+                    "INFO", 
+                    basename(__FILE__), 
+                    "Requested transcode size is bigger than the original. `allow_upscale` option not provided",
+                    $this->activityLogKey
+                );
+                $size = $metadata->{'size'};
+            }
+        }
 
         return ($size);
     }

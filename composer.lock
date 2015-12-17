@@ -237,12 +237,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sportarchive/CloudProcessingEngine-SDK.git",
-                "reference": "90431d8831fca39d2d000454f14999083ac0c4f8"
+                "reference": "93d9f0fe2c3b7f33f91a5ead07477292aab48c4c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/90431d8831fca39d2d000454f14999083ac0c4f8",
-                "reference": "90431d8831fca39d2d000454f14999083ac0c4f8",
+                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/93d9f0fe2c3b7f33f91a5ead07477292aab48c4c",
+                "reference": "93d9f0fe2c3b7f33f91a5ead07477292aab48c4c",
                 "shasum": ""
             },
             "require": {
@@ -271,7 +271,7 @@
                 "Cloud Processing Engine",
                 "Cloud Transcode"
             ],
-            "time": "2015-12-17 18:48:46"
+            "time": "2015-12-17 19:36:12"
         },
         {
             "name": "symfony/event-dispatcher",

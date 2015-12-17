@@ -147,7 +147,9 @@ class TranscodeAssetActivity extends BasicActivity
                 array($this, "s3_put_processing_callback"), 
                 $task
             );
-        
+            // We delete the TMP file once uploaded
+            unlink("$this->pathToOutputFiles/$entry");
+            
             $this->cpeLogger->log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $this->activityLogKey);

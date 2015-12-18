@@ -49,7 +49,7 @@ class ValidateAssetActivity extends BasicActivity
         // Determine file type
         file_put_contents($tmpFile, (string) $obj['Body']);
         $mime = trim((new CommandExecuter($this->cpeLogger))->execute(
-            'file -b --mime-type ' . escapeshellarg($tmpFile))['out']);
+            'mimetype -b ' . escapeshellarg($tmpFile))['out']);
         $type = substr($mime, 0, strpos($mime, '/'));
 
         $this->cpeLogger->log_out(

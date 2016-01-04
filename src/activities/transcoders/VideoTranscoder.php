@@ -54,6 +54,8 @@ class VideoTranscoder extends BasicTranscoder
                 "NO Input Video metadata! We can't transcode an asset without probing it first. Use ValidateAsset activity to probe it and pass a 'metadata' field containing the input metadata to this TranscodeAsset activity.",
                 self::TRANSCODE_FAIL
             );
+        // Extract an sanitize metadata
+        $metadata = $this->_extractFileInfo($metadata);
 
         $ffmpegCmd = "";
 
@@ -118,7 +120,7 @@ class VideoTranscoder extends BasicTranscoder
                 1, 
                 array(2 => array("pipe", "w")),
                 array($this, "capture_progression"), 
-                $metadata->{'duration'}, 
+                $metadata['duration'], 
                 true, 
                 10
             );
@@ -436,15 +438,13 @@ class VideoTranscoder extends BasicTranscoder
         }
         
         // Enlargement check
-        // FIXME: Size information in metadata is not the same anymore
-        //        We need to parse the metadata and extract the VIDEO stream
         if (!isset($outputWanted->{'allow_upscale'}) ||
             $outputWanted->{'allow_upscale'} == 'false')
         {
-            $metadata->{'size'} = $metadata->width . 'x' . $metadata->height;
-            $inputSize       = $metadata->{'size'};
-            $inputSizeSplit  = explode("x", $inputSize);
-            $outputSizeSplit = explode("x", $size);
+            $metadata['size'] = $metadata['video']['resolution'];
+            $inputSize        = $metadata['size'];
+            $inputSizeSplit   = explode("x", $inputSize);
+            $outputSizeSplit  = explode("x", $size);
 
             if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
                 intval($outputSizeSplit[1]) > intval($inputSizeSplit[1])) {
@@ -454,7 +454,7 @@ class VideoTranscoder extends BasicTranscoder
                     "Requested transcode size is bigger than the original. `allow_upscale` option not provided",
                     $this->activityLogKey
                 );
-                $size = $metadata->{'size'};
+                $size = $metadata['size'];
             }
         }
 
@@ -591,7 +591,44 @@ class VideoTranscoder extends BasicTranscoder
         throw new CpeSdk\CpeException("Unkown preset file '$preset' !",
             self::UNKNOWN_PRESET);
     }
-    
+
+    // Extract Metadata from ffprobe
+    private function _extractFileInfo($metadata) {
+
+        $videoStreams;
+        $audioStreams;
+
+        foreach ($metadata->streams as $key => $value) {
+            if ($value->codec_type === 'video') {
+                $videoStreams = $value;
+            }
+            else if ($value->codec_type === 'audio') {
+                $audioStreams = $value;
+            }
+        }
+
+        $analyse = [
+            'duration' => isset($metadata->format->duration) ? (float)$metadata->format->duration : 0,
+            'video' => empty($videoStreams) ? null : [
+                'codec' => $videoStreams->codec_name,
+                'color' => $videoStreams->color_space,
+                'resolution' => $videoStreams->width . 'x' . $videoStreams->height,
+                'sar' => $videoStreams->sample_aspect_ratio,
+                'dar' => $videoStreams->display_aspect_ratio,
+                'framerate' => $videoStreams->r_frame_rate,
+                'bitrate' => isset($videoStreams->bit_rate) ? (int)$videoStreams->bit_rate : null
+            ],
+            'audio' => empty($audioStreams) ? null : [
+                'codec' => $audioStreams->codec_name,
+                'frequency' => $audioStreams->sample_rate,
+                'channels' => (int)$audioStreams->channels,
+                'depth' => $audioStreams->bits_per_sample,
+                'bitrate' => (int)$audioStreams->bit_rate
+            ]
+        ];
+
+        return $analyse;
+    }
     
     /**************************************
      * GET VIDEO INFORMATION AND VALIDATION

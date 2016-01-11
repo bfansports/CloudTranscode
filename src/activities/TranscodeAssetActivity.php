@@ -64,13 +64,18 @@ class TranscodeAssetActivity extends BasicActivity
                 $this->output->{'preset_values'} =
                     $videoTranscoder->get_preset_values($this->output);
             }
-            
+
+            # If we have metadata, we expect the output of ffprobe
+            $metadata = null;
+            if (isset($this->input->{'input_asset_metadata'})) 
+                $metadata = $this->input->{'input_asset_metadata'};
+                
             // Perform transcoding
             $result = $videoTranscoder->transcode_asset(
                 $this->tmpPathInput,
                 $this->pathToInputFile,
                 $this->pathToOutputFiles,
-                $this->input->{'input_asset_metadata'}, 
+                $metadata, 
                 $this->output
             );
 
@@ -78,6 +83,26 @@ class TranscodeAssetActivity extends BasicActivity
 
             break;
         case self::IMAGE:
+            require_once __DIR__.'/transcoders/ImageTranscoder.php';
+            
+            // Instanciate transcoder to output Images
+            $imageTranscoder = new ImageTranscoder($this, $task);
+
+            # If we have metadata, we expect the output of ffprobe
+            $metadata = null;
+            if (isset($this->input->{'input_asset_metadata'})) 
+                $metadata = $this->input->{'input_asset_metadata'};
+            
+            // Perform transcoding
+            $result = $videoTranscoder->transcode_asset(
+                $this->tmpPathInput,
+                $this->pathToInputFile,
+                $this->pathToOutputFiles,
+                $metadata, 
+                $this->output
+            );
+            
+            unset($imageTranscoder);
                 
             break;
         case self::AUDIO:

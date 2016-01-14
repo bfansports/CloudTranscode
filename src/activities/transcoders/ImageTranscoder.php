@@ -32,12 +32,6 @@ class ImageTranscoder extends BasicTranscoder
             // Extract an sanitize metadata
             $metadata = $this->_extractFileInfo($metadata);
         }
-        $this->cpeLogger->log_out(
-            "INFO",
-            basename(__FILE__),
-            "CONVERT CMD:\n$convertCmd\n",
-            $this->activityLogKey
-        );
 
         $this->cpeLogger->log_out(
             "INFO", 
@@ -55,12 +49,18 @@ class ImageTranscoder extends BasicTranscoder
             );
 
         try {
-            $convertCmd = "convert ";
+            $convertCmd = "";
 
+            // Update output extension file if it ends with '.*'
+            // Output will take the same extension as input
+            $this->_updateOutputExtension(
+                $pathToInputFile,
+                $outputWanted);
+            
             // Custom command
             if (isset($outputWanted->{'custom_cmd'}) &&
                 $outputWanted->{'custom_cmd'}) {
-                $ffmpegCmd = $this->craft_convert_custom_cmd(
+                $convertCmd = $this->craft_convert_custom_cmd(
                     $tmpPathInput,
                     $pathToInputFile,
                     $pathToOutputFiles,
@@ -68,6 +68,22 @@ class ImageTranscoder extends BasicTranscoder
                     $outputWanted
                 );
             }
+            else {
+                $convertCmd = $this->craft_convert_cmd(
+                    $tmpPathInput,
+                    $pathToInputFile,
+                    $pathToOutputFiles,
+                    $metadata, 
+                    $outputWanted
+                );
+            }
+
+            $this->cpeLogger->log_out(
+                "INFO",
+                basename(__FILE__),
+                "CONVERT CMD:\n$convertCmd\n",
+                $this->activityLogKey
+            );
 
             // Use executer to start FFMpeg command
             // Use 'capture_progression' function as callback
@@ -118,6 +134,40 @@ class ImageTranscoder extends BasicTranscoder
         return $output_info;
     }
 
+    // Craft command based on JSON input
+    private function craft_convert_cmd(
+        $tmpPathInput,
+        $pathToInputFile,
+        $pathToOutputFiles,
+        $metadata, 
+        $outputWanted)
+    {
+        $convertArgs = "$pathToInputFile ";
+
+        if (isset($outputWanted->{'quality'})) {
+            $quality = $outputWanted->{'quality'};
+            $convertArgs .= "-quality $quality ";
+        }
+
+        if (isset($outputWanted->{'crop'})) {
+            $crop = $outputWanted->{'crop'};
+            $convertArgs .= "-crop $crop ";
+        }
+        
+        if (isset($outputWanted->{'resize'})) {
+            $resize = $outputWanted->{'resize'};
+            $convertArgs .= "-resize $resize ";
+        }
+        
+        // Append output filename to path
+        $pathToOutputFiles .=
+            "/" . $outputWanted->{'output_file_info'}['basename'];
+        
+        $convertCmd = "convert $convertArgs $pathToOutputFiles";
+
+        return ($convertCmd);
+    }
+    
     // Craft custom command
     private function craft_ffmpeg_custom_cmd(
         $tmpPathInput,
@@ -127,7 +177,38 @@ class ImageTranscoder extends BasicTranscoder
         $outputWanted)
     {
         $convertCmd = $outputWanted->{'custom_cmd'};
+
+        // Replace ${input_file} by input file path
+        $pathToInputFile = escapeshellarg($pathToInputFile);
+        $convertCmd = preg_replace('/\$\{input_file\}/',
+            $pathToInputFile, $convertCmd);
+
+        // Append output filename to path
+        $pathToOutputFiles .= "/" . $outputWanted->{'output_file_info'}['basename'];
+        // Replace ${output_file} by output filename and path to local disk
+        $convertCmd = preg_replace('/\$\{output_file\}/',
+            $pathToOutputFiles, $convertCmd);
         
         return ($convertCmd);
+    }
+
+    // Check if output file need an update on the extension
+    private function _updateOutputExtension(
+        $pathToInputFile,
+        &$outputWanted)
+    {
+        $inputExtension =
+            pathinfo($pathToInputFile)['extension'];
+        
+        // REplace output extension if == * with the input extension
+        $outputPathInfo =
+            pathinfo($outputWanted->{'output_file_info'}['basename']);
+        $outputExtension = $outputPathInfo['extension'];
+        if ($outputExtension == "*") {
+            $outputWanted->{'output_file_info'}['basename'] = preg_replace(
+                '/\*/',
+                $inputExtension,
+                $outputWanted->{'output_file_info'}['basename']);
+        }
     }
 }

@@ -14,7 +14,6 @@ use SA\CpeSdk;
 class VideoTranscoder extends BasicTranscoder
 {
     // Errors
-    const EXEC_VALIDATE_FAILED  = "EXEC_VALIDATE_FAILED";
     const GET_VIDEO_INFO_FAILED = "GET_VIDEO_INFO_FAILED";
     const GET_AUDIO_INFO_FAILED = "GET_AUDIO_INFO_FAILED";
     const GET_DURATION_FAILED   = "GET_DURATION_FAILED";
@@ -27,7 +26,6 @@ class VideoTranscoder extends BasicTranscoder
     const BAD_PRESET_FORMAT     = "BAD_PRESET_FORMAT";
     const RATIO_ERROR           = "RATIO_ERROR";
     const ENLARGEMENT_ERROR     = "ENLARGEMENT_ERROR";
-    const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
     const WATERMARK_ERROR       = "WATERMARK_ERROR";
     
     const SNAPSHOT_SEC_DEFAULT  = 0;
@@ -59,13 +57,6 @@ class VideoTranscoder extends BasicTranscoder
             // Extract an sanitize metadata
             $metadata = $this->_extractFileInfo($metadata);
         }
-        
-        $this->cpeLogger->log_out(
-            "INFO",
-            basename(__FILE__),
-            "FFMPEG CMD:\n$ffmpegCmd\n",
-            $this->activityLogKey
-        );
         
         $this->cpeLogger->log_out(
             "INFO", 
@@ -112,6 +103,13 @@ class VideoTranscoder extends BasicTranscoder
                     $outputWanted
                 );
             }
+        
+            $this->cpeLogger->log_out(
+                "INFO",
+                basename(__FILE__),
+                "FFMPEG CMD:\n$ffmpegCmd\n",
+                $this->activityLogKey
+            );
             
             // Use executer to start FFMpeg command
             // Use 'capture_progression' function as callback
@@ -633,53 +631,5 @@ class VideoTranscoder extends BasicTranscoder
         ];
 
         return $analyse;
-    }
-    
-    /**************************************
-     * GET VIDEO INFORMATION AND VALIDATION
-     * The methods below are used by the ValidationActivity
-     * We capture as much info as possible on the input video
-     */
-
-    // Execute FFMpeg to get video information
-    public function get_asset_info($pathToInputFile)
-    {
-        $pathToInputFile = escapeshellarg($pathToInputFile);
-        $ffprobeCmd = "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile";
-        try {
-            // Execute FFMpeg to validate and get information about input video
-            $out = $this->executer->execute(
-                $ffprobeCmd,
-                1, 
-                array(
-                    1 => array("pipe", "w"),
-                    2 => array("pipe", "w")
-                ),
-                false, false, 
-                false, 1
-            );
-        }
-        catch (\Exception $e) {
-            $this->cpeLogger->log_out(
-                "ERROR", 
-                basename(__FILE__), 
-                "Execution of command '".$ffprobeCmd."' failed.",
-                $this->activityLogKey
-            );
-            return false;
-        }
-        
-        if (empty($out)) {
-            throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$pathToInputFile'!",
-                self::EXEC_VALIDATE_FAILED);
-        }
-        
-        // FFmpeg writes on STDERR ...
-        if (!($assetInfo = json_decode($out['out']))) {
-            throw new CpeSdk\CpeException("FFProbe returned invalid JSON!",
-                self::EXEC_VALIDATE_FAILED);
-        }
-        
-        return ($assetInfo);
     }
 }

@@ -94,7 +94,7 @@ class TranscodeAssetActivity extends BasicActivity
                 $metadata = $this->input->{'input_asset_metadata'};
             
             // Perform transcoding
-            $result = $videoTranscoder->transcode_asset(
+            $result = $imageTranscoder->transcode_asset(
                 $this->tmpPathInput,
                 $this->pathToInputFile,
                 $this->pathToOutputFiles,

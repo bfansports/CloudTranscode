@@ -35,7 +35,7 @@ class ValidateAssetActivity extends BasicActivity
         // Call parent do_activity:
         // It download the input file we will process.
         parent::do_activity($task);
-        
+
         // Fetch first 1 KiB of file
         $this->send_heartbeat($task);
         $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
@@ -73,13 +73,29 @@ class ValidateAssetActivity extends BasicActivity
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Get input video information
             $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
-            $assetInfo->mime = $mime;
-            $assetInfo->type = $type;
 
             // Liberate memory
             unset($videoTranscoder);
-
-            return $assetInfo;
         }
+
+        if ($mime === 'application/octet-stream' && isset($asset['streams'])) {
+            // Check all stream types
+            foreach ($asset['streams'] as $stream) {
+                if ($stream['codec_type'] === 'video') {
+                    // For a video type, set type to video and break
+                    $type = 'video';
+                    break;
+                } elseif ($stream['codec_type'] === 'audio') {
+                    // For an audio type, set to audio, but don't break
+                    // in case there's a video stream later
+                    $type = 'audio';
+                }
+            }
+        }
+
+        $assetInfo->mime = $mime;
+        $assetInfo->type = $type;
+
+        return $assetInfo;
     }
 }

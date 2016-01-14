@@ -9,7 +9,6 @@ require_once __DIR__."/../../vendor/autoload.php";
 require_once __DIR__.'/../utils/S3Utils.php';
 
 use SA\CpeSdk;
-use Aws\S3\S3Client;
 
 class BasicActivity extends CpeSdk\CpeActivity
 {
@@ -35,9 +34,6 @@ class BasicActivity extends CpeSdk\CpeActivity
     // Nico: Expensive though.
     // This is where we store temporary files for transcoding
     const TMP_FOLDER = "/tmp/CloudTranscode/";
-
-    /** @var \Aws\S3\S3Client */
-    protected $s3;
     
     public function __construct($params, $debug, $cpeLogger = null)
     {
@@ -45,7 +41,6 @@ class BasicActivity extends CpeSdk\CpeActivity
         
         // S3 utils
         $this->s3Utils = new S3Utils($this->cpeLogger);
-        $this->s3 = S3Client::factory();
     }
 
     /**
@@ -101,14 +96,17 @@ class BasicActivity extends CpeSdk\CpeActivity
         if (isset($this->input->{'input_asset'}->{'bucket'}) &&
             isset($this->input->{'input_asset'}->{'file'}))
         {
-            // Make pre-signed URL so ffmpeg has access to file
-            $this->pathToInputFile = 'cache:' .
-                $this->s3->getCommand('GetObject', [
-                    'Bucket' => $this->input->{'input_asset'}->{'bucket'},
-                    'Key' => $this->input->{'input_asset'}->{'file'}
-                ])->createPresignedUrl('+1 day');
+            // Download input file and store it in TMP folder
+            $saveFileTo = $this->tmpPathInput."/".$inputFileInfo['basename'];
+            $this->pathToInputFile = 
+                $this->get_file_to_process(
+                    $task, 
+                    $this->input->{'input_asset'}->{'bucket'},
+                    $this->input->{'input_asset'}->{'file'},
+                    $saveFileTo
+                );
         }
-        else if ($this->input->{'input_asset'}->{'http'})
+        else if (isset($this->input->{'input_asset'}->{'http'}))
         {
             // Pad HTTP input so it is cached in case of full encodes
             $this->pathToInputFile = 'cache:' . $this->input->{'input_asset'}->{'http'};

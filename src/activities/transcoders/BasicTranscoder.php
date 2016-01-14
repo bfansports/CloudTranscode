@@ -23,6 +23,9 @@ class BasicTranscoder
     public $s3Utils; // Used to manipulate S3
     public $executer; // Executer obj
 
+    const EXEC_VALIDATE_FAILED  = "EXEC_VALIDATE_FAILED";
+    const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
+    
     // Types
     const VIDEO = "VIDEO";
     const THUMB = "THUMB";
@@ -54,5 +57,54 @@ class BasicTranscoder
         }
         closedir($handle); 
         return true;
+    }
+
+    
+    /**************************************
+     * GET ASSET METADATA INFO
+     * The methods below are used to run ffprobe on assets
+     * We capture as much info as possible on the input asset
+     */
+
+    // Execute FFPROBE to get asset information
+    public function get_asset_info($pathToInputFile)
+    {
+        $pathToInputFile = escapeshellarg($pathToInputFile);
+        $ffprobeCmd = "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile";
+        try {
+            // Execute FFMpeg to validate and get information about input video
+            $out = $this->executer->execute(
+                $ffprobeCmd,
+                1, 
+                array(
+                    1 => array("pipe", "w"),
+                    2 => array("pipe", "w")
+                ),
+                false, false, 
+                false, 1
+            );
+        }
+        catch (\Exception $e) {
+            $this->cpeLogger->log_out(
+                "ERROR", 
+                basename(__FILE__), 
+                "Execution of command '".$ffprobeCmd."' failed.",
+                $this->activityLogKey
+            );
+            return false;
+        }
+        
+        if (empty($out)) {
+            throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$pathToInputFile'!",
+                self::EXEC_VALIDATE_FAILED);
+        }
+        
+        // FFmpeg writes on STDERR ...
+        if (!($assetInfo = json_decode($out['out']))) {
+            throw new CpeSdk\CpeException("FFProbe returned invalid JSON!",
+                self::EXEC_VALIDATE_FAILED);
+        }
+        
+        return ($assetInfo);
     }
 }

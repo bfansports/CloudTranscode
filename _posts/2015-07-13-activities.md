@@ -36,7 +36,7 @@ The expected JSON payload your Decider must pass as input to this activity is as
 
 **Those are the minimum fields this activity should receive:**
 	
-   - [**input_asset**](/CloudTranscode/specs/input.html): Contains the basic information about your input asset.
+   - [**input_asset**](/CloudTranscode/specs/input.html): Contains the basic information about your input asset. The ValidateAsset activity only supports the `buket/file` input parameters. It doesn't support `http`. 
    - **client**: The client is injected in your workflow input paylad by the InputPoller. **You must pass it to all your activities.** See for example: http://sportarchive.github.io/CloudProcessingEngine/comp/decider.html#decider-plan
 
 **This activity should always be first in a workflow for two reasons:**
@@ -79,7 +79,7 @@ The expected JSON payload your Decider must pass as input to this activity is as
 
    - [**input_asset**](/CloudTranscode/specs/input.html): Contains the basic information about your input asset.
    - **client**: The client is injected in your client application payload by the InputPoller. You must pass it to your activities. See for example: http://sportarchive.github.io/CloudProcessingEngine/comp/decider.html#decider-plan
-   - **input_asset_metadata**: Output of FFprobe that describe the input asset. This can be capture in your decider plan after the ValidateAsset acitivty and passed on to the TranscodeActivity. See the ct_plan_simple.xml in the Decider project (docs/examples/).
+   - **input_asset_metadata**: Metadata that will be passed along to the Transcoder. For Videos, pass the output of FFprobe that describe the input asset. This can be capture in your decider plan after the ValidateAsset acitivty and passed on to the TranscodeActivity. See the ct_plan_simple.xml in the Decider project (docs/examples/).
    - [**output_asset**](/CloudTranscode/specs/output.html): Information about what type of resulting file we want. What do you want to transcode?
 
 Now you have the information you need to start your own job. Check the specs in the documentation to know the options you have at your disposal to transcode the files you want.

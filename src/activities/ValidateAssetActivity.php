@@ -10,16 +10,18 @@ require_once __DIR__.'/BasicActivity.php';
 
 use Guzzle\Http\EntityBody;
 use SA\CpeSdk;
+use Aws\S3\S3Client;
 
 class ValidateAssetActivity extends BasicActivity
 {
-    /** @var \finfo */
     private $finfo;
+    private $s3;
 
     public function __construct($params, $debug, $cpeLogger = null)
     {
         parent::__construct($params, $debug, $cpeLogger);
         $this->finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $this->s3 = S3Client::factory();
     }
 
     // Perform the activity

@@ -42,16 +42,16 @@ class ValidateAssetActivity extends BasicActivity
         $this->send_heartbeat($task);
         $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
         $obj = $this->s3->getObject([
-            'Bucket' => $this->input->{'input_asset'}->{'bucket'},
-            'Key' => $this->input->{'input_asset'}->{'file'},
-            'Range' => 'bytes=0-1024'
-        ]);
+                'Bucket' => $this->input->{'input_asset'}->{'bucket'},
+                'Key' => $this->input->{'input_asset'}->{'file'},
+                'Range' => 'bytes=0-1024'
+            ]);
         $this->send_heartbeat($task);
 
         // Determine file type
         file_put_contents($tmpFile, (string) $obj['Body']);
         $mime = trim((new CommandExecuter($this->cpeLogger))->execute(
-            'file -b --mime-type ' . escapeshellarg($tmpFile))['out']);
+                'file -b --mime-type ' . escapeshellarg($tmpFile))['out']);
         $type = substr($mime, 0, strpos($mime, '/'));
 
         $this->cpeLogger->log_out(
@@ -80,9 +80,9 @@ class ValidateAssetActivity extends BasicActivity
             unset($videoTranscoder);
         }
 
-        if ($mime === 'application/octet-stream' && isset($asset['streams'])) {
+        if ($mime === 'application/octet-stream' && isset($assetInfo['streams'])) {
             // Check all stream types
-            foreach ($asset['streams'] as $stream) {
+            foreach ($assetInfo['streams'] as $stream) {
                 if ($stream['codec_type'] === 'video') {
                     // For a video type, set type to video and break
                     $type = 'video';
@@ -94,7 +94,7 @@ class ValidateAssetActivity extends BasicActivity
                 }
             }
         }
-
+        
         $assetInfo->mime = $mime;
         $assetInfo->type = $type;
 

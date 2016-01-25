@@ -80,14 +80,14 @@ class ValidateAssetActivity extends BasicActivity
             unset($videoTranscoder);
         }
 
-        if ($mime === 'application/octet-stream' && isset($assetInfo['streams'])) {
+        if ($mime === 'application/octet-stream' && isset($assetInfo->streams)) {
             // Check all stream types
-            foreach ($assetInfo['streams'] as $stream) {
-                if ($stream['codec_type'] === 'video') {
+            foreach ($assetInfo->streams as $stream) {
+                if ($stream->codec_type === 'video') {
                     // For a video type, set type to video and break
                     $type = 'video';
                     break;
-                } elseif ($stream['codec_type'] === 'audio') {
+                } elseif ($stream->codec_type === 'audio') {
                     // For an audio type, set to audio, but don't break
                     // in case there's a video stream later
                     $type = 'audio';

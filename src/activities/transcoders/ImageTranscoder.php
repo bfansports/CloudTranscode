@@ -20,7 +20,7 @@ class ImageTranscoder extends BasicTranscoder
 
     // $metadata should contain the ffprobe video stream array.
 
-    // Start FFmpeg for output transcoding
+    // Start Convert for output transcoding
     public function transcode_asset(
         $tmpPathInput,
         $pathToInputFile, 
@@ -85,7 +85,7 @@ class ImageTranscoder extends BasicTranscoder
                 $this->activityLogKey
             );
 
-            // Use executer to start FFMpeg command
+            // Use executer to start Converter command
             // Use 'capture_progression' function as callback
             // Pass video 'duration' as parameter
             // Sleep 1sec between turns and callback every 10 turns
@@ -95,7 +95,7 @@ class ImageTranscoder extends BasicTranscoder
                 1, 
                 array(2 => array("pipe", "w")),
                 array($this, "capture_progression"), 
-                $metadata['duration'], 
+                null, 
                 true, 
                 10
             );
@@ -110,6 +110,7 @@ class ImageTranscoder extends BasicTranscoder
             }
 
             // FFProbe the output file and return its information
+            // XXX: Remove FFprobe for image convertion. Save time
             $output_info =
                 $this->get_asset_info($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
         }
@@ -148,15 +149,20 @@ class ImageTranscoder extends BasicTranscoder
             $quality = $outputWanted->{'quality'};
             $convertArgs .= "-quality $quality ";
         }
-
-        if (isset($outputWanted->{'crop'})) {
-            $crop = $outputWanted->{'crop'};
-            $convertArgs .= "-crop $crop ";
-        }
         
         if (isset($outputWanted->{'resize'})) {
             $resize = $outputWanted->{'resize'};
             $convertArgs .= "-resize $resize ";
+        }
+
+        if (isset($outputWanted->{'thumbnail'})) {
+            $thumbnail = $outputWanted->{'thumbnail'};
+            $convertArgs .= "-thumbnail $thumbnail ";
+        }
+        
+        if (isset($outputWanted->{'crop'})) {
+            $crop = $outputWanted->{'crop'};
+            $convertArgs .= "-crop $crop ";
         }
         
         // Append output filename to path
@@ -169,7 +175,7 @@ class ImageTranscoder extends BasicTranscoder
     }
     
     // Craft custom command
-    private function craft_ffmpeg_custom_cmd(
+    private function craft_convert_custom_cmd(
         $tmpPathInput,
         $pathToInputFile,
         $pathToOutputFiles,

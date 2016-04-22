@@ -1,11 +1,6 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
 
-## Updates [11/20/2015]
-> We're looking for someone interested to help on this project. If you know FFmpeg by heart and AWS services at the tip of your fingers, let's talk! 
->
-> We can pay for your services. 
-
 # What is Cloud Transcode ?
 Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 

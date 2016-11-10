@@ -139,10 +139,10 @@ RUN touch /etc/profile.d/alias.sh \
     && sh /etc/profile.d/alias.sh
 RUN mv ~/bin/* /bin
 
-ENV INPUT_QUEUE https://sqs.eu-west-1.amazonaws.com/082865641114/inputCtQueue
-ENV OUTPUT_QUEUE https://sqs.eu-west-1.amazonaws.com/082865641114/outputCtQueue
-ENV AWS_DEFAULT_REGION eu-west-1
-ENV AWS_ACCESS_KEY_ID AKIAIPGGBQ3PLRKVUGFQ
-ENV AWS_SECRET_ACCESS_KEY 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
+ENV INPUT_QUEUE <url of input queue>
+ENV OUTPUT_QUEUE <url of output queue>
+ENV AWS_DEFAULT_REGION <region>
+ENV AWS_ACCESS_KEY_ID <access key>
+ENV AWS_SECRET_ACCESS_KEY <secret>
 
 ENTRYPOINT ["/usr/src/cloudprocessingengine/bootstrap.sh"]

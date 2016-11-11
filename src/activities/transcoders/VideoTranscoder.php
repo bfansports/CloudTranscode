@@ -247,7 +247,7 @@ class VideoTranscoder extends BasicTranscoder
         
         // Create FFMpeg arguments
         $ffmpegArgs =  " -i $pathToInputFile -y -threads 0";
-        $ffmpegArgs .= " -s $size";
+        $ffmpegArgs .= " -vf scale=$size";
         $ffmpegArgs .= " -vcodec $videoCodec";
         $ffmpegArgs .= " -acodec $audioCodec";
         $ffmpegArgs .= " -b:v $videoBitrate";
@@ -460,7 +460,7 @@ class VideoTranscoder extends BasicTranscoder
             }
         }
 
-        return ($size);
+        return (str_replace("x",":", $size));
     }
     
     // REad ffmpeg output and calculate % progress

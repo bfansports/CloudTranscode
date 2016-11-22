@@ -146,7 +146,7 @@ class VideoTranscoder extends BasicTranscoder
                 "Execution of command '".$ffmpegCmd."' failed: " . print_r($metadata, true). ". ".$e->getMessage(),
                 $this->activityLogKey
             );
-            return false;
+            throw $e;
         }
         
         // No error. Transcode successful

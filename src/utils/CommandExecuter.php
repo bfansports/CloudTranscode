@@ -60,14 +60,14 @@ class CommandExecuter
         $allOutErr = "";
         
         // Check process status at every turn
-        $procStatus = proc_get_status($process);
-        while ($procStatus['running']) 
-        {
+        do {
+	    sleep($sleep);	    
+
             // Read prog output
             if (isset($descriptors[1]) &&
                 $descriptors[1])
             {
-                $out = fread($pipes[1], 8192); 
+                $out = stream_get_contents($pipes[1], 8192); 
                 $allOut .= $out;
             }
             
@@ -75,13 +75,12 @@ class CommandExecuter
             if (isset($descriptors[2]) &&
                 $descriptors[2])
             {
-                $outErr = fread($pipes[2], 8192); 
+                $outErr = stream_get_contents($pipes[2], 8192); 
                 $allOutErr .= $outErr;
             }
 
             // If callback only after N turns
-            if (!$callbackTurns ||
-                $i == $callbackTurns)
+            if ( !$callbackTurns || in_array($i, array(0, $callbackTurns)) ) 
             {
                 if ($showProgress) {
                     echo ".\n";
@@ -101,7 +100,6 @@ class CommandExecuter
 
             // Get latest status
             $procStatus = proc_get_status($process);
-            
             if ($showProgress)
             {
                 echo ".";
@@ -109,8 +107,10 @@ class CommandExecuter
             }
             
             $i++;
-            sleep($sleep);
-        }
+        } while ($procStatus['running']);
+
+	fclose($pipes[1]);
+	fclose($pipes[2]);
 
         if ($procStatus['exitcode'] > 0)
         {

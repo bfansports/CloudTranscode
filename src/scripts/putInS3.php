@@ -6,8 +6,6 @@
 
 require __DIR__ . "/../../vendor/autoload.php";
 
-use Aws\S3\S3Client;
-
 function usage()
 {
     echo("Usage: php ". basename(__FILE__) . " [-h] [--rrs::] [--encrypt::] --bucket <s3 bucket> --file <filename> --from <filepath>\n");
@@ -48,7 +46,9 @@ check_input_parameters($options);
 
 try {
     // Get S3 client
-    $s3 = S3Client::factory();
+    $s3 = new \Aws\S3\S3Client([
+            'version' => 'latest'
+        ]);
     
     $params = array(
         'Bucket'     => $options['bucket'],

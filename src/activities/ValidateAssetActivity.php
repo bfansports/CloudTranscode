@@ -8,9 +8,7 @@
 
 require_once __DIR__.'/BasicActivity.php';
 
-use Guzzle\Http\EntityBody;
 use SA\CpeSdk;
-use Aws\S3\S3Client;
 
 class ValidateAssetActivity extends BasicActivity
 {
@@ -21,7 +19,9 @@ class ValidateAssetActivity extends BasicActivity
     {
         parent::__construct($params, $debug, $cpeLogger);
         $this->finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $this->s3 = S3Client::factory();
+        $this->s3 = new \Aws\S3\S3Client([
+                "version" => "latest"
+            ]);
     }
 
     // Perform the activity

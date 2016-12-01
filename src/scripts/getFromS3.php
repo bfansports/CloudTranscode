@@ -6,8 +6,6 @@
 
 require __DIR__ . "/../../vendor/autoload.php";
 
-use Aws\S3\S3Client;
-
 function usage()
 {
     echo("Usage: php ". basename(__FILE__) . " [-h] [--force] --bucket <s3 bucket> --file <filename> --to <filepath>\n");
@@ -48,7 +46,9 @@ if (!isset($options['force']) &&
 
 try {
     // Get S3 client
-    $s3 = S3Client::factory();
+    $s3 = new \Aws\S3\S3Client([
+            'version' => 'latest'
+        ]);
     
     // Download and Save object to a local file.
     $s3->getObject(array(

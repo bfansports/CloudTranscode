@@ -21,6 +21,7 @@ Your workers only need an Internet connection to use the required Amazon service
    - **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
    - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds. Keep image ratio.
    - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency. Keep image ratio.
+   - **Image to Image transcoding**: Use all the features ImageMagic (`convert` command) offers.
 
 We are working to support ALL FFmpeg options.
 

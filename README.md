@@ -56,8 +56,7 @@ We explain how to create transcoding jobs and detail all available transcoding o
 We need help from the community to develop other types of transcoding:
 
    - Audio
-   - Image
-   - Document
+   - Documents
 
 The transcoders classes are already created, they just need to be implemented. (Check the `src/activities/transcoders/` folder)
 

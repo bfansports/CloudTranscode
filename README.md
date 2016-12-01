@@ -2,12 +2,12 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
 
 # What is Cloud Transcode ?
-Cloud Transcode is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
+Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 
 ## Goal
 The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over performance and cost. 
 
-We started with video transcoding as it is the most costly, but the goal is to transcode any type media files (audio, documents and images). We use FFMpeg for video transcoding.
+We started with video transcoding as it is the most costly, but the goal is to transcode any type media files (audio, documents and images). We use FFMpeg for video transcoding. CT also image transcoding using ImageMagic.
 
 Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of files at the pace you want, thus controling your cost. 
 

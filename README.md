@@ -9,6 +9,8 @@ It is basically an advanced implementation of our decider by AWS. You will descr
 
 We will work on moving to this soon. If you are interested in participating, let us know!
 
+We are also working on moving to AWS SDK 3.* instead of 2.*.
+
 # What is Cloud Transcode ?
 Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 

@@ -3,7 +3,9 @@
 
 # Updates
 
-AWS anounced AWS Step Functions which is basically an AWS implementation of our decider. You will describe your execution flow visually, it will generate a "plan" and then executes Lambda functions or activities in workers. This new services will be great for CloudTranscode as it will simplify the setup greatly. It will remove the need for a Decider. We could also get rid of the InputPoller.php and initiate workflow directly from the client applications. 
+AWS anounced AWS Step Functions:https://aws.amazon.com/step-functions/details/
+
+It is basically an advanced implementation of our decider by AWS. You will describe your execution workflow visually, it will generate a "plan" and then executes Lambda functions or activities in workers accordingly. This new services will be great for CloudTranscode as it will simplify the setup greatly. It will remove the need for a Decider. We could also get rid of the InputPoller.php and initiate workflow directly from the client applications. you will be able to create fancy workflow with fallbacks, branches, parallel transcoding, etc
 
 We will work on moving to this soon. If you are interested in participating, let us know!
 

@@ -45,15 +45,20 @@ if (!isset($options['force']) &&
 }
 
 try {
+    # Check if preper env vars are setup
+    if (!($region = getenv("AWS_DEFAULT_REGION")))
+        throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
+    
     // Get S3 client
     $s3 = new \Aws\S3\S3Client([
-            'version' => 'latest'
+            'version' => 'latest',
+            'region'  => $region
         ]);
     
     // Download and Save object to a local file.
     $s3->getObject(array(
             'Bucket' => $options['bucket'],
-            'Key'    => $options['file'],
+            'Key'    => ltrim($options['file'], '/'),
             'SaveAs' => $options['to']
         ));
 

@@ -17,10 +17,15 @@ class ValidateAssetActivity extends BasicActivity
 
     public function __construct($params, $debug, $cpeLogger = null)
     {
+        # Check if preper env vars are setup
+        if (!($region = getenv("AWS_DEFAULT_REGION")))
+            throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
+        
         parent::__construct($params, $debug, $cpeLogger);
         $this->finfo = new \finfo(FILEINFO_MIME_TYPE);
         $this->s3 = new \Aws\S3\S3Client([
-                "version" => "latest"
+                "version" => "latest",
+                "region"  => $region
             ]);
     }
 

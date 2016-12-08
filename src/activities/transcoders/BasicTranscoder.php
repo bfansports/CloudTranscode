@@ -46,7 +46,7 @@ class BasicTranscoder
         $this->s3Utils          = new S3Utils($activityObj->cpeLogger);
     }
 
-    public function is_dir_empty($dir)
+    public function isDirEmpty($dir)
     {
         if (!is_readable($dir)) return null; 
         $handle = opendir($dir);
@@ -67,10 +67,10 @@ class BasicTranscoder
      */
 
     // Execute FFPROBE to get asset information
-    public function get_asset_info($pathToInputFile)
+    public function getAssetInfo($inputFilePath)
     {
-        $pathToInputFile = escapeshellarg($pathToInputFile);
-        $ffprobeCmd = "ffprobe -v quiet -of json -show_format -show_streams $pathToInputFile";
+        $inputFilePath = escapeshellarg($inputFilePath);
+        $ffprobeCmd = "ffprobe -v quiet -of json -show_format -show_streams $inputFilePath";
         try {
             // Execute FFMpeg to validate and get information about input video
             $out = $this->executer->execute(
@@ -95,7 +95,7 @@ class BasicTranscoder
         }
         
         if (empty($out)) {
-            throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$pathToInputFile'!",
+            throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$inputFilePath'!",
                 self::EXEC_VALIDATE_FAILED);
         }
         

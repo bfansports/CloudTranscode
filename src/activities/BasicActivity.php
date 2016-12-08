@@ -12,9 +12,9 @@ use SA\CpeSdk;
 
 class BasicActivity extends CpeSdk\CpeActivity
 {
-    public $tmpPathInput; // PAth to directory containing TMP file
-    public $pathToInputFile; // PAth to input file locally
-    public $s3Utils; // Used to manipulate S3. Download/Upload
+    public $tmpInputPath;    // Path to directory containing TMP file
+    public $inputFilePath; // Path to input file locally
+    public $s3Utils;         // Used to manipulate S3. Download/Upload
   
     // Constants
     const TMP_FOLDER_FAIL      = "TMP_FOLDER_FAIL";
@@ -32,7 +32,8 @@ class BasicActivity extends CpeSdk\CpeActivity
 
     // XXX Use EFS for storage
     // Nico: Expensive though.
-    // This is where we store temporary files for transcoding
+    // This is where we store temporary files for transcoding for now
+    // Make sure your partition is big enough!
     const TMP_FOLDER = "/tmp/CloudTranscode/";
     
     public function __construct($params, $debug, $cpeLogger = null)
@@ -43,33 +44,12 @@ class BasicActivity extends CpeSdk\CpeActivity
         $this->s3Utils = new S3Utils($this->cpeLogger);
     }
 
-    /**
-     * CpeActivity Implementation
-     */
-    
-    // Perform JSON input validation
-    public function do_input_validation()
-    {
-        parent::do_input_validation();
-        /*
-         * Nico: Reactivate JSON Schema
-         *       Remove dependency from Utils.php for when we split the Engine from the Activities
-         *       We need an Activity SDK.
-         */
-        // From Utils.php
-        //if (($err = validate_json($decoded, "activities/".$this->activityType.".json")))
-        /*   throw new CpeSdk\CpeException("JSON input format is not valid! Details:\n".$err,  */
-        /*       self::FORMAT_INVALID); */
-    }
-    
     // Perform the activity
-    public function do_activity($task)
+    public function process($task)
     {
-        parent::do_activity($task);
-        
         // Use workflowID to generate a unique TMP folder localy.
-        $this->tmpPathInput = self::TMP_FOLDER 
-            . $task["workflowExecution"]["workflowId"]."/" 
+        $this->tmpInputPath = self::TMP_FOLDER 
+            . $task["token"]."/" 
             . "input";
         
         $inputFileInfo = null;
@@ -78,28 +58,28 @@ class BasicActivity extends CpeSdk\CpeActivity
             $inputFileInfo = pathinfo($this->input->{'input_asset'}->{'file'});
         
         // Create the tmp folder if doesn't exist
-        if (!file_exists($this->tmpPathInput)) 
+        if (!file_exists($this->tmpInputPath)) 
         {
             if ($this->debug)
-                $this->cpeLogger->log_out("INFO", basename(__FILE__), 
-                    "Creating TMP input folder '".$this->tmpPathInput."'",
-                    $this->activityLogKey);
+                $this->cpeLogger->logOut("INFO", basename(__FILE__), 
+                    "Creating TMP input folder '".$this->tmpInputPath."'",
+                    $task['token']);
             
-            if (!mkdir($this->tmpPathInput, 0750, true))
+            if (!mkdir($this->tmpInputPath, 0750, true))
                 throw new CpeSdk\CpeException(
-                    "Unable to create temporary folder '$this->tmpPathInput' !",
+                    "Unable to create temporary folder '$this->tmpInputPath' !",
                     self::TMP_FOLDER_FAIL
                 );
         }
             
-        $this->pathToInputFile = null;
+        $this->inputFilePath = null;
         if (isset($this->input->{'input_asset'}->{'bucket'}) &&
             isset($this->input->{'input_asset'}->{'file'}))
         {
             // Download input file and store it in TMP folder
-            $saveFileTo = $this->tmpPathInput."/".$inputFileInfo['basename'];
-            $this->pathToInputFile = 
-                $this->get_file_to_process(
+            $saveFileTo = $this->tmpInputPath."/".$inputFileInfo['basename'];
+            $this->inputFilePath = 
+                $this->getFileToProcess(
                     $task, 
                     $this->input->{'input_asset'}->{'bucket'},
                     $this->input->{'input_asset'}->{'file'},
@@ -109,7 +89,7 @@ class BasicActivity extends CpeSdk\CpeActivity
         else if (isset($this->input->{'input_asset'}->{'http'}))
         {
             // Pad HTTP input so it is cached in case of full encodes
-            $this->pathToInputFile = 'cache:' . $this->input->{'input_asset'}->{'http'};
+            $this->inputFilePath = 'cache:' . $this->input->{'input_asset'}->{'http'};
         }
     }
     
@@ -118,55 +98,32 @@ class BasicActivity extends CpeSdk\CpeActivity
      */
     
     // Create TMP folder and download file to process
-    public function get_file_to_process($task, $inputBuket, $inputFile, $saveFileTo)
+    public function getFileToProcess($task, $inputBuket, $inputFile, $saveFileTo)
     {        
         // Get file from S3 or local copy if any
-        $this->cpeLogger->log_out("INFO", 
+        $this->cpeLogger->logOut("INFO", 
             basename(__FILE__), 
             "Downloading '$inputBuket/$inputFile' to '$saveFileTo' ...",
-            $this->activityLogKey);
+            $task['token']);
 
         // Use the S3 utils to initiate the download
         $s3Output = $this->s3Utils->get_file_from_s3(
             $inputBuket, 
             $inputFile, 
             $saveFileTo,
-            array($this, "s3_get_processing_callback"), 
+            array($this, "activityHeartbeat"), 
             $task
         );
         
-        $this->cpeLogger->log_out("INFO", basename(__FILE__), 
+        $this->cpeLogger->logOut("INFO", basename(__FILE__), 
             $s3Output['msg'],
-            $this->activityLogKey);
+            $task['token']);
         
-        $this->cpeLogger->log_out("INFO", basename(__FILE__), 
+        $this->cpeLogger->logOut("INFO", basename(__FILE__), 
             "Input file successfully downloaded into local TMP folder '$saveFileTo' !",
-            $this->activityLogKey);
+            $task['token']);
         
         return $saveFileTo;
     }
-    
-    // Callback from S3Utils while GET from S3 is in progress
-    public function s3_get_processing_callback($task)
-    {
-        // Tells SWF we're alive while downloading!
-        $this->send_heartbeat($task);
-
-        // Send progress through SQS to notify client of download
-        $this->cpeSqsWriter->activity_preparing($task);
-    }
-
-    // Callback from S3Utils while PUT to S3 is in progress
-    public function s3_put_processing_callback($task)
-    {
-        // Tells SWF we're alive while uploading!
-        $this->send_heartbeat($task);
-
-        // Send progress through SQS to notify client of upload
-        $this->cpeSqsWriter->activity_finishing($task);
-    }
 }
-
-
-
 

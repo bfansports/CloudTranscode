@@ -102,7 +102,7 @@ class ImageTranscoder extends BasicTranscoder
 
             // Test if we have an output file !
             if (!file_exists($pathToOutputFiles) || 
-                $this->is_dir_empty($pathToOutputFiles)) {
+                $this->isDirEmpty($pathToOutputFiles)) {
                 throw new CpeSdk\CpeException(
                     "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
                     self::TRANSCODE_FAIL
@@ -112,7 +112,7 @@ class ImageTranscoder extends BasicTranscoder
             // FFProbe the output file and return its information
             // XXX: Remove FFprobe for image convertion. Save time
             $output_info =
-                $this->get_asset_info($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
+                $this->getAssetInfo($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
             $this->cpeLogger->log_out(

@@ -15,30 +15,30 @@ class TranscodeAssetActivity extends BasicActivity
     const TMP_PATH_OPEN_FAIL    = "TMP_PATH_OPEN_FAIL";
 
     private $output;
-    private $pathToOutputFiles;
+    private $outputFilesPath;
     
     // Perform the activity
-    public function do_activity($task)
+    public function process($task)
     {
         // Save output object
         $this->output = $this->input->{'output_asset'};
         
         // Custom validation for transcoding. Set $this->output
-        $this->validate_input();
+        $this->validateInput();
         
         $this->cpeLogger->log_out(
             "INFO", 
             basename(__FILE__), 
             "Preparing Asset transcoding ...",
-            $this->activityLogKey
+            $task['token']
         );
         
         // Call parent do_activity:
         // It download the input file we will process.
-        parent::do_activity($task);
+        parent::process($task);
         
         // Set output path to store result files
-        $this->set_output_path($task);
+        $this->setOutputPath($task);
 
         // Result output
         $result = null;
@@ -73,8 +73,8 @@ class TranscodeAssetActivity extends BasicActivity
             // Perform transcoding
             $result = $videoTranscoder->transcode_asset(
                 $this->tmpPathInput,
-                $this->pathToInputFile,
-                $this->pathToOutputFiles,
+                $this->inputFilePath,
+                $this->outputFilesPath,
                 $metadata, 
                 $this->output
             );
@@ -96,8 +96,8 @@ class TranscodeAssetActivity extends BasicActivity
             // Perform transcoding
             $result = $imageTranscoder->transcode_asset(
                 $this->tmpPathInput,
-                $this->pathToInputFile,
-                $this->pathToOutputFiles,
+                $this->inputFilePath,
+                $this->outputFilesPath,
                 $metadata, 
                 $this->output
             );
@@ -117,13 +117,13 @@ class TranscodeAssetActivity extends BasicActivity
         }
         
         // Upload resulting file
-        $this->upload_result_files($task);
+        $this->uploadResultFiles($task);
         
         return $result;
     }
 
     // Upload all output files to destination S3 bucket
-    private function upload_result_files($task)
+    private function uploadResultFiles($task)
     {
         // Sanitize output bucket and file path "/"
         $s3Bucket = str_replace("//", "/",
@@ -146,13 +146,13 @@ class TranscodeAssetActivity extends BasicActivity
             $options['encrypt'] = true;
         }
         
-        // Open '$pathToOutputFiles' to read it and send all files to S3 bucket
-        if (!$handle = opendir($this->pathToOutputFiles)) {
-            throw new CpeSdk\CpeException("Can't open tmp path '$this->pathToOutputFiles'!", 
+        // Open '$outputFilesPath' to read it and send all files to S3 bucket
+        if (!$handle = opendir($this->outputFilesPath)) {
+            throw new CpeSdk\CpeException("Can't open tmp path '$this->outputFilesPath'!", 
                 self::TMP_PATH_OPEN_FAIL);
         }
         
-        // Upload all resulting files sitting in $pathToOutputFiles to S3
+        // Upload all resulting files sitting in $outputFilesPath to S3
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") {
                 continue;
@@ -167,41 +167,41 @@ class TranscodeAssetActivity extends BasicActivity
             $s3Output = $this->s3Utils->put_file_into_s3(
                 $s3Bucket, 
                 $s3Location,
-                "$this->pathToOutputFiles/$entry", 
+                "$this->outputFilesPath/$entry", 
                 $options, 
                 array($this, "s3_put_processing_callback"), 
                 $task
             );
             // We delete the TMP file once uploaded
-            unlink("$this->pathToOutputFiles/$entry");
+            unlink("$this->outputFilesPath/$entry");
             
             $this->cpeLogger->log_out("INFO", basename(__FILE__), 
                 $s3Output['msg'],
-                $this->activityLogKey);
+                $task['token']);
         }
     }
 
-    private function set_output_path($task)
+    private function setOutputPath($task)
     {
-        $this->pathToOutputFiles = self::TMP_FOLDER 
+        $this->outputFilesPath = self::TMP_FOLDER 
             . $task["workflowExecution"]["workflowId"]."/output/" 
             . $this->activityId;
         
         // Create TMP folder for output files
         $outputFileInfo = pathinfo($this->output->{'file'});
         $this->output->{'output_file_info'} = $outputFileInfo;
-        $this->pathToOutputFiles .= "/".$outputFileInfo['dirname'];
+        $this->outputFilesPath .= "/".$outputFileInfo['dirname'];
         
-        if (!file_exists($this->pathToOutputFiles)) 
+        if (!file_exists($this->outputFilesPath)) 
         {
             if ($this->debug)
                 $this->cpeLogger->log_out("INFO", basename(__FILE__), 
-                    "Creating TMP output folder '".$this->pathToOutputFiles."'",
-                    $this->activityLogKey);
+                    "Creating TMP output folder '".$this->outputFilesPath."'",
+                    $task['token']);
 
-            if (!mkdir($this->pathToOutputFiles, 0750, true))
+            if (!mkdir($this->outputFilesPath, 0750, true))
                 throw new CpeSdk\CpeException(
-                    "Unable to create temporary folder '$this->pathToOutputFiles' !",
+                    "Unable to create temporary folder '$this->outputFilesPath' !",
                     self::TMP_FOLDER_FAIL
                 );
         }
@@ -209,7 +209,7 @@ class TranscodeAssetActivity extends BasicActivity
     
     // Perform custom validation on JSON input
     // Callback function used in $this->do_input_validation
-    private function validate_input()
+    private function validateInput()
     {
         
         if ((

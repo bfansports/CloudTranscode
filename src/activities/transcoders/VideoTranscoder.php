@@ -41,9 +41,8 @@ class VideoTranscoder extends BasicTranscoder
 
     // Start FFmpeg for output transcoding
     public function transcode_asset(
-        $tmpPathInput,
-        $pathToInputFile, 
-        $pathToOutputFiles,
+        $tmpInputPath, 
+        $outputFilesPath,
         $metadata = null, 
         $outputWanted)
     {
@@ -80,25 +79,25 @@ class VideoTranscoder extends BasicTranscoder
             if (isset($outputWanted->{'custom_cmd'}) &&
                 $outputWanted->{'custom_cmd'}) {
                 $ffmpegCmd = $this->craft_ffmpeg_custom_cmd(
-                    $tmpPathInput,
+                    $tmpInputPath,
                     $pathToInputFile,
-                    $pathToOutputFiles,
+                    $outputFilesPath,
                     $metadata, 
                     $outputWanted
                 );
             } else if ($outputWanted->{'type'} == self::VIDEO) {
                 $ffmpegCmd = $this->craft_ffmpeg_cmd_video(
-                    $tmpPathInput,
+                    $tmpInputPath,
                     $pathToInputFile,
-                    $pathToOutputFiles,
+                    $outputFilesPath,
                     $metadata, 
                     $outputWanted
                 );
             } else if ($outputWanted->{'type'} == self::THUMB) {
                 $ffmpegCmd = $this->craft_ffmpeg_cmd_thumb(
-                    $tmpPathInput,
+                    $tmpInputPath,
                     $pathToInputFile,
-                    $pathToOutputFiles,
+                    $outputFilesPath,
                     $metadata, 
                     $outputWanted
                 );
@@ -127,17 +126,17 @@ class VideoTranscoder extends BasicTranscoder
             );
 
             // Test if we have an output file !
-            if (!file_exists($pathToOutputFiles) || 
-                $this->is_dir_empty($pathToOutputFiles)) {
+            if (!file_exists($outputFilesPath) || 
+                $this->isDirEmpty($outputFilesPath)) {
                 throw new CpeSdk\CpeException(
-                    "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
+                    "Output file '$outputFilesPath' hasn't been created successfully or is empty !",
                     self::TRANSCODE_FAIL
                 );
             }
 
             // FFProbe the output file and return its information
             $output_info =
-                $this->get_asset_info($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
+                $this->getAssetInfo($outputFilesPath."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
             $this->cpeLogger->log_out(
@@ -162,9 +161,9 @@ class VideoTranscoder extends BasicTranscoder
 
     // Craft custom command
     private function craft_ffmpeg_custom_cmd(
-        $tmpPathInput,
+        $tmpInputPath,
         $pathToInputFile,
-        $pathToOutputFiles,
+        $outputFilesPath,
         $metadata, 
         $outputWanted)
     {
@@ -179,25 +178,25 @@ class VideoTranscoder extends BasicTranscoder
         if (isset($outputWanted->{'watermark'}) && $outputWanted->{'watermark'}) {
             $watermarkOptions = 
                 $this->get_watermark_options(
-                    $tmpPathInput,
+                    $tmpInputPath,
                     $outputWanted->{'watermark'});
             // Replace ${watermark_options} by watermark options
             $ffmpegCmd = preg_replace('/\$\{watermark_options\}/', $watermarkOptions, $ffmpegCmd);
         }
         
         // Append output filename to path
-        $pathToOutputFiles .= "/" . $outputWanted->{'output_file_info'}['basename'];
+        $outputFilesPath .= "/" . $outputWanted->{'output_file_info'}['basename'];
         // Replace ${output_file} by output filename and path to local disk
-        $ffmpegCmd = preg_replace('/\$\{output_file\}/', $pathToOutputFiles, $ffmpegCmd);
+        $ffmpegCmd = preg_replace('/\$\{output_file\}/', $outputFilesPath, $ffmpegCmd);
 
         return ($ffmpegCmd);
     }
     
     // Generate FFmpeg command for video transcoding
     private function craft_ffmpeg_cmd_video(
-        $tmpPathInput,
+        $tmpInputPath,
         $pathToInputFile,
-        $pathToOutputFiles,
+        $outputFilesPath,
         $metadata, 
         $outputWanted)
     {
@@ -241,7 +240,7 @@ class VideoTranscoder extends BasicTranscoder
         if (isset($outputWanted->{'watermark'}) && $outputWanted->{'watermark'}) {
             $watermarkOptions = 
                 $this->get_watermark_options(
-                    $tmpPathInput,
+                    $tmpInputPath,
                     $outputWanted->{'watermark'});
         }
         
@@ -257,18 +256,18 @@ class VideoTranscoder extends BasicTranscoder
         $ffmpegArgs .= " $watermarkOptions";
         
         // Append output filename to path
-        $pathToOutputFiles .= "/" . $outputWanted->{'output_file_info'}['basename'];
+        $outputFilesPath .= "/" . $outputWanted->{'output_file_info'}['basename'];
         // Final command
-        $ffmpegCmd  = "ffmpeg $ffmpegArgs $pathToOutputFiles";
+        $ffmpegCmd  = "ffmpeg $ffmpegArgs $outputFilesPath";
             
         return ($ffmpegCmd);
     }
     
     // Craft FFMpeg command to generate thumbnails
     private function craft_ffmpeg_cmd_thumb(
-        $tmpPathInput,
+        $tmpInputPath,
         $pathToInputFile,
-        $pathToOutputFiles,
+        $outputFilesPath,
         $metadata, 
         $outputWanted)
     {
@@ -287,7 +286,7 @@ class VideoTranscoder extends BasicTranscoder
             }
                 
             $time = gmdate("H:i:s", $snapshot_sec) . ".000";
-            $pathToOutputFiles .= "/" . $outputFileInfo['basename'];
+            $outputFilesPath .= "/" . $outputFileInfo['basename'];
             $frameOptions = " -ss $time -vframes 1";
         }
         else if ($outputWanted->{'mode'} == 'intervals')
@@ -298,7 +297,7 @@ class VideoTranscoder extends BasicTranscoder
                 $intervals = $outputWanted->{'intervals'};
             }
             
-            $pathToOutputFiles .= "/" . $outputFileInfo['filename'] . "%06d." 
+            $outputFilesPath .= "/" . $outputFileInfo['filename'] . "%06d." 
                 . $outputFileInfo['extension'];
             $frameOptions = " -vf fps=fps=1/$intervals";
         }
@@ -309,20 +308,20 @@ class VideoTranscoder extends BasicTranscoder
         $ffmpegArgs .= " $frameOptions -f image2 -q:v 8";
 
         // Final command
-        $ffmpegCmd   = "ffmpeg $ffmpegArgs $pathToOutputFiles";
+        $ffmpegCmd   = "ffmpeg $ffmpegArgs $outputFilesPath";
         
         return ($ffmpegCmd);
     }
 
     // Get watermark info to generate overlay options for ffmpeg
     private function get_watermark_options(
-        $tmpPathInput,
+        $tmpInputPath,
         $watermarkOptions)
     {
         // Get info about the video in order to save the watermark in same location
         $watermarkFileInfo = pathinfo($watermarkOptions->{'file'});
-        $watermarkPath     = $tmpPathInput."/".$watermarkFileInfo['basename'];
-        $newWatermarkPath  = $tmpPathInput."/new-".$watermarkFileInfo['basename'];
+        $watermarkPath     = $tmpInputPath."/".$watermarkFileInfo['basename'];
+        $newWatermarkPath  = $tmpInputPath."/new-".$watermarkFileInfo['basename'];
         
         // Get watermark image from S3
         $s3Output = $this->s3Utils->get_file_from_s3(

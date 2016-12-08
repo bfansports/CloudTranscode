@@ -30,7 +30,7 @@ class ValidateAssetActivity extends BasicActivity
     }
 
     // Perform the activity
-    public function do_activity($task)
+    public function process($task)
     {
         $this->cpeLogger->log_out(
             "INFO",
@@ -39,11 +39,10 @@ class ValidateAssetActivity extends BasicActivity
             $this->activityLogKey
         );
 
-        // Call parent do_activity:
-        // It download the input file we will process.
-        parent::do_activity($task);
+        // Call parent process:
+        parent::process($task);
 
-        // Fetch first 1 KiB of file
+        // Fetch first 1 KiB of the file for Magic number validation
         $this->send_heartbeat($task);
         $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
         $obj = $this->s3->getObject([
@@ -51,7 +50,7 @@ class ValidateAssetActivity extends BasicActivity
                 'Key' => $this->input->{'input_asset'}->{'file'},
                 'Range' => 'bytes=0-1024'
             ]);
-        $this->send_heartbeat($task);
+        $this->activityHeartbeat($task['token']);
 
         // Determine file type
         file_put_contents($tmpFile, (string) $obj['Body']);
@@ -79,7 +78,7 @@ class ValidateAssetActivity extends BasicActivity
             // Initiate transcoder obj
             $videoTranscoder = new VideoTranscoder($this, $task);
             // Get input video information
-            $assetInfo = $videoTranscoder->get_asset_info($this->pathToInputFile);
+            $assetInfo = $videoTranscoder->getAssetInfo($this->inputFilePath);
 
             // Liberate memory
             unset($videoTranscoder);

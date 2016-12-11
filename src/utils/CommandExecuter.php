@@ -12,14 +12,14 @@ use SA\CpeSdk;
 class CommandExecuter
 {
     private $cpeLogger;
+    private $logKey;
     
     const EXEC_FAILED = "EXEC_FAILED";
     
-    public function __construct($cpeLogger = null)
+    public function __construct($cpeLogger, $logKey = null)
     {
-        if (!$cpeLogger)
-            $this->cpeLogger = new CpeSdk\CpeLogger(null, 'CommandExecuter');
         $this->cpeLogger = $cpeLogger;
+        $this->logKey    = $logKey;
     }
     
     public function execute(
@@ -32,9 +32,13 @@ class CommandExecuter
         $progressCallback = null,
         $progressCallbackParams = null,
         $showProgress = false,
-        $callbackTurns = 0)
+        $callbackTurns = 0,
+        $logKey = null)
     {
-        $this->cpeLogger->log_out("INFO", basename(__FILE__), "Executing: $cmd");
+        $this->cpeLogger->logOut("INFO", basename(__FILE__), "Executing: $cmd", $this->logKey);
+
+        if ($logKey)
+            $this->logKey = $logKey;
         
         // Start execution of $cmd
         if (!($process = proc_open($cmd, $descriptors, $pipes)) ||
@@ -109,16 +113,23 @@ class CommandExecuter
             $i++;
         } while ($procStatus['running']);
 
-	fclose($pipes[1]);
-	fclose($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
 
         if ($procStatus['exitcode'] > 0)
         {
-            $this->cpeLogger->log_out("ERROR", basename(__FILE__), "Can't execute: $cmd. Exit Code: ".$procStatus['exitcode']);
+            $this->cpeLogger->logOut("ERROR",
+                                     basename(__FILE__),
+                                     "Can't execute: $cmd. Exit Code: ".$procStatus['exitcode'],
+                                     $this->logKey);
             if ($allOut)
-                $this->cpeLogger->log_out("ERROR", basename(__FILE__), "COMMAND STDOUT: ".$allOut);
+                $this->cpeLogger->logOut("ERROR",
+                                         basename(__FILE__), "COMMAND STDOUT: ".$allOut,
+                                         $this->logKey);
             if ($allOutErr)
-                $this->cpeLogger->log_out("ERROR", basename(__FILE__), "COMMAND STDERR: ".$allOutErr);
+                $this->cpeLogger->logOut("ERROR",
+                                         basename(__FILE__), "COMMAND STDERR: ".$allOutErr,
+                                         $this->logKey);
         }
         
         if ($showProgress) {

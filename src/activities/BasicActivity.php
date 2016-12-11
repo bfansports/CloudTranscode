@@ -13,7 +13,7 @@ use SA\CpeSdk;
 class BasicActivity extends CpeSdk\CpeActivity
 {
     public $tmpInputPath;    // Path to directory containing TMP file
-    public $inputFilePath; // Path to input file locally
+    public $inputFilePath;   // Path to input file locally
     public $s3Utils;         // Used to manipulate S3. Download/Upload
   
     // Constants
@@ -49,21 +49,22 @@ class BasicActivity extends CpeSdk\CpeActivity
     {
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpInputPath = self::TMP_FOLDER 
-            . $task["token"]."/" 
+            . $this->logKey."/" 
             . "input";
         
         $inputFileInfo = null;
-        // Create TMP storage to store input file to transcode
-        if (isset($this->input->{'input_asset'}->{'file'}))
+        if (isset($this->input->{'input_asset'}->{'file'})) {
+            $this->input->{'input_asset'}->{'file'} = ltrim($this->input->{'input_asset'}->{'file'}, "/");
             $inputFileInfo = pathinfo($this->input->{'input_asset'}->{'file'});
+        }
         
         // Create the tmp folder if doesn't exist
         if (!file_exists($this->tmpInputPath)) 
         {
             if ($this->debug)
-                $this->cpeLogger->logOut("INFO", basename(__FILE__), 
-                    "Creating TMP input folder '".$this->tmpInputPath."'",
-                    $task['token']);
+                $this->cpeLogger->logOut("DEBUG", basename(__FILE__), 
+                                         "Creating TMP input folder '".$this->tmpInputPath."'",
+                                         $this->logKey);
             
             if (!mkdir($this->tmpInputPath, 0750, true))
                 throw new CpeSdk\CpeException(
@@ -104,7 +105,7 @@ class BasicActivity extends CpeSdk\CpeActivity
         $this->cpeLogger->logOut("INFO", 
             basename(__FILE__), 
             "Downloading '$inputBuket/$inputFile' to '$saveFileTo' ...",
-            $task['token']);
+            $this->logKey);
 
         // Use the S3 utils to initiate the download
         $s3Output = $this->s3Utils->get_file_from_s3(
@@ -112,16 +113,17 @@ class BasicActivity extends CpeSdk\CpeActivity
             $inputFile, 
             $saveFileTo,
             array($this, "activityHeartbeat"), 
-            $task
+            $task,
+            $this->logKey
         );
         
         $this->cpeLogger->logOut("INFO", basename(__FILE__), 
             $s3Output['msg'],
-            $task['token']);
+            $this->logKey);
         
         $this->cpeLogger->logOut("INFO", basename(__FILE__), 
             "Input file successfully downloaded into local TMP folder '$saveFileTo' !",
-            $task['token']);
+            $this->logKey);
         
         return $saveFileTo;
     }

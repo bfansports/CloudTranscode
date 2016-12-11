@@ -26,10 +26,13 @@ function check_input_parameters($options)
     if (!isset($options['bucket']) || !isset($options['file']) ||
         !isset($options['to']))
     {
-        print "Error: Missing mandatory parameter !\n";
-        usage();
+        print json_encode([ "status" => "ERROR",
+                            "msg" => "Missing mandatory parameter!" ]);
+        exit(0);
     }
 }
+
+@ini_set('implicit_flush', 1);
 
 $options = getopt("h", array("bucket:", "file:", "to:", "force::", "help::"));
 check_input_parameters($options);
@@ -48,7 +51,7 @@ try {
     # Check if preper env vars are setup
     if (!($region = getenv("AWS_DEFAULT_REGION")))
         throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
-    
+
     // Get S3 client
     $s3 = new \Aws\S3\S3Client([
             'version' => 'latest',
@@ -71,6 +74,5 @@ catch (Exception $e) {
     // Print JSON error output
     print json_encode([ "status" => "ERROR",
             "msg" => "[".__FILE__."] $err" ]);
-    
-    die("[".__FILE__."] $err");
+    exit(0);
 }

@@ -20,11 +20,6 @@ class ValidateAssetActivity extends BasicActivity
 
     public function __construct($client = null, $params, $debug, $cpeLogger)
     {
-        global $debug;
-        global $cpeLogger;
-
-        $this->cpeLogger = $cpeLogger;
-        
         # Check if preper env vars are setup
         if (!($region = getenv("AWS_DEFAULT_REGION")))
             throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
@@ -34,9 +29,9 @@ class ValidateAssetActivity extends BasicActivity
         $this->finfo = new \finfo(FILEINFO_MIME_TYPE);
         
         $this->s3 = new \Aws\S3\S3Client([
-                "version" => "latest",
-                "region"  => $region
-            ]);
+            "version" => "latest",
+            "region"  => $region
+        ]);
     }
 
     // Perform the activity
@@ -64,15 +59,16 @@ class ValidateAssetActivity extends BasicActivity
 
         // Determine file type
         file_put_contents($tmpFile, (string) $obj['Body']);
-        $mime = trim((new CommandExecuter($this->cpeLogger))->execute(
-                'file -b --mime-type ' . escapeshellarg($tmpFile))['out']);
+        $mime = trim((new CommandExecuter($this->cpeLogger, $this->logKey))->execute(
+            'file -b --mime-type '.escapeshellarg($tmpFile))['out']);
         $type = substr($mime, 0, strpos($mime, '/'));
 
-        $this->cpeLogger->logOut(
-            "DEBUG",
-            basename(__FILE__),
-            "File meta information gathered. Mime: $mime | Type: $type",
-            $this->logKey
+        if ($this->debug)
+            $this->cpeLogger->logOut(
+                "DEBUG",
+                basename(__FILE__),
+                "File meta information gathered. Mime: $mime | Type: $type",
+                $this->logKey
         );
 
         // Load the right transcoder base on input_type
@@ -112,7 +108,7 @@ class ValidateAssetActivity extends BasicActivity
         $assetInfo->mime = $mime;
         $assetInfo->type = $type;
 
-        return $assetInfo;
+        return json_encode($assetInfo);
     }
 }
 
@@ -125,11 +121,12 @@ class ValidateAssetActivity extends BasicActivity
 // Usage
 function usage()
 {
-    echo("Usage: php ". basename(__FILE__) . " -A <ARN: (Snf ARN)> [-h] [-d] [-l <log path>]\n");
+    echo("Usage: php ". basename(__FILE__) . " -A <ARN: (Snf ARN)> [-C <client class path>] [-h] [-d] [-l <log path>]\n");
     echo("-h: Print this help\n");
     echo("-d: Debug mode\n");
     echo("-l <log_path>: Location where logs will be dumped in (folder).\n");
     echo("-A <activity_name>: Activity name this Poller can process. Or use 'SNF_ACTIVITY_ARN' environment variable. Command line arguments have precedence\n");
+    echo("-C <client class path>: Path to the PHP file that contains the class that implements your Client Interface\n");
     exit(0);
 }
 
@@ -138,8 +135,9 @@ function check_activity_arguments()
 {
     // Filling the globals with input
     global $arn;
-    global $name;
     global $logPath;
+    global $debug;
+    global $clientClassPath;
     
     // Handle input parameters
     if (!($options = getopt("A:l:hd")))
@@ -160,6 +158,10 @@ function check_activity_arguments()
         echo "ERROR: You must provide the ARN of your activity (Sfn ARN). Use option [-A <ARN>] or environment variable: 'SNF_ACTIVITY_ARN'\n";
         usage();
     }
+
+    if (isset($options['C']) && $options['C']) {
+        $clientClassPath = $options['C'];
+    }
     
     if (isset($options['l']))
         $logPath = $options['l'];
@@ -174,23 +176,21 @@ function check_activity_arguments()
 $debug = false;
 $logPath = null;
 $arn;
-$activityName = 'ValidateAsset';
+$name = 'ValidateAsset';
+$clientClassPath = null;
 
 check_activity_arguments();
 
-$cpeLogger = new SA\CpeSdk\CpeLogger($activityName, $logPath);
+$cpeLogger = new SA\CpeSdk\CpeLogger($name, $logPath);
 $cpeLogger->logOut("INFO", basename(__FILE__),
-                   "\033[1mStarting activity\033[0m: $activityName");
-
-// Instantiate Client Interface implementation 
-$validateAssetClient = new ValidateAssetClientInterface($cpeLogger);
+                   "\033[1mStarting activity\033[0m: $name");
 
 // We instanciate the Activity 'ValidateAsset' and give it a name for Snf
 $activityPoller = new ValidateAssetActivity(
-    $validateAssetClient,
+    $clientClassPath,
     [
         'arn'  => $arn,
-        'name' => $activityName
+        'name' => $name
     ],
     $debug,
     $cpeLogger);

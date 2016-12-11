@@ -13,15 +13,13 @@ use SA\CpeSdk;
 
 class BasicTranscoder 
 {
-    public $activityLogKey; // Valling activity loggin key
     public $activityObj; // Calling activity object
-    public $task; // Activity TASK
+    public $task;        // Activity TASK
+    public $logKey;      // Valling activity loggin key
 
-    public $cpeLogger; // Logger
-    public $cpeSqsWriter; // SQS write for sending msgs to client
-    public $cpeJsonValidator; // SQS write for sending msgs to client
-    public $s3Utils; // Used to manipulate S3
-    public $executer; // Executer obj
+    public $cpeLogger;   // Logger
+    public $s3Utils;     // Used to manipulate S3
+    public $executer;    // Executer obj
 
     const EXEC_VALIDATE_FAILED  = "EXEC_VALIDATE_FAILED";
     const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
@@ -36,13 +34,11 @@ class BasicTranscoder
     public function __construct($activityObj, $task) 
     { 
         $this->activityObj      = $activityObj;
-        $this->activityLogKey   = $activityObj->activityLogKey;
+        $this->logKey           = $activityObj->logKey;
         $this->task             = $task;
 
         $this->cpeLogger        = $activityObj->cpeLogger;
-        $this->cpeSqsWriter     = $activityObj->cpeSqsWriter;
-        $this->cpeJsonValidator = $activityObj->cpeJsonValidator;
-        $this->executer         = new CommandExecuter($activityObj->cpeLogger);
+        $this->executer         = new CommandExecuter($activityObj->cpeLogger, $this->logKey);
         $this->s3Utils          = new S3Utils($activityObj->cpeLogger);
     }
 
@@ -85,7 +81,7 @@ class BasicTranscoder
             );
         }
         catch (\Exception $e) {
-            $this->cpeLogger->log_out(
+            $this->cpeLogger->logOut(
                 "ERROR", 
                 basename(__FILE__), 
                 "Execution of command '".$ffprobeCmd."' failed.",

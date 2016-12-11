@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__.'/BasicActivity.php';
+require_once __DIR__.'/TranscodeAssetClientInterface.php';
 
 use SA\CpeSdk;
 

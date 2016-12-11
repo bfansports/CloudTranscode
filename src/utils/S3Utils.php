@@ -33,7 +33,8 @@ class S3Utils
         $filename, 
         $saveFileTo,
         $callback = null, 
-        $callbackParams = null)
+        $callbackParams = null,
+        $logKey = null)
     {   
         $cmd = "php " . __DIR__ . self::GET_FROM_S3;
         $cmd .= " --bucket $bucket";
@@ -45,7 +46,8 @@ class S3Utils
                 self::GET_FROM_S3,
                 $cmd, 
                 $callback,
-                $callbackParams));
+                $callbackParams,
+                $logKey));
     }
 
     // Get a file from S3 using external script localted in "scripts" folder
@@ -55,7 +57,8 @@ class S3Utils
         $pathToFileToSend, 
         $options, 
         $callback = null, 
-        $callbackParams = null)
+        $callbackParams = null,
+        $logKey)
     {
         $cmd  = "php " . __DIR__ . self::PUT_IN_S3;
         $cmd .= " --bucket $bucket";
@@ -71,16 +74,17 @@ class S3Utils
                 self::PUT_IN_S3,
                 $cmd, 
                 $callback,
-                $callbackParams)
+                $callbackParams,
+                $logKey)
         );
     }
 
     // Execute S3 $cmd and capture output
-    private function handle_s3_ops($caller, $cmd, $callback, $callbackParams)
+    private function handle_s3_ops($caller, $cmd, $callback, $callbackParams, $logKey)
     {
         // Use executer to start external S3 script
         // The array request listening to 1 (STDOUT) and 2 (STDERR)
-        $executer = new CommandExecuter($this->cpeLogger);
+        $executer = new CommandExecuter($this->cpeLogger, $logKey);
         $out = $executer->execute(
             $cmd,
             2,
@@ -89,7 +93,8 @@ class S3Utils
             $callback,
             $callbackParams, 
             true,
-            5);
+            5
+        );
         
         if ($out['outErr'])
             throw new CpeSdk\CpeException($out['outErr'],

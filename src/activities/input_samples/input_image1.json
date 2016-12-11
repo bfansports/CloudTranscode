@@ -1,0 +1,17 @@
+{
+    "input_asset": {
+	"type": "IMAGE",
+	"bucket": "cloudtranscode-dev",
+	"file": "/input/image.jpg"
+    },
+    "output_asset": 
+    {
+	"type": "IMAGE",
+	"bucket": "cloudtranscode-dev",
+	"file": "/output/image.*",
+	"crop": "600x600+0+0",
+	"quality": 70,
+	"s3_rrs": true,
+	"s3_encrypt": true
+    }
+}

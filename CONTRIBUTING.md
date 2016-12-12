@@ -1,6 +1,6 @@
-Fork the project and push the branch you used to make you fix or create your feature. Make sure you don't change the formatting of the file and that you follow the naming convention the file already use.
+Fork the project, push your branch to your fork, and submit a Pull Request on GiHub.
 
-Comment your code and send a PR when your feature/bug is ready.
+We're looking for more `state_machines` samples that you created on AWS Step Functions or for more activitiy implementations.
 
 Thanks for contributing to this project.
 

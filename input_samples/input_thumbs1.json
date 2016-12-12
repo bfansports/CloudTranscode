@@ -1,0 +1,24 @@
+{
+    "workflow": {
+        "name": "Transcode",
+        "version": "1.0",
+        "taskList": "basic_transcode",
+        "domain": "SADomain"
+    },
+    "input_asset": {
+	"type": "VIDEO",
+	"bucket": "cloudtranscode-dev",
+	"file": "/input/video1.mp4"
+    },
+    "output_asset": 
+    {
+	"type": "THUMB",
+	"mode": "snapshot",
+	"bucket": "cloudtranscode-dev",
+	"file": "/output/thumbs/video1_thumb.jpg",
+	"s3_rrs": true,
+	"s3_encrypt": true,
+	"size": "-1:159",
+	"snapshot_sec": 5
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "workflow": {
+        "name": "Transcode",
+        "version": "1.0",
+        "taskList": "basic_transcode",
+        "domain": "SADomain"
+    },
+    "input_asset": {
+	"type": "VIDEO",
+	"bucket": "cloudtranscode-dev",
+	"file": "/input/video1.mp4"
+    },
+    "output_asset": 
+    {
+	"type": "VIDEO",
+	"bucket": "cloudtranscode-dev",
+	"file": "/output/video1.mp4",
+	"s3_rrs": true,
+	"s3_encrypt": true,
+	"custom_cmd": "ffmpeg -i ${input_file} -c:v libx264 -preset slow -crf 22 -c:a copy ${watermark_options} ${output_file}",
+	"watermark": {
+	    "bucket": "cloudtranscode-dev",
+	    "file": "/no-text-96px.png",
+	    "size": "96:96",
+	    "opacity": 0.2,
+	    "x": -20,
+	    "y": -20
+	}
+    }
+}

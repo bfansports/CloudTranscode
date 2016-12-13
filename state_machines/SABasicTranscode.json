@@ -5,7 +5,7 @@
         "ValidateAsset": {
             "Type": "Task",
             "Next": "Transcode",
-            "Resource": "aws:states:eu-west-1:441276146445:activity:ValidateAsset",
+            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:ValidateAsset",
             "TimeoutSeconds": 300,
             "HeartbeatSeconds": 30
         },

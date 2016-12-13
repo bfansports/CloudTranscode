@@ -2,58 +2,58 @@
     "Comment": "Transcode a video asset into thumbnails and proxy mp4",
     "StartAt": "ValidateAsset",
     "States": {
-	"ValidateAsset": {
-	    "Type": "Task",
-	    "Next": "Transcode",
-	    "Resource": "arn:aws:swf:us-arn:aws:states:eu-west-1:441276146445:activity:ValidateAsset",
-	    "TimeoutSeconds": 300,
-	    "HeartbeatSeconds": 30
-	},
-	"Transcode": {
-	    "Type": "Parallel",
-	    "Next": "Done",
-	    "Branches": [
-		{
-		    "StartAt": "ThumbSD",
-		    "States": {
-			"ThumbSD": {
-			    "Type": "Task",
-			    "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
-			    "TimeoutSeconds": 300,
-			    "HeartbeatSeconds": 30,
-			    "End": true
-			}
-		    }
-		},
-		{
-		    "StartAt": "ThumbHD",
-		    "States": {
-			"ThumbHD": {
-			    "Type": "Task",
-			    "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
-			    "TimeoutSeconds": 300,
-			    "HeartbeatSeconds": 30,
-			    "End": true
-			}
-		    }
-		},
-		{
-		    "StartAt": "Proxy",
-		    "States": {
-			"Proxy": {
-			    "Type": "Task",
-			    "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
-			    "TimeoutSeconds": 28800,
-			    "HeartbeatSeconds": 30,
-			    "End": true
-			}
-		    }
-		}
-	    ]
-	},
-	"Done": {
-	    "Type": "Pass",
-      	"End": true
-	}
+        "ValidateAsset": {
+            "Type": "Task",
+            "Next": "Transcode",
+            "Resource": "aws:states:eu-west-1:441276146445:activity:ValidateAsset",
+            "TimeoutSeconds": 300,
+            "HeartbeatSeconds": 30
+        },
+        "Transcode": {
+            "Type": "Parallel",
+            "Next": "Done",
+            "Branches": [
+                {
+                    "StartAt": "ThumbSD",
+                    "States": {
+                        "ThumbSD": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
+                            "TimeoutSeconds": 300,
+                            "HeartbeatSeconds": 30,
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "ThumbHD",
+                    "States": {
+                        "ThumbHD": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
+                            "TimeoutSeconds": 300,
+                            "HeartbeatSeconds": 30,
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Proxy",
+                    "States": {
+                        "Proxy": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
+                            "TimeoutSeconds": 28800,
+                            "HeartbeatSeconds": 30,
+                            "End": true
+                        }
+                    }
+                }
+            ]
+        },
+        "Done": {
+            "Type": "Pass",
+            "End": true
+        }
     }
 }

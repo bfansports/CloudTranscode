@@ -22,57 +22,44 @@ function check_input_parameters($options)
     if (!count($options) || isset($options['h']) ||
         isset($options['help']))
         usage();
-    
+
     if (!isset($options['bucket']) || !isset($options['file']) ||
         !isset($options['to']))
-    {
-        print json_encode([ "status" => "ERROR",
-                            "msg" => "Missing mandatory parameter!" ]);
-        exit(0);
-    }
+        throw new \SA\CpeSdk\CpeException("Missing mandatory parameter!");
 }
-
-@ini_set('implicit_flush', 1);
 
 $options = getopt("h", array("bucket:", "file:", "to:", "force::", "help::"));
 check_input_parameters($options);
 
 // If local file already exists. We don't download unless --force
-if (!isset($options['force']) && 
+if (!isset($options['force']) &&
     file_exists($options['to']) &&
     filesize($options['to']))
 {
-    print json_encode([ "status" => "SUCCESS",
-            "msg" => "[".__FILE__."] Using local copy: '" . $options['to']  . "'" ]);
+    $out = [ "status" => "SUCCESS",
+             "msg" => "[".__FILE__."] Using local copy: '" . $options['to']  . "'" ];
+    print json_encode($out)."\n";
     exit(0);
 }
 
-try {
-    # Check if preper env vars are setup
-    if (!($region = getenv("AWS_DEFAULT_REGION")))
-        throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
+# Check if preper env vars are setup
+if (!($region = getenv("AWS_DEFAULT_REGION")))
+    throw new \SA\CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
 
-    // Get S3 client
-    $s3 = new \Aws\S3\S3Client([
-            'version' => 'latest',
-            'region'  => $region
-        ]);
-    
-    // Download and Save object to a local file.
-    $s3->getObject(array(
-            'Bucket' => $options['bucket'],
-            'Key'    => ltrim($options['file'], '/'),
-            'SaveAs' => $options['to']
-        ));
+// Get S3 client
+$s3 = new \Aws\S3\S3Client([
+    'version' => 'latest',
+    'region'  => $region
+]);
 
-    // Print JSON error output
-    print json_encode([ "status" => "SUCCESS",
-            "msg" => "[".__FILE__."] Download '" . $options['bucket'] . "/" . $options['file'] . "' successful !" ]);
-} 
-catch (Exception $e) {
-    $err = "Unable to get '" . $options['bucket'] . "/" . $options['file'] . "' file from S3 ! " . $e->getMessage();
-    // Print JSON error output
-    print json_encode([ "status" => "ERROR",
-            "msg" => "[".__FILE__."] $err" ]);
-    exit(0);
-}
+// Download and Save object to a local file.
+$res = $s3->getObject(array(
+    'Bucket' => $options['bucket'],
+    'Key'    => ltrim($options['file'], '/'),
+    'SaveAs' => $options['to']
+));
+
+$out = [ "status" => "SUCCESS",
+         "msg" => "[".__FILE__."] Download '" . $options['bucket'] . "/" . $options['file'] . "' successful !" ];
+
+print json_encode($out)."\n";

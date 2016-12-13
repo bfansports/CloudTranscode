@@ -1,8 +1,26 @@
+#!/usr/bin/php
+
 <?php
 
-/**
- * This class handles the transcoding activity
- * Based on the input file type we lunch the proper transcoder
+/*
+ *   This class handles the transcoding activity
+ *   Based on the input file type we lunch the proper transcoder
+ *
+ *   Copyright (C) 2016  BFan Sports - Sport Archive Inc.
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License along
+ *   with this program; if not, write to the Free Software Foundation, Inc.,
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 require_once __DIR__.'/BasicActivity.php';
@@ -17,6 +35,11 @@ class TranscodeAssetActivity extends BasicActivity
     private $output;
     private $outputFilesPath;
     
+    public function __construct($client = null, $params, $debug, $cpeLogger)
+    {
+        parent::__construct($client, $params, $debug, $cpeLogger);
+    }
+
     // Perform the activity
     public function process($task)
     {
@@ -26,7 +49,7 @@ class TranscodeAssetActivity extends BasicActivity
         // Custom validation for transcoding. Set $this->output
         $this->validateInput();
         
-        $this->cpeLogger->log_out(
+        $this->cpeLogger->logOut(
             "INFO", 
             basename(__FILE__), 
             "Preparing Asset transcoding ...",
@@ -67,12 +90,12 @@ class TranscodeAssetActivity extends BasicActivity
 
             # If we have metadata, we expect the output of ffprobe
             $metadata = null;
-            if (isset($this->input->{'input_asset_metadata'})) 
-                $metadata = $this->input->{'input_asset_metadata'};
-                
+            if (isset($this->input->{'input_metadata'})) 
+                $metadata = $this->input->{'input_metadata'};
+
             // Perform transcoding
             $result = $videoTranscoder->transcode_asset(
-                $this->tmpPathInput,
+                $this->tmpInputPath,
                 $this->inputFilePath,
                 $this->outputFilesPath,
                 $metadata, 
@@ -90,12 +113,12 @@ class TranscodeAssetActivity extends BasicActivity
 
             # If we have metadata, we expect the output of ffprobe
             $metadata = null;
-            if (isset($this->input->{'input_asset_metadata'})) 
-                $metadata = $this->input->{'input_asset_metadata'};
+            if (isset($this->input->{'input_metadata'})) 
+                $metadata = $this->input->{'input_metadata'};
             
             // Perform transcoding
             $result = $imageTranscoder->transcode_asset(
-                $this->tmpPathInput,
+                $this->tmpInputPath,
                 $this->inputFilePath,
                 $this->outputFilesPath,
                 $metadata, 
@@ -128,12 +151,6 @@ class TranscodeAssetActivity extends BasicActivity
         // Sanitize output bucket and file path "/"
         $s3Bucket = str_replace("//", "/",
             $this->output->{"bucket"});
-
-        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        // XXX: Add tmp workflowID to output bucket to seperate upload
-        // XXX: For testing only !
-        // $s3Bucket .= "/".$task["workflowExecution"]["workflowId"];
-        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
         // Set S3 options
         $options = array("rrs" => false, "encrypt" => false);
@@ -169,13 +186,13 @@ class TranscodeAssetActivity extends BasicActivity
                 $s3Location,
                 "$this->outputFilesPath/$entry", 
                 $options, 
-                array($this, "s3_put_processing_callback"), 
+                array($this, "activityHeartbeat"), 
                 $task
             );
             // We delete the TMP file once uploaded
             unlink("$this->outputFilesPath/$entry");
             
-            $this->cpeLogger->log_out("INFO", basename(__FILE__), 
+            $this->cpeLogger->logOut("INFO", basename(__FILE__), 
                 $s3Output['msg'],
                 $task['token']);
         }
@@ -184,18 +201,19 @@ class TranscodeAssetActivity extends BasicActivity
     private function setOutputPath($task)
     {
         $this->outputFilesPath = self::TMP_FOLDER 
-            . $task["workflowExecution"]["workflowId"]."/output/" 
-            . $this->activityId;
+                               . $this->name."/".$this->logKey; 
         
         // Create TMP folder for output files
         $outputFileInfo = pathinfo($this->output->{'file'});
         $this->output->{'output_file_info'} = $outputFileInfo;
-        $this->outputFilesPath .= "/".$outputFileInfo['dirname'];
+        $this->outputFilesPath .= $outputFileInfo['dirname'];
+
+print "DIR: ".$this->outputFilesPath."\n";
         
         if (!file_exists($this->outputFilesPath)) 
         {
             if ($this->debug)
-                $this->cpeLogger->log_out("INFO", basename(__FILE__), 
+                $this->cpeLogger->logOut("INFO", basename(__FILE__), 
                     "Creating TMP output folder '".$this->outputFilesPath."'",
                     $task['token']);
 
@@ -205,6 +223,7 @@ class TranscodeAssetActivity extends BasicActivity
                     self::TMP_FOLDER_FAIL
                 );
         }
+print "DIR2: ".$this->outputFilesPath."\n";
     }
     
     // Perform custom validation on JSON input
@@ -239,5 +258,99 @@ class TranscodeAssetActivity extends BasicActivity
         }
     }
 }
+
+
+/*
+ ***************************
+ * Activity Startup SCRIPT
+ ***************************
+*/
+
+// Usage
+function usage()
+{
+    echo("Usage: php ". basename(__FILE__) . " -A <Snf ARN> [-C <client class path>] [-N <activity name>] [-h] [-d] [-l <log path>]\n");
+    echo("-h: Print this help\n");
+    echo("-d: Debug mode\n");
+    echo("-l <log_path>: Location where logs will be dumped in (folder).\n");
+    echo("-A <activity_name>: Activity name this Poller can process. Or use 'SNF_ACTIVITY_ARN' environment variable. Command line arguments have precedence\n");
+    echo("-C <client class path>: Path to the PHP file that contains the class that implements your Client Interface\n");
+    echo("-N <activity name>: Override the default activity name. Useful if you want to have different client interfaces for the same activity type.\n");
+    exit(0);
+}
+
+// Check command line input parameters
+function check_activity_arguments()
+{
+    // Filling the globals with input
+    global $arn;
+    global $logPath;
+    global $debug;
+    global $clientClassPath;
+    global $name;
+    
+    // Handle input parameters
+    if (!($options = getopt("A:l:hd")))
+        usage();
+    
+    if (isset($options['h']))
+        usage();
+
+    // Debug
+    if (isset($options['d']))
+        $debug = true;
+
+    if (isset($options['A']) && $options['A']) {
+        $arn = $options['A'];
+    } else if (getenv('SNF_ACTIVITY_ARN')) {
+        $arn = getenv('SNF_ACTIVITY_ARN');
+    } else {
+        echo "ERROR: You must provide the ARN of your activity (Sfn ARN). Use option [-A <ARN>] or environment variable: 'SNF_ACTIVITY_ARN'\n";
+        usage();
+    }
+
+    if (isset($options['C']) && $options['C']) {
+        $clientClassPath = $options['C'];
+    }
+
+    if (isset($options['N']) && $options['N']) {
+        $name = $options['N'];
+    }
+    
+    if (isset($options['l']))
+        $logPath = $options['l'];
+}
+
+
+
+/*
+ * START THE SCRIPT ACTITIVY
+ */
+
+// Globals
+$debug = false;
+$logPath = null;
+$arn;
+$name = 'TranscodeAsset';
+$clientClassPath = null;
+
+check_activity_arguments();
+
+$cpeLogger = new SA\CpeSdk\CpeLogger($name, $logPath);
+$cpeLogger->logOut("INFO", basename(__FILE__),
+                   "\033[1mStarting activity\033[0m: $name");
+
+// We instanciate the Activity 'ValidateAsset' and give it a name for Snf
+$activityPoller = new TranscodeAssetActivity(
+    $clientClassPath,
+    [
+        'arn'  => $arn,
+        'name' => $name
+    ],
+    $debug,
+    $cpeLogger);
+
+// Initiate the polling loop and will call your `process` function upon trigger
+$activityPoller->doActivity();
 
 

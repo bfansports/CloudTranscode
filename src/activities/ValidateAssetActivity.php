@@ -2,10 +2,25 @@
 
 <?php
 
-/**
- * This class validate input assets and get metadata about them
- * It makes sure the input files to be transcoded exists and is valid.
- * Based on the input file type we lunch the proper transcoder
+/*
+ *   This class validate input assets and get mime type and metadata 
+ *   Using the ValidateAsset activity you can confirm your asset can be transcoded
+ *
+ *   Copyright (C) 2016  BFan Sports - Sport Archive Inc.
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License along
+ *   with this program; if not, write to the Free Software Foundation, Inc.,
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 require_once __DIR__.'/BasicActivity.php';
@@ -16,7 +31,7 @@ class ValidateAssetActivity extends BasicActivity
 {
     private $finfo;
     private $s3;
-
+    
     public function __construct($client = null, $params, $debug, $cpeLogger)
     {
         # Check if preper env vars are setup
@@ -45,7 +60,7 @@ class ValidateAssetActivity extends BasicActivity
 
         // Call parent process:
         parent::process($task);
-
+        
         // Fetch first 1 KiB of the file for Magic number validation
         $this->activityHeartbeat();
         $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
@@ -107,7 +122,11 @@ class ValidateAssetActivity extends BasicActivity
         $assetInfo->mime = $mime;
         $assetInfo->type = $type;
 
-        return json_encode($assetInfo);
+        $result['input_asset']    = $this->input->{'input_asset'};
+        $result['input_metadata'] = $assetInfo;
+        $result['output_asset']   = $this->input->{'output_asset'};
+        
+        return json_encode($result);
     }
 }
 
@@ -120,12 +139,13 @@ class ValidateAssetActivity extends BasicActivity
 // Usage
 function usage()
 {
-    echo("Usage: php ". basename(__FILE__) . " -A <ARN: (Snf ARN)> [-C <client class path>] [-h] [-d] [-l <log path>]\n");
+    echo("Usage: php ". basename(__FILE__) . " -A <Snf ARN> [-C <client class path>] [-N <activity name>] [-h] [-d] [-l <log path>]\n");
     echo("-h: Print this help\n");
     echo("-d: Debug mode\n");
     echo("-l <log_path>: Location where logs will be dumped in (folder).\n");
     echo("-A <activity_name>: Activity name this Poller can process. Or use 'SNF_ACTIVITY_ARN' environment variable. Command line arguments have precedence\n");
     echo("-C <client class path>: Path to the PHP file that contains the class that implements your Client Interface\n");
+    echo("-N <activity name>: Override the default activity name. Useful if you want to have different client interfaces for the same activity type.\n");
     exit(0);
 }
 
@@ -137,6 +157,7 @@ function check_activity_arguments()
     global $logPath;
     global $debug;
     global $clientClassPath;
+    global $name;
     
     // Handle input parameters
     if (!($options = getopt("A:l:hd")))
@@ -160,6 +181,10 @@ function check_activity_arguments()
 
     if (isset($options['C']) && $options['C']) {
         $clientClassPath = $options['C'];
+    }
+
+    if (isset($options['N']) && $options['N']) {
+        $name = $options['N'];
     }
     
     if (isset($options['l']))

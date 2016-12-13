@@ -1,11 +1,25 @@
 <?php
 
-/**
- * This class handled Images transcoding
- * Here we the input image
- * We transcode and generate an output image using ImageMagic (convert)
+/*
+ *   This class handles Images transcoding
+ *   We transcode and generate an output image using ImageMagic (convert)
+ *
+ *   Copyright (C) 2016  BFan Sports - Sport Archive Inc.
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License along
+ *   with this program; if not, write to the Free Software Foundation, Inc.,
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 
 require_once __DIR__.'/BasicTranscoder.php';
 
@@ -33,7 +47,7 @@ class ImageTranscoder extends BasicTranscoder
             $metadata = $this->_extractFileInfo($metadata);
         }
 
-        $this->cpeLogger->log_out(
+        $this->cpeLogger->logOut(
             "INFO", 
             basename(__FILE__), 
             "Start Transcoding Asset '$pathToInputFile' ...",
@@ -41,7 +55,7 @@ class ImageTranscoder extends BasicTranscoder
         );
 
         if ($metadata)
-            $this->cpeLogger->log_out(
+            $this->cpeLogger->logOut(
                 "INFO", 
                 basename(__FILE__), 
                 "Input Video metadata: " . print_r($metadata, true),
@@ -78,7 +92,7 @@ class ImageTranscoder extends BasicTranscoder
                 );
             }
 
-            $this->cpeLogger->log_out(
+            $this->cpeLogger->logOut(
                 "INFO",
                 basename(__FILE__),
                 "CONVERT CMD:\n$convertCmd\n",
@@ -115,7 +129,7 @@ class ImageTranscoder extends BasicTranscoder
                 $this->getAssetInfo($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
-            $this->cpeLogger->log_out(
+            $this->cpeLogger->logOut(
                 "ERROR", 
                 basename(__FILE__), 
                 "Execution of command '".$convertCmd."' failed: " . print_r($metadata, true). ". ".$e->getMessage(),
@@ -125,7 +139,7 @@ class ImageTranscoder extends BasicTranscoder
         }
 
         // No error. Transcode successful
-        $this->cpeLogger->log_out(
+        $this->cpeLogger->logOut(
             "INFO", 
             basename(__FILE__), 
             "Transcoding successfull !",

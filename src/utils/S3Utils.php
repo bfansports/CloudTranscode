@@ -87,13 +87,13 @@ class S3Utils
         $executer = new CommandExecuter($this->cpeLogger, $logKey);
         $out = $executer->execute(
             $cmd,
-            2,
+            1,
             array(1 => array("pipe", "w"),
                   2 => array("pipe", "w")),
             $callback,
             $callbackParams, 
             true,
-            5
+            2
         );
         
         if ($out['outErr'])

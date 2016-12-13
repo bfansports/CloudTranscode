@@ -7,7 +7,7 @@
     "output_asset": 
     {
 	"type": "VIDEO",
-	"bucket": "cloudtranscode-dev",
+	"bucket": "cloudtranscode-eu-dev",
 	"file": "/output/video1.mp4",
 	"s3_rrs": true,
 	"s3_encrypt": true,
@@ -15,7 +15,7 @@
 	"no_enlarge": false,
 	"preset": "360p-4.3-generic",
 	"watermark": {
-	    "bucket": "cloudtranscode-dev",
+	    "bucket": "cloudtranscode-eu-dev",
 	    "file": "/no-text-96px.png",
 	    "size": "96:96",
 	    "opacity": 0.2,

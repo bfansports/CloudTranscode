@@ -1,33 +1,38 @@
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master) 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
-# Updates
+## Cloud Transcode 2.0 has arrived
 
-AWS anounced AWS Step Functions:https://aws.amazon.com/step-functions/details/
+This version greatly simplifies the work required to setup Cloud Transcode. No more SQS queues, listener, commander, nor decider.
 
-It is basically an advanced implementation of our decider by AWS. You will describe your execution workflow visually, it will generate a "plan" and then executes Lambda functions or activities in workers accordingly. This new services will be great for CloudTranscode as it will simplify the setup greatly. It will remove the need for a Decider. We could also get rid of the InputPoller.php and initiate workflow directly from the client applications. you will be able to create fancy workflow with fallbacks, branches, parallel transcoding, etc
+Thanks to AWS Steps Functions, the new AWS service, you can now create your workflow in the console which removes the need for deciders.
 
-We will work on moving to this soon. If you are interested in participating, let us know!
+You just need to deploy Activities for processing your jobs: ValidateAssetActivity ad TranscodeAssetActivity are the two activities CT supports.
 
-We are also working on moving to AWS SDK 3.* instead of 2.*.
+In order to update your client application upon progress, success or failure for example, your activity now accepts a custom class implementing an Interface to your application. Updating your DB, or notifying 3rd party apps has never been so easy.
+
+We hope that more of you will start using CT now that it is VERY easy to get going. Read on!
 
 # What is Cloud Transcode ?
 Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 
 ## Goal
-The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over performance and cost. 
+The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over performance and cost.
 
 We started with video transcoding as it is the most costly, but the goal is to transcode any type media files (audio, documents and images). We use FFMpeg for video transcoding. CT also image transcoding using ImageMagic.
 
-Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of files at the pace you want, thus controling your cost. 
+Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of files at the pace you want, thus controling your cost.
 
 ## Benefits
-With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. Or you can deploy on AWS EC2, Beanstalk or Docker containers. 
+With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. Or you can deploy on AWS EC2, Beanstalk or Docker containers.
 
 Your workers only need an Internet connection to use the required Amazon services: SWF, SQS and S3. It means that you can have a local, hybrid or full cloud setup. It's up to you.
 
-## Transcoding supported
+## Activity supported
 
+   - **Probe Asset**: Get the mime type of an asset and attempt to run `ffprobe`. Returns mime and ffprobe results.
+   - **Custom FFMpeg command**: Run your own ffmpeg command
+   - **Transcode from HTTP**: No need to put your input file in S3. We can pull it from HTTP and transcode it on the fly. Result files to S3.
    - **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
    - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds. Keep image ratio.
    - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency. Keep image ratio.
@@ -37,29 +42,60 @@ We are working to support ALL FFmpeg options.
 
 # How to use CT ?
 
-Cloud Transcode is a set of "activities" that are executed by the Cloud Processing Engine (CPE) project. 
+Cloud Transcode is a set of "activities" that are standalone scripts implementing the `CpeActivity` class located in the CloudProcessingEngine-SDK:
+https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
 
-With CPE you can execute workflows (chain of tasks) in a distributed way using the SWF cloud service. It initiate tasks executions on workers that you deploy. You can deploy your workers anywhere: locally or in the Cloud. Your workers (machines running your tasks) only need an Internet connection to access the AWS services.
+Those activities listens to the AWS Step Function service for incoming task to process.
 
-CPE allows the execution of arbitrary workflow that you define yourself. CPE is a good fit for any type of orchestrated batch processing that needs to span over several workers.
+## State Machine
 
-CPE makes use of the following AWS services:
+You must create a State Machine in the AWS Step Function console. This is the default workflow we use at **BFan Sports** to process our videos:
 
-   - SWF (Simple Workflow): Define your own workflow and let SWF track its progress and initiate tasks.
-   - SQS (Simple Queue Messaging): Your client applications communicate with the CPE stack simply using SQS messages.
+You can then start this workflow from the console or using the AWS SDK. See:
+http://docs.aws.amazon.com/step-functions/latest/dg/concepts-state-machine-executions.html
 
-**You need to clone the CPE project to get going with Cloud Transcode.**
+## Run Activities
 
-So head to the CPE project page, clone it and discover what you can do with CPE: https://github.com/sportarchive/CloudProcessingEngine
+Activities are standalone scripts that can be started in command line.
 
-The CPE detailed documentation is here: http://sportarchive.github.io/CloudProcessingEngine/
+``` bash
+$> ./src/activities/ValidateAssetActivity.php -h
+$> ./src/activities/TranscodeAssetActivity.php -h
+```
 
-## CT Documentation
+They can also be ran into Docker. A Docker image is provided which depends from images:
 
-To understand all about Cloud Transcode and the transcoding activities,
-head to the CT documentation here: http://sportarchive.github.io/CloudTranscode/
+   - https://hub.docker.com/r/sportarc/cloudtranscode-base/
 
-We explain how to create transcoding jobs and detail all available transcoding options.
+```
+$> sudo docker run sportarc/cloudtranscode ValidateAssetActivity
+$> sudo docker run sportarc/cloudtranscode TranscodeAssetActivity
+```
+
+## Integrate with your client app
+
+You start transcoding from your client application. A web server, an API, anything. Now, how do you update your DB, send notifications, and integrate this transcoding stack with your client app?
+
+This way:
+
+   - Check the CloudProcessingEngine-SDK for the Interface file called: `src/SA/CpeSdk/CpeClientInterface.php`
+
+You must implement this PHP Interface and put your synchronization logic in there. For each event in the task, your interface class will be called and you will get the necessary data to update your DB for example.
+
+In order to pass this class to the Activity, you have to provide its path in command line using the [-C <client class path>] option.
+
+That means that if you use Docker, you must create your own image based on the CloudTranscode one which will contain this class. A Dockerfile like this for example:
+
+
+``` Dockerfile
+FROM sportarc/cloudtranscode-prod
+MAINTAINER Sport Archive, Inc.
+
+COPY clientInterfaces/* /etc/cloudtranscode/
+```
+
+Just create a folder with this Dockerfile and a clone of the CloudTranscode repository.
+
 
 # Contributing
 
@@ -76,4 +112,3 @@ Thanks for contributing !
 
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances running FFMpeg:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
-

@@ -13,15 +13,15 @@ class CommandExecuter
 {
     private $cpeLogger;
     private $logKey;
-    
+
     const EXEC_FAILED = "EXEC_FAILED";
-    
+
     public function __construct($cpeLogger, $logKey = null)
     {
         $this->cpeLogger = $cpeLogger;
         $this->logKey    = $logKey;
     }
-    
+
     public function execute(
         $cmd,
         $sleep = 1,
@@ -35,16 +35,19 @@ class CommandExecuter
         $callbackTurns = 0,
         $logKey = null)
     {
-        $this->cpeLogger->logOut("INFO", basename(__FILE__), "Executing: $cmd", $this->logKey);
-
         if ($logKey)
             $this->logKey = $logKey;
         
+        $this->cpeLogger->logOut("INFO", basename(__FILE__), "Executing: $cmd", $this->logKey);
+
         // Start execution of $cmd
         if (!($process = proc_open($cmd, $descriptors, $pipes)) ||
             !is_resource($process)) {
+            $this->cpeLogger->logOut("ERROR",
+                                     basename(__FILE__), "Unable to execute command:\n$cmd",
+                                     $this->logKey);
             throw new CpeSdk\CpeException("Unable to execute command:\n$cmd\n",
-                self::EXEC_FAILED);
+                                          self::EXEC_FAILED);
         }
 
         // Set the pipes as non-blocking
@@ -56,49 +59,33 @@ class CommandExecuter
             $descriptors[2]) {
             stream_set_blocking($pipes[2], FALSE);
         }
-        
+
         $i = 0;
-        
+
         // Used to store all output
         $allOut = "";
         $allOutErr = "";
-        
+
         // Check process status at every turn
         do {
-	    sleep($sleep);	    
-
-            // Read prog output
-            if (isset($descriptors[1]) &&
-                $descriptors[1])
-            {
-                $out = stream_get_contents($pipes[1], 8192); 
-                $allOut .= $out;
-            }
-            
-            // Read prog errors
-            if (isset($descriptors[2]) &&
-                $descriptors[2])
-            {
-                $outErr = stream_get_contents($pipes[2], 8192); 
-                $allOutErr .= $outErr;
-            }
+            sleep($sleep);
 
             // If callback only after N turns
-            if ( !$callbackTurns || in_array($i, array(0, $callbackTurns)) ) 
+            if ( !$callbackTurns || in_array($i, array(0, $callbackTurns)) )
             {
                 if ($showProgress) {
                     echo ".\n";
                 }
 
                 // Call user provided callback.
-                // Callback should be an array as per doc here: 
+                // Callback should be an array as per doc here:
                 // http://www.php.net/manual/en/language.types.callable.php
                 // Type 3: Object method call
                 if (isset($progressCallback) && $progressCallback) {
-                    call_user_func($progressCallback, $progressCallbackParams, 
-                        $allOut, $allOutErr);
+                    call_user_func($progressCallback, $progressCallbackParams,
+                                   $allOut, $allOutErr);
                 }
-                    
+
                 $i = 0;
             }
 
@@ -110,6 +97,22 @@ class CommandExecuter
                 flush();
             }
             
+            // Read prog output
+            if (isset($descriptors[1]) &&
+                $descriptors[1])
+            {
+                $out = stream_get_contents($pipes[1], 8192);
+                $allOut .= $out;
+            }
+
+            // Read prog errors
+            if (isset($descriptors[2]) &&
+                $descriptors[2])
+            {
+                $outErr = stream_get_contents($pipes[2], 8192);
+                $allOutErr .= $outErr;
+            }
+
             $i++;
         } while ($procStatus['running']);
 
@@ -131,14 +134,14 @@ class CommandExecuter
                                          basename(__FILE__), "COMMAND STDERR: ".$allOutErr,
                                          $this->logKey);
         }
-        
+
         if ($showProgress) {
             echo "\n";
         }
-    
+
         // Process is over
         proc_close($process);
-        
+
         return array('out' => $allOut, 'outErr' => $allOutErr);
     }
 }

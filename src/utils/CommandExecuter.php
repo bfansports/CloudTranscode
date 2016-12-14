@@ -91,25 +91,20 @@ class CommandExecuter
 
             // Get latest status
             $procStatus = proc_get_status($process);
-            if ($showProgress)
-            {
+            if ($showProgress) {
                 echo ".";
                 flush();
             }
             
             // Read prog output
-            if (isset($descriptors[1]) &&
-                $descriptors[1])
-            {
-                $out = stream_get_contents($pipes[1], 8192);
+            if (isset($pipes[1]) && $pipes[1]) {
+                $out = stream_get_contents($pipes[1], -1);
                 $allOut .= $out;
             }
 
             // Read prog errors
-            if (isset($descriptors[2]) &&
-                $descriptors[2])
-            {
-                $outErr = stream_get_contents($pipes[2], 8192);
+            if (isset($pipes[2]) && $pipes[2]) {
+                $outErr = stream_get_contents($pipes[2], -1);
                 $allOutErr .= $outErr;
             }
 

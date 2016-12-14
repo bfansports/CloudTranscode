@@ -207,8 +207,6 @@ class TranscodeAssetActivity extends BasicActivity
         $outputFileInfo = pathinfo($this->output->{'file'});
         $this->output->{'output_file_info'} = $outputFileInfo;
         $this->outputFilesPath .= $outputFileInfo['dirname'];
-
-print "DIR: ".$this->outputFilesPath."\n";
         
         if (!file_exists($this->outputFilesPath)) 
         {
@@ -223,7 +221,6 @@ print "DIR: ".$this->outputFilesPath."\n";
                     self::TMP_FOLDER_FAIL
                 );
         }
-print "DIR2: ".$this->outputFilesPath."\n";
     }
     
     // Perform custom validation on JSON input

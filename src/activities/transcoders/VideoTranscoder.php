@@ -629,7 +629,7 @@ class VideoTranscoder extends BasicTranscoder
             'duration' => isset($metadata->format->duration) ? (float)$metadata->format->duration : 0,
             'video' => empty($videoStreams) ? null : [
                 'codec' => $videoStreams->codec_name,
-                'color' => $videoStreams->color_space,
+                'color' => @$videoStreams->color_space,
                 'resolution' => $videoStreams->width . 'x' . $videoStreams->height,
                 'sar' => $videoStreams->sample_aspect_ratio,
                 'dar' => $videoStreams->display_aspect_ratio,

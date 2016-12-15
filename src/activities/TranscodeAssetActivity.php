@@ -142,7 +142,7 @@ class TranscodeAssetActivity extends BasicActivity
         // Upload resulting file
         $this->uploadResultFiles($task);
         
-        return $result;
+        return json_encode($result);
     }
 
     // Upload all output files to destination S3 bucket
@@ -202,9 +202,11 @@ class TranscodeAssetActivity extends BasicActivity
     {
         $this->outputFilesPath = self::TMP_FOLDER 
                                . $this->name."/".$this->logKey; 
+
+        $this->output->{'key'} = $this->output->{'path'}."/".$this->output->{'file'};
         
         // Create TMP folder for output files
-        $outputFileInfo = pathinfo($this->output->{'file'});
+        $outputFileInfo = pathinfo($this->output->{'key'});
         $this->output->{'output_file_info'} = $outputFileInfo;
         $this->outputFilesPath .= $outputFileInfo['dirname'];
         

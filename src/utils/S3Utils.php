@@ -58,7 +58,7 @@ class S3Utils
         $options, 
         $callback = null, 
         $callbackParams = null,
-        $logKey)
+        $logKey = null)
     {
         $cmd  = "php " . __DIR__ . self::PUT_IN_S3;
         $cmd .= " --bucket $bucket";

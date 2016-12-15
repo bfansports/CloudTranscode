@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d5021a32a56e40d07984fb0d5214dec3",
-    "content-hash": "86db0748ae1999470e0a8e914cdbe3bb",
+    "hash": "f7d5703a793a5034c7ec8b9262477bc6",
+    "content-hash": "b9eec4c67e65df6cfc2505c50f78d8d5",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.20.4",
+            "version": "3.20.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "4541d9e350644a5c70b298d42e526b65275fc804"
+                "reference": "5a05ae6851405587f0bdeedb67abfe997a079ac0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/4541d9e350644a5c70b298d42e526b65275fc804",
-                "reference": "4541d9e350644a5c70b298d42e526b65275fc804",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/5a05ae6851405587f0bdeedb67abfe997a079ac0",
+                "reference": "5a05ae6851405587f0bdeedb67abfe997a079ac0",
                 "shasum": ""
             },
             "require": {
@@ -85,7 +85,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2016-12-08 20:59:19"
+            "time": "2016-12-12 23:02:57"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -431,16 +431,16 @@
         },
         {
             "name": "sportarchive/cloud-processing-engine-sdk",
-            "version": "2.0",
+            "version": "3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sportarchive/CloudProcessingEngine-SDK.git",
-                "reference": "ab32d2497f08fc9be85de2117f389cc87c05a385"
+                "reference": "ea10c44e068de7ff025dd0343123c016567f46fe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/ab32d2497f08fc9be85de2117f389cc87c05a385",
-                "reference": "ab32d2497f08fc9be85de2117f389cc87c05a385",
+                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/ea10c44e068de7ff025dd0343123c016567f46fe",
+                "reference": "ea10c44e068de7ff025dd0343123c016567f46fe",
                 "shasum": ""
             },
             "require": {
@@ -469,7 +469,7 @@
                 "Cloud Processing Engine",
                 "Cloud Transcode"
             ],
-            "time": "2016-12-04 22:20:32"
+            "time": "2016-12-13 18:15:56"
         }
     ],
     "packages-dev": [],

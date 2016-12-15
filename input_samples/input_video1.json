@@ -8,7 +8,8 @@
     {
 	"type": "VIDEO",
 	"bucket": "cloudtranscode-eu-dev",
-	"file": "/output/video1.mp4",
+        "path": "/output/",
+	"file": "video1.mp4",
 	"s3_rrs": true,
 	"s3_encrypt": true,
 	"keep_ratio": false,

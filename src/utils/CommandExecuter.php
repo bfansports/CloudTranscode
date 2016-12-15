@@ -111,8 +111,10 @@ class CommandExecuter
             $i++;
         } while ($procStatus['running']);
 
-        fclose($pipes[1]);
-        fclose($pipes[2]);
+        if ($pipes[1])
+            fclose($pipes[1]);
+        if ($pipes[2])
+            fclose($pipes[2]);
 
         if ($procStatus['exitcode'] > 0)
         {

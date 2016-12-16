@@ -4,14 +4,16 @@
 	"bucket": "cloudtranscode-eu-dev",
 	"file": "/input/image.jpg"
     },
-    "output_asset": 
-    {
-	"type": "IMAGE",
-	"bucket": "cloudtranscode-eu-dev",
-	"file": "/output/image.*",
-	"crop": "600x600+0+0",
-	"quality": 70,
-	"s3_rrs": true,
-	"s3_encrypt": true
-    }
+    "output_assets":
+    [
+        {
+	    "type": "IMAGE",
+	    "bucket": "cloudtranscode-eu-dev",
+	    "file": "/output/image.*",
+	    "crop": "600x600+0+0",
+	    "quality": 70,
+	    "s3_rrs": true,
+	    "s3_encrypt": true
+        }
+    ]
 }

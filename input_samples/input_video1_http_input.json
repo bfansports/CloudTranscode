@@ -1,25 +1,51 @@
 {
     "input_asset": {
 	"type": "VIDEO",
+        "bucket": "cloudtranscode-eu-dev",
+        "file": "/input/video1.mp4",
 	"http": "https://s3.amazonaws.com/cloudtranscode-dev/input/Football+Gameplan%27s+2013+College+Football+FCS+Wraparound+-+Week+13+-+YouTube+%5B360p%5D.mp4"
     },
-    "output_asset": 
-    {
-	"type": "VIDEO",
-	"bucket": "cloudtranscode-dev",
-	"file": "/output/video1.mp4",
-	"s3_rrs": true,
-	"s3_encrypt": true,
-	"keep_ratio": false,
-	"no_enlarge": false,
-	"preset": "360p-4.3-generic",
-	"watermark": {
-	    "bucket": "cloudtranscode-dev",
-	    "file": "/no-text-96px.png",
-	    "size": "96:96",
-	    "opacity": 0.2,
-	    "x": -20,
-	    "y": -20
-	}
-    }
+    "output_assets":
+    [
+        {
+            "type": "THUMB",
+            "mode": "snapshot",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "thumbnail_sd.jpg",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "size": "-1:159",
+            "snapshot_sec": 5
+        },
+        {
+            "type": "THUMB",
+            "mode": "snapshot",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "thumbnail_hd.jpg",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "size": "-1:720",
+            "snapshot_sec": 5
+        },
+        {
+	    "type": "VIDEO",
+	    "bucket": "cloudtranscode-eu-dev",
+	    "file": "/output/video1.mp4",
+	    "s3_rrs": true,
+	    "s3_encrypt": true,
+	    "keep_ratio": false,
+	    "no_enlarge": false,
+	    "preset": "360p-4.3-generic",
+	    "watermark": {
+	        "bucket": "cloudtranscode-eu-dev",
+	        "file": "/no-text-96px.png",
+	        "size": "96:96",
+	        "opacity": 0.2,
+	        "x": -20,
+	        "y": -20
+	    }
+        }
+    ]
 }

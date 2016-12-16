@@ -89,23 +89,22 @@ class BasicActivity extends CpeSdk\CpeActivity
         }
             
         $this->inputFilePath = null;
-        if (isset($this->input->{'input_asset'}->{'bucket'}) &&
-            isset($this->input->{'input_asset'}->{'file'}))
-        {
-            // Download input file and store it in TMP folder
-            $saveFileTo = $this->tmpInputPath."/".$inputFileInfo['basename'];
-            $this->inputFilePath = 
-                $this->getFileToProcess(
-                    $task, 
-                    $this->input->{'input_asset'}->{'bucket'},
-                    $this->input->{'input_asset'}->{'file'},
-                    $saveFileTo
-                );
-        }
-        else if (isset($this->input->{'input_asset'}->{'http'}))
+        if (isset($this->input->{'input_asset'}->{'http'}))
         {
             // Pad HTTP input so it is cached in case of full encodes
             $this->inputFilePath = 'cache:' . $this->input->{'input_asset'}->{'http'};
+        }
+        else if (isset($this->input->{'input_asset'}->{'bucket'}) &&
+                 isset($this->input->{'input_asset'}->{'file'}))
+        {
+            // Download input file and store it in TMP folder
+            $saveFileTo = $this->tmpInputPath."/".$inputFileInfo['basename'];
+            $this->inputFilePath = $this->getFileToProcess(
+                $task, 
+                $this->input->{'input_asset'}->{'bucket'},
+                $this->input->{'input_asset'}->{'file'},
+                $saveFileTo
+            );
         }
     }
     

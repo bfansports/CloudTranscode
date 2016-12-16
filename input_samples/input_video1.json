@@ -1,27 +1,51 @@
 {
     "input_asset": {
-	"type": "VIDEO",
-	"bucket": "cloudtranscode-eu-dev",
-	"file": "/input/video1.mp4"
+        "type": "VIDEO",
+        "bucket": "cloudtranscode-eu-dev",
+        "file": "/input/video1.mp4"
     },
-    "output_asset": 
-    {
-	"type": "VIDEO",
-	"bucket": "cloudtranscode-eu-dev",
-        "path": "/output/",
-	"file": "video1.mp4",
-	"s3_rrs": true,
-	"s3_encrypt": true,
-	"keep_ratio": false,
-	"no_enlarge": false,
-	"preset": "360p-4.3-generic",
-	"watermark": {
-	    "bucket": "cloudtranscode-eu-dev",
-	    "file": "/no-text-96px.png",
-	    "size": "96:96",
-	    "opacity": 0.2,
-	    "x": -20,
-	    "y": -20
-	}
-    }
+    "output_assets": [
+        {
+            "type": "THUMB",
+            "mode": "snapshot",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "thumbnail_sd.jpg",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "size": "-1:159",
+            "snapshot_sec": 5
+        },
+        {
+            "type": "THUMB",
+            "mode": "snapshot",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "thumbnail_hd.jpg",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "size": "-1:720",
+            "snapshot_sec": 5
+        },
+        {
+            "type": "VIDEO",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "video1.mp4",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "keep_ratio": false,
+            "no_enlarge": false,
+            "preset": "360p-4.3-generic",
+            "watermark": {
+                "bucket": "cloudtranscode-eu-dev",
+                "file": "/no-text-96px.png",
+                "size": "96:96",
+                "opacity": 0.2,
+                "x": -20,
+                "y": -20
+            }
+        }
+    ]
 }
+

@@ -122,9 +122,9 @@ class ValidateAssetActivity extends BasicActivity
         $assetInfo->mime = $mime;
         $assetInfo->type = $type;
 
-        $result['input_asset']    = $this->input->{'input_asset'};
-        $result['input_metadata'] = $assetInfo;
-        $result['output_asset']   = $this->input->{'output_asset'};
+        $result['input_asset']     = $this->input->{'input_asset'};
+        $result['input_metadata']  = $assetInfo;
+        $result['output_assets']   = $this->input->{'output_assets'};
         
         return json_encode($result);
     }
@@ -160,7 +160,7 @@ function check_activity_arguments()
     global $name;
     
     // Handle input parameters
-    if (!($options = getopt("A:l:hd")))
+    if (!($options = getopt("A:l:C:hd")))
         usage();
     
     if (isset($options['h']))

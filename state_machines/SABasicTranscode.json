@@ -1,90 +1,19 @@
 {
-    "Comment": "Transcode a video asset into thumbnails and proxy mp4",
+    "Comment": "Validate and Transcode a video asset into thumbnails and proxy mp4",
     "StartAt": "ValidateAsset",
     "States": {
         "ValidateAsset": {
             "Type": "Task",
-            "Next": "Transcode",
+            "Next": "TranscodeAsset",
             "Resource": "arn:aws:states:eu-west-1:441276146445:activity:ValidateAsset",
             "TimeoutSeconds": 300,
             "HeartbeatSeconds": 30
         },
-        "Transcode": {
-            "Type": "Parallel",
-            "Next": "Done",
-            "Branches": [
-                {
-                    "StartAt": "ThumSDInputGen",
-                    "States": {
-                        "ThumSDInputGen": {
-                            "Type": "Pass",
-                            "Next": "ThumbSD",
-                            "Result": {
-                                "output_asset": {
-                                    "type": "THUMB",
-                                    "bucket": $.output_asset.bucket,
-                                    "path": $.output_asset.path,
-                                    "file": "thumbSD.jpg",
-                                    "quality": 80,
-                                    "s3_rrs": true,
-                                    "s3_encrypt": true
-                                }
-                            },
-                            "ResultPath": "$.output_asset"
-                        },
-                        "ThumbSD": {
-                            "Type": "Task",
-                            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
-                            "TimeoutSeconds": 300,
-                            "HeartbeatSeconds": 30,
-                            "End": true
-                        }
-                    }
-                },
-                {
-                    "StartAt": "ThumHDInputGen",
-                    "States": {
-                        "ThumHDInputGen": {
-                            "Type": "Pass",
-                            "Next": "ThumbHD",
-                            "Result": {
-                                "output_asset": {
-                                    "type": "THUMB",
-                                    "bucket": $.output_asset.bucket,
-                                    "path": $.output_asset.path,
-                                    "file": "thumbHD.jpg",
-                                    "quality": 80,
-                                    "s3_rrs": true,
-                                    "s3_encrypt": true
-                                }
-                            },
-                            "ResultPath": "$.output_asset"
-                        },
-                        "ThumbHD": {
-                            "Type": "Task",
-                            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
-                            "TimeoutSeconds": 300,
-                            "HeartbeatSeconds": 30,
-                            "End": true
-                        }
-                    }
-                },
-                {
-                    "StartAt": "Proxy",
-                    "States": {
-                        "Proxy": {
-                            "Type": "Task",
-                            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
-                            "TimeoutSeconds": 28800,
-                            "HeartbeatSeconds": 30,
-                            "End": true
-                        }
-                    }
-                }
-            ]
-        },
-        "Done": {
-            "Type": "Pass",
+        "TranscodeAsset": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
+            "TimeoutSeconds": 28800,
+            "HeartbeatSeconds": 30,
             "End": true
         }
     }

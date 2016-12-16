@@ -125,7 +125,16 @@ class VideoTranscoder extends BasicTranscoder
                 "FFMPEG CMD:\n$ffmpegCmd\n",
                 $this->logKey
             );
-
+            
+            // Send heartbeat and initialize progress
+            $this->activityObj->activityHeartbeat(
+                [
+                    "duration" => $metadata['duration'],
+                    "done"     => 0,
+                    "progress" => 0
+                ]
+            );
+            
             // Use executer to start FFMpeg command
             // Use 'capture_progression' function as callback
             // Pass video 'duration' as parameter
@@ -151,8 +160,7 @@ class VideoTranscoder extends BasicTranscoder
             }
 
             // FFProbe the output file and return its information
-            $output_info =
-                         $this->getAssetInfo($outputFilesPath."/".$outputWanted->{'output_file_info'}['basename']);
+            $output_info = $this->getAssetInfo($outputFilesPath."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
             $this->cpeLogger->logOut(
@@ -485,15 +493,7 @@ class VideoTranscoder extends BasicTranscoder
     {
         $progress = 0;
         $done = 0;
-
-        // We also call a callback here ... the 'send_hearbeat' function from the origin activity
-        // This way we notify SWF that we are alive !
-        $this->activityObj->activityHeartbeat([
-            "duration" => $duration,
-            "done"     => $done,
-            "progress" => 0
-        ]);
-
+        
         // # get the current time
         preg_match_all("/time=(.*?) bitrate/", $outErr, $matches);
 
@@ -525,9 +525,8 @@ class VideoTranscoder extends BasicTranscoder
             $this->logKey
         );
 
-        // Send progress through SQSUtils to notify client of progress
+        // Send heartbeat and progress data
         $this->activityObj->activityHeartbeat(
-            $this->task,
             [
                 "duration" => $duration,
                 "done"     => $done,
@@ -614,8 +613,6 @@ class VideoTranscoder extends BasicTranscoder
         $videoStreams;
         $audioStreams;
 
-        print_r($metadata);
-        
         foreach ($metadata->streams as $key => $value) {
             if ($value->codec_type === 'video') {
                 $videoStreams = $value;

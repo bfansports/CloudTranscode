@@ -108,7 +108,7 @@ class ImageTranscoder extends BasicTranscoder
                 $convertCmd, 
                 1, 
                 array(2 => array("pipe", "w")),
-                array($this, "capture_progression"), 
+                array($this->activityObj, "activityHeartbeat"), 
                 null, 
                 true, 
                 10

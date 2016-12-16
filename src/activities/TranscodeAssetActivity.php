@@ -34,7 +34,7 @@ class TranscodeAssetActivity extends BasicActivity
 
     private $output;
     private $outputFilesPath;
-    
+
     public function __construct($client = null, $params, $debug, $cpeLogger)
     {
         parent::__construct($client, $params, $debug, $cpeLogger);
@@ -43,132 +43,144 @@ class TranscodeAssetActivity extends BasicActivity
     // Perform the activity
     public function process($task)
     {
-        // Save output object
-        $this->output = $this->input->{'output_asset'};
-        
-        // Custom validation for transcoding. Set $this->output
-        $this->validateInput();
-        
-        $this->cpeLogger->logOut(
-            "INFO", 
-            basename(__FILE__), 
-            "Preparing Asset transcoding ...",
-            $task['token']
-        );
-        
         // Call parent do_activity:
         // It download the input file we will process.
         parent::process($task);
-        
-        // Set output path to store result files
-        $this->setOutputPath($task);
 
-        // Result output
-        $result = null;
+        // Save output object
+        $this->outputs = $this->input->{'output_assets'};
 
-        // Load the right transcoder base on input_type
-        // Get asset detailed info
-        switch ($this->input->{'input_asset'}->{'type'}) 
+        $this->cpeLogger->logOut(
+            "INFO",
+            basename(__FILE__),
+            "Preparing Asset transcoding ...",
+            $this->logKey
+        );
+
+        foreach ($this->outputs as $output)
         {
-        case self::VIDEO:
-            require_once __DIR__.'/transcoders/VideoTranscoder.php';
-
-            // Instanciate transcoder to output Videos
-            $videoTranscoder = new VideoTranscoder($this, $task);
+            $this->validateInput($output);
             
-            // Check preset file, read its content and add its data to output object
-            if ($this->output->{'type'} == self::VIDEO &&
-                isset($this->output->{'preset'}))
+            // Set output path to store result files
+            $this->outputFilesPath = $this->getOutputPath($output);
+            
+            // Load the right transcoder base on input_type
+            // Get asset detailed info
+            switch ($this->input->{'input_asset'}->{'type'})
             {
-                // Validate output preset
-                $videoTranscoder->validate_preset($this->output);
-
-                // Set preset value
-                $this->output->{'preset_values'} =
-                    $videoTranscoder->get_preset_values($this->output);
+            case self::VIDEO:
+                $result = $this->transcodeVideo($task, $output);
+                break;
+            case self::IMAGE:
+                $result = $this->transcodeImage($task, $output);
+                break;
+            case self::AUDIO:
+            case self::DOC:
+                break;
+            default:
+                throw new CpeSdk\CpeException("Unknown input asset 'type'! Abording ...",
+                                              self::UNKOWN_INPUT_TYPE);
             }
 
-            # If we have metadata, we expect the output of ffprobe
-            $metadata = null;
-            if (isset($this->input->{'input_metadata'})) 
-                $metadata = $this->input->{'input_metadata'};
+            // Upload resulting file
+            $this->uploadResultFiles($task, $output);
 
-            // Perform transcoding
-            $result = $videoTranscoder->transcode_asset(
-                $this->tmpInputPath,
-                $this->inputFilePath,
-                $this->outputFilesPath,
-                $metadata, 
-                $this->output
-            );
-
-            unset($videoTranscoder);
-
-            break;
-        case self::IMAGE:
-            require_once __DIR__.'/transcoders/ImageTranscoder.php';
-            
-            // Instanciate transcoder to output Images
-            $imageTranscoder = new ImageTranscoder($this, $task);
-
-            # If we have metadata, we expect the output of ffprobe
-            $metadata = null;
-            if (isset($this->input->{'input_metadata'})) 
-                $metadata = $this->input->{'input_metadata'};
-            
-            // Perform transcoding
-            $result = $imageTranscoder->transcode_asset(
-                $this->tmpInputPath,
-                $this->inputFilePath,
-                $this->outputFilesPath,
-                $metadata, 
-                $this->output
-            );
-            
-            unset($imageTranscoder);
-                
-            break;
-        case self::AUDIO:
-                
-            break;
-        case self::DOC:
-                
-            break;
-        default:
-            throw new CpeSdk\CpeException("Unknown input asset 'type'! Abording ...", 
-                self::UNKOWN_INPUT_TYPE);
+            if ($this->client)
+                $this->client->onTranscodeDone($this->token, $result);
         }
-        
-        // Upload resulting file
-        $this->uploadResultFiles($task);
-        
+
         return json_encode($result);
     }
 
+    // Process INPUT IMAGE
+    private function transcodeImage($task, $output)
+    {
+        require_once __DIR__.'/transcoders/ImageTranscoder.php';
+        
+        // Instanciate transcoder to output Images
+        $imageTranscoder = new ImageTranscoder($this, $task);
+        
+        # If we have metadata, we expect the output of ffprobe
+        $metadata = null;
+        if (isset($this->input->{'input_metadata'}))
+            $metadata = $this->input->{'input_metadata'};
+        
+        // Perform transcoding
+        $result = $imageTranscoder->transcode_asset(
+            $this->tmpInputPath,
+            $this->inputFilePath,
+            $this->outputFilesPath,
+            $metadata,
+            $output
+        );
+        
+        unset($imageTranscoder);
+
+        return ($result);
+    }
+    
+    // Process INPUT VIDEO
+    private function transcodeVideo($task, $output)
+    {
+        require_once __DIR__.'/transcoders/VideoTranscoder.php';
+        
+        // Instanciate transcoder to output Videos
+        $videoTranscoder = new VideoTranscoder($this, $task);
+
+        // Check preset file, read its content and add its data to output object
+        if ($output->{'type'} == self::VIDEO &&
+            isset($output->{'preset'}))
+        {
+            // Validate output preset
+            $videoTranscoder->validate_preset($output);
+
+            // Set preset value
+            $output->{'preset_values'} = $videoTranscoder->get_preset_values($output);
+        }
+
+        # If we have metadata, we expect the output of ffprobe
+        $metadata = null;
+        if (isset($this->input->{'input_metadata'}))
+            $metadata = $this->input->{'input_metadata'};
+
+        // Perform transcoding
+        $result = $videoTranscoder->transcode_asset(
+            $this->tmpInputPath,
+            $this->inputFilePath,
+            $this->outputFilesPath,
+            $metadata,
+            $output
+        );
+        
+        unset($videoTranscoder);
+
+        return ($result);
+    }
+
     // Upload all output files to destination S3 bucket
-    private function uploadResultFiles($task)
+    private function uploadResultFiles($task, $output)
     {
         // Sanitize output bucket and file path "/"
         $s3Bucket = str_replace("//", "/",
-            $this->output->{"bucket"});
+                                $output->{"bucket"});
 
         // Set S3 options
         $options = array("rrs" => false, "encrypt" => false);
-        if (isset($this->output->{'s3_rrs'}) &&
-            $this->output->{'s3_rrs'} == true) {
+        if (isset($output->{'s3_rrs'}) &&
+            $output->{'s3_rrs'} == true) {
             $options['rrs'] = true;
         }
-        if (isset($this->output->{'s3_encrypt'}) &&
-            $this->output->{'s3_encrypt'} == true) {
+        if (isset($output->{'s3_encrypt'}) &&
+            $output->{'s3_encrypt'} == true) {
             $options['encrypt'] = true;
         }
-        
+
         // Open '$outputFilesPath' to read it and send all files to S3 bucket
         if (!$handle = opendir($this->outputFilesPath)) {
-            throw new CpeSdk\CpeException("Can't open tmp path '$this->outputFilesPath'!", 
-                self::TMP_PATH_OPEN_FAIL);
+            throw new CpeSdk\CpeException("Can't open tmp path '$this->outputFilesPath'!",
+                                          self::TMP_PATH_OPEN_FAIL);
         }
-        
+
         // Upload all resulting files sitting in $outputFilesPath to S3
         while ($entry = readdir($handle)) {
             if ($entry == "." || $entry == "..") {
@@ -176,93 +188,94 @@ class TranscodeAssetActivity extends BasicActivity
             }
 
             // Destination path on S3. Sanitizing
-            $s3Location = $this->output->{'output_file_info'}['dirname']."/$entry";
+            $s3Location = $output->{'output_file_info'}['dirname']."/$entry";
             $s3Location = str_replace("//", "/", $s3Location);
-            
+
             // Send to S3. We reference the callback s3_put_processing_callback
             // The callback ping back SWF so we stay alive
             $s3Output = $this->s3Utils->put_file_into_s3(
-                $s3Bucket, 
+                $s3Bucket,
                 $s3Location,
-                "$this->outputFilesPath/$entry", 
-                $options, 
-                array($this, "activityHeartbeat"), 
+                "$this->outputFilesPath/$entry",
+                $options,
+                array($this, "activityHeartbeat"),
                 $task
             );
             // We delete the TMP file once uploaded
             unlink("$this->outputFilesPath/$entry");
-            
-            $this->cpeLogger->logOut("INFO", basename(__FILE__), 
-                $s3Output['msg'],
-                $task['token']);
+
+            $this->cpeLogger->logOut("INFO", basename(__FILE__),
+                                     $s3Output['msg'],
+                                     $this->logKey);
         }
     }
 
-    private function setOutputPath($task)
+    private function getOutputPath($output)
     {
-        $this->outputFilesPath = self::TMP_FOLDER 
-                               . $this->name."/".$this->logKey; 
+        $outputFilesPath = self::TMP_FOLDER
+                         . $this->name."/".$this->logKey;
 
-        $this->output->{'key'} = $this->output->{'path'}."/".$this->output->{'file'};
-        
+        $output->{'key'} = $output->{'path'}."/".$output->{'file'};
+
         // Create TMP folder for output files
-        $outputFileInfo = pathinfo($this->output->{'key'});
-        $this->output->{'output_file_info'} = $outputFileInfo;
-        $this->outputFilesPath .= $outputFileInfo['dirname'];
-        
-        if (!file_exists($this->outputFilesPath)) 
+        $outputFileInfo = pathinfo($output->{'key'});
+        $output->{'output_file_info'} = $outputFileInfo;
+        $outputFilesPath .= $outputFileInfo['dirname'];
+
+        if (!file_exists($outputFilesPath))
         {
             if ($this->debug)
-                $this->cpeLogger->logOut("INFO", basename(__FILE__), 
-                    "Creating TMP output folder '".$this->outputFilesPath."'",
-                    $task['token']);
+                $this->cpeLogger->logOut("INFO", basename(__FILE__),
+                                         "Creating TMP output folder '".$outputFilesPath."'",
+                                         $this->logKey);
 
-            if (!mkdir($this->outputFilesPath, 0750, true))
+            if (!mkdir($outputFilesPath, 0750, true))
                 throw new CpeSdk\CpeException(
-                    "Unable to create temporary folder '$this->outputFilesPath' !",
+                    "Unable to create temporary folder '$outputFilesPath' !",
                     self::TMP_FOLDER_FAIL
                 );
         }
+
+        return ($outputFilesPath);
     }
-    
+
     // Perform custom validation on JSON input
     // Callback function used in $this->do_input_validation
-    private function validateInput()
+    private function validateInput($output)
     {
-        
         if ((
-                $this->input->{'input_asset'}->{'type'} == self::VIDEO &&
-                $this->output->{'type'} != self::VIDEO &&
-                $this->output->{'type'} != self::THUMB &&
-                $this->output->{'type'} != self::AUDIO
-            )
+            $this->input->{'input_asset'}->{'type'} == self::VIDEO &&
+            $output->{'type'} != self::VIDEO &&
+            $output->{'type'} != self::THUMB &&
+            $output->{'type'} != self::AUDIO
+        )
             ||
             (
                 $this->input->{'input_asset'}->{'type'} == self::IMAGE &&
-                $this->output->{'type'} != self::IMAGE
+                $output->{'type'} != self::IMAGE
             )
             ||
             (
                 $this->input->{'input_asset'}->{'type'} == self::AUDIO &&
-                $this->output->{'type'} != self::AUDIO
+                $output->{'type'} != self::AUDIO
             )
             ||
             (
                 $this->input->{'input_asset'}->{'type'} == self::DOC &&
-                $this->output->{'type'} != self::DOC
+                $output->{'type'} != self::DOC
             ))
         {
-            throw new CpeSdk\CpeException("Can't convert that input asset 'type' (".$this->input->{'input_asset'}->{'type'}.") into this output asset 'type' (".$this->output->{'type'}.")! Abording.", 
-                self::CONVERSION_TYPE_ERROR);
+            throw new CpeSdk\CpeException("Can't convert that input asset 'type' (".$this->input->{'input_asset'}->{'type'}.") into this output asset 'type' (".$output->{'type'}.")! Abording.",
+                                          self::CONVERSION_TYPE_ERROR);
         }
     }
 }
 
 
 /*
- ***************************
- * Activity Startup SCRIPT
- ***************************
+***************************
+* Activity Startup SCRIPT
+***************************
 */
 
 // Usage
@@ -287,11 +300,11 @@ function check_activity_arguments()
     global $debug;
     global $clientClassPath;
     global $name;
-    
+
     // Handle input parameters
-    if (!($options = getopt("A:l:hd")))
+    if (!($options = getopt("A:l:C:hd")))
         usage();
-    
+
     if (isset($options['h']))
         usage();
 
@@ -315,7 +328,7 @@ function check_activity_arguments()
     if (isset($options['N']) && $options['N']) {
         $name = $options['N'];
     }
-    
+
     if (isset($options['l']))
         $logPath = $options['l'];
 }
@@ -351,5 +364,3 @@ $activityPoller = new TranscodeAssetActivity(
 
 // Initiate the polling loop and will call your `process` function upon trigger
 $activityPoller->doActivity();
-
-

@@ -129,6 +129,7 @@ class VideoTranscoder extends BasicTranscoder
             // Send heartbeat and initialize progress
             $this->activityObj->activityHeartbeat(
                 [
+                    "output"   => $outputWanted,
                     "duration" => $metadata['duration'],
                     "done"     => 0,
                     "progress" => 0
@@ -145,7 +146,10 @@ class VideoTranscoder extends BasicTranscoder
                 1,
                 array(2 => array("pipe", "w")),
                 array($this, "capture_progression"),
-                $metadata['duration'],
+                [
+                    "duration" => $metadata['duration'],
+                    "output"   => $outputWanted
+                ],
                 true,
                 10
             );
@@ -160,7 +164,7 @@ class VideoTranscoder extends BasicTranscoder
             }
 
             // FFProbe the output file and return its information
-            $output_info = $this->getAssetInfo($outputFilesPath."/".$outputWanted->{'output_file_info'}['basename']);
+            $outputInfo = $this->getAssetInfo($outputFilesPath."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
             $this->cpeLogger->logOut(
@@ -180,7 +184,10 @@ class VideoTranscoder extends BasicTranscoder
             $this->logKey
         );
 
-        return $output_info;
+        return [
+            "output"     => $outputWanted,
+            "outputInfo" => $outputInfo
+        ];
     }
 
     // Craft custom command
@@ -489,10 +496,12 @@ class VideoTranscoder extends BasicTranscoder
     // REad ffmpeg output and calculate % progress
     // This is a callback called from 'CommandExecuter.php'
     // $out and $outErr contain FFmpeg output
-    public function capture_progression($duration, $out, $outErr)
+    public function capture_progression($params, $out, $outErr)
     {
         $progress = 0;
         $done = 0;
+        $duration = $params['duration'];
+        $output   = $params['output'];
         
         // # get the current time
         preg_match_all("/time=(.*?) bitrate/", $outErr, $matches);
@@ -528,6 +537,7 @@ class VideoTranscoder extends BasicTranscoder
         // Send heartbeat and progress data
         $this->activityObj->activityHeartbeat(
             [
+                "output"   => $output,
                 "duration" => $duration,
                 "done"     => $done,
                 "progress" => $progress

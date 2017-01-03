@@ -199,7 +199,7 @@ class TranscodeAssetActivity extends BasicActivity
                 "$this->outputFilesPath/$entry",
                 $options,
                 array($this, "activityHeartbeat"),
-                $task
+                null
             );
             // We delete the TMP file once uploaded
             unlink("$this->outputFilesPath/$entry");

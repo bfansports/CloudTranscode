@@ -125,7 +125,7 @@ class ImageTranscoder extends BasicTranscoder
 
             // FFProbe the output file and return its information
             // XXX: Remove FFprobe for image convertion. Save time
-            $output_info =
+            $outputInfo =
                 $this->getAssetInfo($pathToOutputFiles."/".$outputWanted->{'output_file_info'}['basename']);
         }
         catch (\Exception $e) {
@@ -145,8 +145,11 @@ class ImageTranscoder extends BasicTranscoder
             "Transcoding successfull !",
             $this->activityLogKey
         );
-
-        return $output_info;
+        
+        return [
+            "output"     => $outputWanted,
+            "outputInfo" => $outputInfo
+        ];
     }
 
     // Craft command based on JSON input

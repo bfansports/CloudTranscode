@@ -127,7 +127,7 @@ class BasicActivity extends CpeSdk\CpeActivity
             $inputFile, 
             $saveFileTo,
             array($this, "activityHeartbeat"), 
-            $task,
+            null,
             $this->logKey
         );
         

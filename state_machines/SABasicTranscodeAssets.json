@@ -1,5 +1,5 @@
 {
-    "Comment": "Validate and Transcode a video asset into thumbnails and proxy mp4",
+    "Comment": "Transcode a video asset into thumbnails and proxy mp4",
     "StartAt": "ValidateAsset",
     "States": {
         "ValidateAsset": {

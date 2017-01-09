@@ -35,33 +35,40 @@ https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
 Those activities listens to the AWS SFN (AWS Step functions) service for incoming tasks to process. One activity processes on type of tasks.
 Tasks are defined in the SFN console, and are identified by their AWS ARNs (AWS resources identifier).
 
-You can start N activity workers. You cna scale this based on your volume, capacity, cost, resources, etc. You can start those activities in Docker which is recommended. A Dockerfile is provided for you.
+You can start N activity workers. You can scale your deployment based on your volume, capacity, cost, resources, etc.
+You can run those activities with Docker, which is recommended. A Dockerfile is provided for you.
 
-Your client applications can then initiate new SFN workflows using the appropriate AWS SDK. They will pass a JSON input to AWS SFN. <br>
-SFN will then pass this input your activities, which then return JSON output which can be passed on to the next activity.
+Your client applications can initiate new SFN workflows using the AWS SDK of your choice. The client apps will pass JSON input date to AWS SFN. <br>
+SFN will then pass this input to your activities, which will then return a JSON output. This output can be passed on to the next activities.
 
-You can build your own workflow and call any activities you want. You can implement your own activities as well. For example CT still needs:
+You can build your own workflow and call any activities you want. You can implement your own activities as well. <br>
+For example CT still needs those activities:
 
    - Document transcoding: DOC to PDF for example
-   - Audio manipulation: Maybe this can be already done by FFMpeg actually? Never tested by if FFmpeg supports it, then CT supports it.
-   - Other?
+   - Audio manipulation: Maybe this can be already done by FFMpeg? Never tested by if FFmpeg supports it or if there is a better tool for Audio.
+   - Other ideas?
 
 ## State Machine
 
-You must create a State Machine workflow in the AWS Step Function console.
+You must create a State Machine workflow in the AWS Step Function console to make things work.
 
-In the folder `state_machines` you will find a basic transcoding workflow for SFN. It validates the input and then processes ALL the outputs you want.<br>
-In sequence, it calls:
+In the folder `state_machines` you will find a basic transcoding workflow for SFN. It validates the input and then processes ALL the outputs you want in one activity.<br>
+In sequence, this workflow calls:
 
-   - ValidateAssetActivity
-   - TranscodeAssetActivity
+   - 1 -> ValidateAssetActivity
+   - N -> TranscodeAssetActivity
 
 One TranscodeAssetActivity worker processes all outputs wanted, in sequence, not in parallel.
 
-*Note:* I couldn't make SFN transform the input data that I give to the activities. The array of "output files wanted" could have been split and one activity could be started for each output in the array, thus allowing parallel transcoding. To achieve parallel transcoding, you need to execute several workflows, each with only one output. That will also validate the file each time. Another solution, is to create a Validate SFN state machine, that only validates, and a Transcode SF workflow that only transcodes. You client application would have to initiate them in sequence and thus keep track of status, and implement some state machine of its own. Not ideal either.
-
-If SFN was implementing a way to manipulate the JSON, like you can do with Mapping Template on AWS API Gateway, it would be great.<br>
-See: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
+> *Note:* I couldn't make SFN transform on the fly the input data given to the activities.
+> The array of "output files wanted" could have been split and one activity could be started for each output in the array, thus allowing parallel  transcoding.
+> To achieve parallel transcoding, you need to execute several workflows, each with only one output wanted.
+>
+> Another solution, is to create a Validate SFN state machine, that only validates, and a Transcode SFN workflow that only transcodes.
+> Your client applications would have to initiate them in sequence and thus keep track of status, and  implement some state machine of its own. Not good either.
+>
+> If SFN was implementing a way to manipulate the JSON, like you can do with Mapping Template on AWS API Gateway, it would be great.<br>
+> See: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
 
 ## Run Activities
 
@@ -87,7 +94,7 @@ Your workers will do the work as wanted but your client applications will not ha
 
 In order to hook your client applications with CT, you must implement an class/interface with CT.
 
-Your class will contain all the callback methods that will be called when events happen in your workflow:
+Your class will contain all the callback methods that will be called when events occur in your CT workflow:
 
    - onStart
    - onHeartbeat
@@ -100,7 +107,9 @@ https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
 
 In order to pass this class to the Activity, you have to provide its location in command line using the [-C <client class path>] option.
 
-That means that if you use Docker, you must create your own Docker image based on the CloudTranscode one, which will contain your custom class. A Dockerfile like this for example:
+That means that if you use Docker, you must create your own Docker image based on the CloudTranscode one, which will contain your custom class.
+
+A Dockerfile like this for example:
 
 
 ``` Dockerfile
@@ -110,26 +119,28 @@ MAINTAINER Sport Archive, Inc.
 COPY clientInterfaces /usr/src/clientInterfaces
 ```
 
-Just create a new folder, put this Dockerfile and a clone of the CloudTranscode repository in it. Then build you own image as follow: `sudo docker  build -t sportarc/cloudtranscode-prod:3.2.2 .`
+Just create a new folder, put the above Dockerfile in it and a clone the CloudTranscode repository in it too.
+Then build your own image as follow: `sudo docker  build -t sportarc/cloudtranscode-prod .`
 
 Then you can start your workers like this:
 
 ```
-$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
 ```
 
-As you can see, you can create many SFN tasks, processed by the same Activity but connected to the client applications with a different Interface. This way you can have sets of workers for all your applications. Each worker processing only certain tasks and hook through the interface to a specific client application.
+As you can see, you can create many SFN tasks. Each task is processed by the same activity code, but they are connected to different client applications using different Interface classes.
+This way you can have several sets of workers for all your applications. Each worker processing only certain tasks and hooked through to a different client application through custom interface classes.
 
 ## Input format
 
-In the input_sample folder, we provide input samples that you can edit to match your setup.
+In the `input_sample` folder, we provide input samples that you can edit to match your setup.
 
 The main idea is:
 
-   - One `input` section which describe what needs to be processed
+   - One `input` section which describes what must be processed
    - One `output` section which contains a list of wanted output. Each output is describe by a JSON and specifies the work to be done and where the resulting file should go.
 
 A Simple example that takes a `.mp4` as input and generate two thumbnails and a proxy video using a FFmpeg template:

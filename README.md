@@ -204,7 +204,7 @@ A Simple example that takes a `.mp4` as input and generate two thumbnails and a 
 
 You can also submit custom FFmpeg commands, or specify as many output as you want here.
 
-*Note:* As mentioned above, those outputs are processed in sequence by the same worker, NOT in parallel.
+> *Note:* As mentioned above, those outputs are processed in sequence by the same worker, NOT in parallel.
 
 # Contributing
 

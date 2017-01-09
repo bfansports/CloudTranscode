@@ -1,19 +1,7 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
-## Cloud Transcode 2.0 has arrived
-
-This version greatly simplifies the work required to setup Cloud Transcode. No more SQS queues, listener, commander, nor decider.
-
-Thanks to AWS Steps Functions, the new AWS service, you can now create your workflow in the console which removes the need for deciders.
-
-You just need to deploy Activities for processing your jobs: ValidateAssetActivity ad TranscodeAssetActivity are the two activities CT supports.
-
-In order to update your client application upon progress, success or failure for example, your activity now accepts a custom class implementing an Interface to your application. Updating your DB, or notifying 3rd party apps has never been so easy.
-
-We hope that more of you will start using CT now that it is VERY easy to get going. Read on!
-
-# What is Cloud Transcode ?
+# What is Cloud Transcode?
 Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 
 ## Goal
@@ -26,89 +14,201 @@ Today's commercial solutions for video transcoding are very expensive for large 
 ## Benefits
 With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. Or you can deploy on AWS EC2, Beanstalk or Docker containers.
 
-Your workers only need an Internet connection to use the required Amazon services: SWF, SQS and S3. It means that you can have a local, hybrid or full cloud setup. It's up to you.
+Your workers only need an Internet connection to use the required Amazon services: SFN (AWS Step Functions) and S3. It means that you can have a local, hybrid or full cloud setup. It's up to you.
 
 ## Activity supported
 
-   - **Probe Asset**: Get the mime type of an asset and attempt to run `ffprobe`. Returns mime and ffprobe results.
+   - **Validate/Probe Asset**: Get the mime type of an asset and attempt to run `ffprobe`. Returns mime and ffprobe results.
    - **Custom FFMpeg command**: Run your own ffmpeg command
-   - **Transcode from HTTP**: No need to put your input file in S3. We can pull it from HTTP and transcode it on the fly. Result files to S3.
+   - **Transcode from HTTP**: No need to put your input file in S3. We can pull it from HTTP and transcode it on the fly. Result files are still put into S3.
    - **Video to Video transcoding**: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
    - **Video to Thumbnails transcoding**: Snapshot at certain time in video or intervals snapshot every N seconds. Keep image ratio.
    - **Watermark integration in video**: Take image IN and position a watermark on top of the video. Custom position and transparency. Keep image ratio.
    - **Image to Image transcoding**: Use all the features ImageMagic (`convert` command) offers.
 
-We are working to support ALL FFmpeg options.
 
-# How to use CT ?
+# How it works?
 
 Cloud Transcode is a set of "activities" that are standalone scripts implementing the `CpeActivity` class located in the CloudProcessingEngine-SDK:
 https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
 
-Those activities listens to the AWS Step Function service for incoming task to process.
+Those activities listens to the AWS SFN (AWS Step functions) service for incoming tasks to process. One activity processes on type of tasks.
+Tasks are defined in the SFN console, and are identified by their AWS ARNs (AWS resources identifier).
+
+You can start N activity workers. You cna scale this based on your volume, capacity, cost, resources, etc. You can start those activities in Docker which is recommended. A Dockerfile is provided for you.
+
+Your client applications can then initiate new SFN workflows using the appropriate AWS SDK. They will pass a JSON input to AWS SFN. <br>
+SFN will then pass this input your activities, which then return JSON output which can be passed on to the next activity.
+
+You can build your own workflow and call any activities you want. You can implement your own activities as well. For example CT still needs:
+
+   - Document transcoding: DOC to PDF for example
+   - Audio manipulation: Maybe this can be already done by FFMpeg actually? Never tested by if FFmpeg supports it, then CT supports it.
+   - Other?
 
 ## State Machine
 
-You must create a State Machine in the AWS Step Function console. This is the default workflow we use at **BFan Sports** to process our videos:
+You must create a State Machine workflow in the AWS Step Function console.
 
-You can then start this workflow from the console or using the AWS SDK. See:
-http://docs.aws.amazon.com/step-functions/latest/dg/concepts-state-machine-executions.html
+In the folder `state_machines` you will find a basic transcoding workflow for SFN. It validates the input and then processes ALL the outputs you want.<br>
+In sequence, it calls:
+
+   - ValidateAssetActivity
+   - TranscodeAssetActivity
+
+One TranscodeAssetActivity worker processes all outputs wanted, in sequence, not in parallel.
+
+*Note:* I couldn't make SFN transform the input data that I give to the activities. The array of "output files wanted" could have been split and one activity could be started for each output in the array, thus allowing parallel transcoding. To achieve parallel transcoding, you need to execute several workflows, each with only one output. That will also validate the file each time. Another solution, is to create a Validate SFN state machine, that only validates, and a Transcode SF workflow that only transcodes. You client application would have to initiate them in sequence and thus keep track of status, and implement some state machine of its own. Not ideal either.
+
+If SFN was implementing a way to manipulate the JSON, like you can do with Mapping Template on AWS API Gateway, it would be great.<br>
+See: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
 
 ## Run Activities
 
 Activities are standalone scripts that can be started in command line.
 
 ``` bash
-$> ./src/activities/ValidateAssetActivity.php -h
-$> ./src/activities/TranscodeAssetActivity.php -h
+$> ./src/activities/ValidateAssetActivity.php -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
+$> ./src/activities/TranscodeAssetActivity.php -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
 ```
 
-They can also be ran into Docker. A Docker image is provided which depends from images:
-
-   - https://hub.docker.com/r/sportarc/cloudtranscode-base/
+Or using Docker
 
 ```
-$> sudo docker run sportarc/cloudtranscode ValidateAssetActivity
-$> sudo docker run sportarc/cloudtranscode TranscodeAssetActivity
+$> sudo docker run sportarc/cloudtranscode ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
+$> sudo docker run sportarc/cloudtranscode TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
 ```
+
+Using this syntax you will start an activity worker that processes one type of activity.
 
 ## Integrate with your client app
 
-You start transcoding from your client application. A web server, an API, anything. Now, how do you update your DB, send notifications, and integrate this transcoding stack with your client app?
+Your workers will do the work as wanted but your client applications will not have any idea of what is going on.
 
-This way:
+In order to hook your client applications with CT, you must implement an class/interface with CT.
 
-   - Check the CloudProcessingEngine-SDK for the Interface file called: `src/SA/CpeSdk/CpeClientInterface.php`
+Your class will contain all the callback methods that will be called when events happen in your workflow:
 
-You must implement this PHP Interface and put your synchronization logic in there. For each event in the task, your interface class will be called and you will get the necessary data to update your DB for example.
+   - onStart
+   - onHeartbeat
+   - onFail
+   - onSuccess
+   - onTranscodeDone
 
-In order to pass this class to the Activity, you have to provide its path in command line using the [-C <client class path>] option.
+Your must implement the CpeClientInterface.php interface located in the CloudProcessingEngine-SDK:<br>
+https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
 
-That means that if you use Docker, you must create your own image based on the CloudTranscode one which will contain this class. A Dockerfile like this for example:
+In order to pass this class to the Activity, you have to provide its location in command line using the [-C <client class path>] option.
+
+That means that if you use Docker, you must create your own Docker image based on the CloudTranscode one, which will contain your custom class. A Dockerfile like this for example:
 
 
 ``` Dockerfile
-FROM sportarc/cloudtranscode-prod
+FROM sportarc/cloudtranscode:3.2.2
 MAINTAINER Sport Archive, Inc.
 
-COPY clientInterfaces/* /etc/cloudtranscode/
+COPY clientInterfaces /usr/src/clientInterfaces
 ```
 
-Just create a folder with this Dockerfile and a clone of the CloudTranscode repository.
+Just create a new folder, put this Dockerfile and a clone of the CloudTranscode repository in it. Then build you own image as follow: `sudo docker  build -t sportarc/cloudtranscode-prod:3.2.2 .`
 
+Then you can start your workers like this:
+
+```
+$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:3.2.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
+```
+
+As you can see, you can create many SFN tasks, processed by the same Activity but connected to the client applications with a different Interface. This way you can have sets of workers for all your applications. Each worker processing only certain tasks and hook through the interface to a specific client application.
+
+## Input format
+
+In the input_sample folder, we provide input samples that you can edit to match your setup.
+
+The main idea is:
+
+   - One `input` section which describe what needs to be processed
+   - One `output` section which contains a list of wanted output. Each output is describe by a JSON and specifies the work to be done and where the resulting file should go.
+
+A Simple example that takes a `.mp4` as input and generate two thumbnails and a proxy video using a FFmpeg template:
+
+``` json
+{
+    "input_asset": {
+        "type": "VIDEO",
+        "bucket": "cloudtranscode-eu-dev",
+        "file": "/input/video1.mp4"
+    },
+    "output_assets": [
+        {
+            "type": "THUMB",
+            "mode": "snapshot",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "thumbnail_sd.jpg",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "size": "-1:159",
+            "snapshot_sec": 5
+        },
+        {
+            "type": "THUMB",
+            "mode": "snapshot",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "thumbnail_hd.jpg",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "size": "-1:720",
+            "snapshot_sec": 5
+        },
+        {
+            "type": "VIDEO",
+            "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/",
+            "file": "video1.mp4",
+            "s3_rrs": true,
+            "s3_encrypt": true,
+            "keep_ratio": false,
+            "no_enlarge": false,
+            "preset": "360p-4.3-generic",
+            "watermark": {
+                "bucket": "cloudtranscode-eu-dev",
+                "file": "/no-text-96px.png",
+                "size": "96:96",
+                "opacity": 0.2,
+                "x": -20,
+                "y": -20
+            }
+        }
+    ]
+}
+
+```
+
+You can also submit custom FFmpeg commands, or specify as many output as you want here.
+
+*Note:* As mentioned above, those outputs are processed in sequence by the same worker, NOT in parallel.
 
 # Contributing
 
-We need help from the community to develop other types of transcoding:
-
-   - Audio
-   - Documents
-
-The transcoders classes are already created, they just need to be implemented. (Check the `src/activities/transcoders/` folder)
+We are open to external contributions! Feel free to send us your Pull Requests.
 
 Thanks for contributing !
 
+# FFmepg
+
+The Cloud Transcode Docker image is based on two other images:
+
+   - https://hub.docker.com/r/sportarc/ffmpeg/: Base image containing: Ubuntu 14, PHP CLI 5.6, FFmpeg
+   - https://hub.docker.com/r/sportarc/cloudtranscode-base/: Adds `ImageMagic` to the above image
+
+
 # FFMpeg performance benchmark on Amazon EC2
+
+*This is already a little old and needs update with the latest AWS instances*
 
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances running FFMpeg:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx

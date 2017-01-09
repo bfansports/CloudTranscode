@@ -92,7 +92,7 @@ Using this syntax you will start an activity worker that processes one type of a
 
 Your workers will do the work as wanted but your client applications will not have any idea of what is going on.
 
-In order to hook your client applications with CT, you must implement an class/interface with CT.
+In order to hook your client applications with CT, you must implement a class/interface with CT.
 
 Your class will contain all the callback methods that will be called when events occur in your CT workflow:
 
@@ -102,12 +102,14 @@ Your class will contain all the callback methods that will be called when events
    - onSuccess
    - onTranscodeDone
 
-Your must implement the CpeClientInterface.php interface located in the CloudProcessingEngine-SDK:<br>
-https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
+You must implement the `CpeClientInterface.php` interface located in the `CloudProcessingEngine-SDK` project:
 
-In order to pass this class to the Activity, you have to provide its location in command line using the [-C <client class path>] option.
+   - Composer: https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
+   - Github: https://github.com/sportarchive/CloudProcessingEngine-SDK
 
-That means that if you use Docker, you must create your own Docker image based on the CloudTranscode one, which will contain your custom class.
+In order to pass this class to your Activity worker, you have to provide its location in command line using the [-C <client class path>] option.
+
+That means that if you use Docker, you must create your own Docker image based on the CloudTranscode one, which will contain your custom classes.
 
 A Dockerfile like this for example:
 
@@ -131,8 +133,9 @@ $> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aw
 $> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
 ```
 
-As you can see, you can create many SFN tasks. Each task is processed by the same activity code, but they are connected to different client applications using different Interface classes.
-This way you can have several sets of workers for all your applications. Each worker processing only certain tasks and hooked through to a different client application through custom interface classes.
+As you can see, you can create many SFN tasks. Each task will execute the same activity code, but they are connected to different client applications using different Interface classes.
+This way you can have several sets of workers for all your workflows and client applications.
+Each worker will be processing only certain tasks. They are hooked to different client applications using the custom interface classes.
 
 ## Input format
 

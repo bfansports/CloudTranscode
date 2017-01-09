@@ -40,8 +40,6 @@ class ValidateAssetActivity extends BasicActivity
         
         parent::__construct($client, $params, $debug, $cpeLogger);
         
-        $this->finfo = new \finfo(FILEINFO_MIME_TYPE);
-        
         $this->s3 = new \Aws\S3\S3Client([
             "version" => "latest",
             "region"  => $region

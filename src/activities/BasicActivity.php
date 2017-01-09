@@ -64,8 +64,8 @@ class BasicActivity extends CpeSdk\CpeActivity
     {
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpInputPath = self::TMP_FOLDER 
-            . $this->logKey."/" 
-            . "input";
+                            . $this->logKey."/" 
+                            . "input";
         
         $inputFileInfo = null;
         if (isset($this->input->{'input_asset'}->{'file'})) {
@@ -87,7 +87,7 @@ class BasicActivity extends CpeSdk\CpeActivity
                     self::TMP_FOLDER_FAIL
                 );
         }
-            
+        
         $this->inputFilePath = null;
         if (isset($this->input->{'input_asset'}->{'http'}))
         {
@@ -117,10 +117,10 @@ class BasicActivity extends CpeSdk\CpeActivity
     {        
         // Get file from S3 or local copy if any
         $this->cpeLogger->logOut("INFO", 
-            basename(__FILE__), 
-            "Downloading '$inputBuket/$inputFile' to '$saveFileTo' ...",
-            $this->logKey);
-
+                                 basename(__FILE__), 
+                                 "Downloading '$inputBuket/$inputFile' to '$saveFileTo' ...",
+                                 $this->logKey);
+        
         // Use the S3 utils to initiate the download
         $s3Output = $this->s3Utils->get_file_from_s3(
             $inputBuket, 
@@ -132,12 +132,12 @@ class BasicActivity extends CpeSdk\CpeActivity
         );
         
         $this->cpeLogger->logOut("INFO", basename(__FILE__), 
-            $s3Output['msg'],
-            $this->logKey);
+                                 $s3Output['msg'],
+                                 $this->logKey);
         
         $this->cpeLogger->logOut("INFO", basename(__FILE__), 
-            "Input file successfully downloaded into local TMP folder '$saveFileTo' !",
-            $this->logKey);
+                                 "Input file successfully downloaded into local TMP folder '$saveFileTo' !",
+                                 $this->logKey);
         
         return $saveFileTo;
     }

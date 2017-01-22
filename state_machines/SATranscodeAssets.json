@@ -4,7 +4,7 @@
     "States": {
         "TranscodeAsset": {
             "Type": "Task",
-            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
+            "Resource": "arn:aws:states:eu-west-1:xxxxxxxx:activity:TranscodeAsset",
             "TimeoutSeconds": 28800,
             "HeartbeatSeconds": 30,
             "End": true

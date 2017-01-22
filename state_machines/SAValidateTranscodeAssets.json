@@ -5,13 +5,13 @@
         "ValidateAsset": {
             "Type": "Task",
             "Next": "TranscodeAsset",
-            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:ValidateAsset",
+            "Resource": "arn:aws:states:eu-west-1:xxxxx:activity:ValidateAsset",
             "TimeoutSeconds": 300,
             "HeartbeatSeconds": 30
         },
         "TranscodeAsset": {
             "Type": "Task",
-            "Resource": "arn:aws:states:eu-west-1:441276146445:activity:TranscodeAsset",
+            "Resource": "arn:aws:states:eu-west-1:xxxxx:activity:TranscodeAsset",
             "TimeoutSeconds": 28800,
             "HeartbeatSeconds": 30,
             "End": true

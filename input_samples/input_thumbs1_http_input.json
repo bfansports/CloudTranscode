@@ -1,23 +1,19 @@
 {
-    "workflow": {
-        "name": "Transcode",
-        "version": "1.0",
-        "taskList": "basic_transcode",
-        "domain": "SADomain"
-    },
     "input_asset": {
 	"type": "VIDEO",
 	"http": "https://s3.amazonaws.com/cloudtranscode-dev/input/Andre+Johnson+mic%27d+up+uncensored.mp4"
     },
-    "output_asset": 
-    {
-	"type": "THUMB",
-	"mode": "snapshot",
-	"bucket": "cloudtranscode-dev",
-	"file": "/output/thumbs/video1_thumb.jpg",
-	"s3_rrs": true,
-	"s3_encrypt": true,
-	"size": "-1:159",
-	"snapshot_sec": 5
-    }
+    "output_asset": [
+        {
+	    "type": "THUMB",
+	    "mode": "snapshot",
+	    "bucket": "cloudtranscode-eu-dev",
+            "path": "/output/thumbs/",
+	    "file": "video1_thumb.jpg",
+	    "s3_rrs": true,
+	    "s3_encrypt": true,
+	    "size": "-1:159",
+	    "snapshot_sec": 5
+        }
+    ]
 }

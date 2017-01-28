@@ -9,7 +9,8 @@
         {
 	    "type": "IMAGE",
 	    "bucket": "cloudtranscode-eu-dev",
-	    "file": "/output/image.*",
+            "path": "/output/",
+	    "file": "image.*",
 	    "crop": "600x600+0+0",
 	    "quality": 70,
 	    "s3_rrs": true,

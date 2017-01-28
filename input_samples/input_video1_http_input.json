@@ -1,8 +1,6 @@
 {
     "input_asset": {
 	"type": "VIDEO",
-        "bucket": "cloudtranscode-eu-dev",
-        "file": "/input/video1.mp4",
 	"http": "https://s3.amazonaws.com/cloudtranscode-dev/input/Football+Gameplan%27s+2013+College+Football+FCS+Wraparound+-+Week+13+-+YouTube+%5B360p%5D.mp4"
     },
     "output_assets":

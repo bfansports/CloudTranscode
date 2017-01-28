@@ -1,32 +1,28 @@
 {
-    "workflow": {
-        "name": "Transcode",
-        "version": "1.0",
-        "taskList": "basic_transcode",
-        "domain": "SADomain"
-    },
     "input_asset": {
 	"type": "VIDEO",
 	"bucket": "cloudtranscode-dev",
 	"file": "/input/video1.mp4"
     },
-    "output_asset": 
-    {
-	"type": "VIDEO",
-	"bucket": "cloudtranscode-dev",
-	"file": "/output/HLS/video1.M3U8",
-	"s3_rrs": true,
-	"s3_encrypt": true,
-	"keep_ratio": false,
-	"no_enlarge": false,
-	"preset": "hls600k-generic",
-	"watermark": {
+    "output_asset": [
+        {
+	    "type": "VIDEO",
 	    "bucket": "cloudtranscode-dev",
-	    "file": "/no-text-96px.png",
-	    "size": "96:96",
-	    "opacity": 0.2,
-	    "x": -20,
-	    "y": -20
-	}
+            "path": "/output/HLS/",
+	    "file": "video1.M3U8",
+	    "s3_rrs": true,
+	    "s3_encrypt": true,
+	    "keep_ratio": false,
+	    "no_enlarge": false,
+	    "preset": "hls600k-generic",
+	    "watermark": {
+	        "bucket": "cloudtranscode-dev",
+	        "file": "/no-text-96px.png",
+	        "size": "96:96",
+	        "opacity": 0.2,
+	        "x": -20,
+	        "y": -20
+	    }
+        ]
     }
 }

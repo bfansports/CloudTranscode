@@ -434,12 +434,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sportarchive/CloudProcessingEngine-SDK.git",
-                "reference": "75f98c0bffd78b8e284c4fe3d734b3ab76e42e51"
+                "reference": "8de7ca5425d33180b15eadabf40d1ea7d3445579"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/75f98c0bffd78b8e284c4fe3d734b3ab76e42e51",
-                "reference": "75f98c0bffd78b8e284c4fe3d734b3ab76e42e51",
+                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/8de7ca5425d33180b15eadabf40d1ea7d3445579",
+                "reference": "8de7ca5425d33180b15eadabf40d1ea7d3445579",
                 "shasum": ""
             },
             "require": {

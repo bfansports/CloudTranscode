@@ -46,6 +46,22 @@ class ValidateAssetActivity extends BasicActivity
         ]);
     }
 
+    // Used to limit the curl download in case of an HTTP encode
+    private function writefn($ch, $chunk)
+    {
+        static $data='';
+        static $limit = 500; // 500 bytes, it's only a test
+        
+        $len = strlen($data) + strlen($chunk);
+        if ($len >= $limit ) {
+            $data .= substr($chunk, 0, $limit-strlen($data));
+            return -1;
+        }
+        
+        $data .= $chunk;
+        return strlen($chunk);
+    }
+    
     // Perform the activity
     public function process($task)
     {
@@ -59,18 +75,33 @@ class ValidateAssetActivity extends BasicActivity
         // Call parent process:
         parent::process($task);
         
-        // Fetch first 1 KiB of the file for Magic number validation
         $this->activityHeartbeat();
         $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
-        $obj = $this->s3->getObject([
+
+        if (isset($this->input->{'input_asset'}->{'http'})) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $this->input->{'input_asset'}->{'http'});
+            curl_setopt($ch, CURLOPT_RANGE, '0-1024');
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, array($this, 'writefn'));
+            $chunk = curl_exec($ch);
+            curl_close($ch);
+        }
+        else if (isset($this->input->{'input_asset'}->{'bucket'}) &&
+                 isset($this->input->{'input_asset'}->{'file'})) {
+            // Fetch first 1 KiB of the file for Magic number validation
+            $obj = $this->s3->getObject([
                 'Bucket' => $this->input->{'input_asset'}->{'bucket'},
-                'Key' => $this->input->{'input_asset'}->{'file'},
-                'Range' => 'bytes=0-1024'
+                'Key'    => $this->input->{'input_asset'}->{'file'},
+                'Range'  => 'bytes=0-1024'
             ]);
+            $chunk = (string) $obj['Body'];
+        }
+        
         $this->activityHeartbeat();
 
         // Determine file type
-        file_put_contents($tmpFile, (string) $obj['Body']);
+        file_put_contents($tmpFile, $chunk);
         $mime = trim((new CommandExecuter($this->cpeLogger, $this->logKey))->execute(
             'file -b --mime-type '.escapeshellarg($tmpFile))['out']);
         $type = substr($mime, 0, strpos($mime, '/'));
@@ -127,6 +158,7 @@ class ValidateAssetActivity extends BasicActivity
         return json_encode($result);
     }
 }
+
 
 /*
  ***************************

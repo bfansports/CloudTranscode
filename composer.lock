@@ -4,21 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "f7d5703a793a5034c7ec8b9262477bc6",
     "content-hash": "b9eec4c67e65df6cfc2505c50f78d8d5",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.20.13",
+            "version": "3.21.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "343c6c96468de5087ae5e7df4ccee2668857a5aa"
+                "reference": "b51512a4ad4aa080ab963942a1e234265771fcde"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/343c6c96468de5087ae5e7df4ccee2668857a5aa",
-                "reference": "343c6c96468de5087ae5e7df4ccee2668857a5aa",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/b51512a4ad4aa080ab963942a1e234265771fcde",
+                "reference": "b51512a4ad4aa080ab963942a1e234265771fcde",
                 "shasum": ""
             },
             "require": {
@@ -85,7 +84,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2017-01-04 18:20:17"
+            "time": "2017-01-27T00:34:55+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -147,7 +146,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2016-10-08 15:01:37"
+            "time": "2016-10-08T15:01:37+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -198,7 +197,7 @@
             "keywords": [
                 "promise"
             ],
-            "time": "2016-12-20 10:07:11"
+            "time": "2016-12-20T10:07:11+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -256,7 +255,7 @@
                 "stream",
                 "uri"
             ],
-            "time": "2016-06-24 23:00:38"
+            "time": "2016-06-24T23:00:38+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -322,7 +321,7 @@
                 "json",
                 "schema"
             ],
-            "time": "2016-01-25 15:43:01"
+            "time": "2016-01-25T15:43:01+00:00"
         },
         {
             "name": "mtdowling/jmespath.php",
@@ -377,7 +376,7 @@
                 "json",
                 "jsonpath"
             ],
-            "time": "2016-12-03 22:08:25"
+            "time": "2016-12-03T22:08:25+00:00"
         },
         {
             "name": "psr/http-message",
@@ -427,7 +426,7 @@
                 "request",
                 "response"
             ],
-            "time": "2016-08-06 14:39:51"
+            "time": "2016-08-06T14:39:51+00:00"
         },
         {
             "name": "sportarchive/cloud-processing-engine-sdk",
@@ -435,12 +434,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sportarchive/CloudProcessingEngine-SDK.git",
-                "reference": "ea10c44e068de7ff025dd0343123c016567f46fe"
+                "reference": "75f98c0bffd78b8e284c4fe3d734b3ab76e42e51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/ea10c44e068de7ff025dd0343123c016567f46fe",
-                "reference": "ea10c44e068de7ff025dd0343123c016567f46fe",
+                "url": "https://api.github.com/repos/sportarchive/CloudProcessingEngine-SDK/zipball/75f98c0bffd78b8e284c4fe3d734b3ab76e42e51",
+                "reference": "75f98c0bffd78b8e284c4fe3d734b3ab76e42e51",
                 "shasum": ""
             },
             "require": {
@@ -469,7 +468,7 @@
                 "Cloud Processing Engine",
                 "Cloud Transcode"
             ],
-            "time": "2016-12-13 18:15:56"
+            "time": "2017-01-28T16:34:10+00:00"
         }
     ],
     "packages-dev": [],

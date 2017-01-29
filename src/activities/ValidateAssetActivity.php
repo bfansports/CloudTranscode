@@ -190,7 +190,7 @@ function check_activity_arguments()
     global $name;
     
     // Handle input parameters
-    if (!($options = getopt("A:l:C:hd")))
+    if (!($options = getopt("N:A:l:C:hd")))
         usage();
     
     if (isset($options['h']))

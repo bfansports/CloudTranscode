@@ -212,7 +212,7 @@ We are open to external contributions! Feel free to send us your Pull Requests.
 
 Thanks for contributing !
 
-# FFmepg
+# FFmpeg
 
 The Cloud Transcode Docker image is based on two other images:
 

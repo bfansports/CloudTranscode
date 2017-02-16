@@ -31,6 +31,7 @@ class ValidateAssetActivity extends BasicActivity
 {
     private $finfo;
     private $s3;
+    private $curl_data = '';
     
     public function __construct($client = null, $params, $debug, $cpeLogger)
     {
@@ -49,16 +50,15 @@ class ValidateAssetActivity extends BasicActivity
     // Used to limit the curl download in case of an HTTP encode
     private function writefn($ch, $chunk)
     {
-        static $data='';
-        static $limit = 500; // 500 bytes, it's only a test
+        static $limit = 1024; // 500 bytes, it's only a test
         
-        $len = strlen($data) + strlen($chunk);
+        $len = strlen($this->curl_data) + strlen($chunk);
         if ($len >= $limit ) {
-            $data .= substr($chunk, 0, $limit-strlen($data));
+            $this->curl_data .= substr($chunk, 0, $limit-strlen($this->curl_data));
             return -1;
         }
         
-        $data .= $chunk;
+        $this->curl_data .= $chunk;
         return strlen($chunk);
     }
     
@@ -82,10 +82,10 @@ class ValidateAssetActivity extends BasicActivity
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $this->input->{'input_asset'}->{'http'});
             curl_setopt($ch, CURLOPT_RANGE, '0-1024');
-            curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
             curl_setopt($ch, CURLOPT_WRITEFUNCTION, array($this, 'writefn'));
-            $chunk = curl_exec($ch);
+            curl_exec($ch);
             curl_close($ch);
+            $chunk = $this->curl_data;
         }
         else if (isset($this->input->{'input_asset'}->{'bucket'}) &&
                  isset($this->input->{'input_asset'}->{'file'})) {

@@ -1,6 +1,12 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
+# Updates
+
+The new version of Cloud Transcode is up and running. It now uses AWS Step Functions (SFN).
+
+The legacy documentation (http://blog.bfansports.com/CloudTranscode/) is not yet up to date, but the JSON format mentioned in it is still partialy valid. For input example, just look into the 'input_sample' folder.
+
 # What is Cloud Transcode?
 Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 

@@ -1,4 +1,4 @@
-FROM sportarc/cloudtranscode-base:3.2.2
+FROM sportarc/cloudtranscode-base:3.3
 MAINTAINER Sport Archive, Inc.
 
 COPY . /usr/src/cloudtranscode

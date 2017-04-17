@@ -121,7 +121,7 @@ A Dockerfile like this for example:
 
 
 ``` Dockerfile
-FROM sportarc/cloudtranscode:3.2.2
+FROM sportarc/cloudtranscode:3.3
 MAINTAINER Sport Archive, Inc.
 
 COPY clientInterfaces /usr/src/clientInterfaces
@@ -220,7 +220,9 @@ Thanks for contributing !
 
 # FFmpeg
 
-The Cloud Transcode Docker image is based on two other images:
+CloudTranscode follows the version of FFmpeg. The latest version uses FFmpeg 3.3.
+
+The CloudTranscode Docker image is based on two other images:
 
    - https://hub.docker.com/r/sportarc/ffmpeg/: Base image containing: Ubuntu 14, PHP CLI 5.6, FFmpeg
    - https://hub.docker.com/r/sportarc/cloudtranscode-base/: Adds `ImageMagic` to the above image

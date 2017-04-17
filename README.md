@@ -1,6 +1,10 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
+### Updates 2017/04/17
+
+Update base Docker image to use FFMpeg 3.3
+
 ### Updates 2017/03/02
 
 The new version of Cloud Transcode is up and running. It now uses AWS Step Functions (SFN).

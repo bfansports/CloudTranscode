@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "68167cbe2df779d68342e8c37adae072",
+    "content-hash": "5fb9fa69f4b58c74361bbfbf68869ccd",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.29.7",
+            "version": "3.31.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "76540001ff938c072db5367a7c945296984b999b"
+                "reference": "551865464a2779b9038aa871094a24bb9e254e24"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/76540001ff938c072db5367a7c945296984b999b",
-                "reference": "76540001ff938c072db5367a7c945296984b999b",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/551865464a2779b9038aa871094a24bb9e254e24",
+                "reference": "551865464a2779b9038aa871094a24bb9e254e24",
                 "shasum": ""
             },
             "require": {
@@ -84,20 +84,61 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2017-06-16T17:29:33+00:00"
+            "time": "2017-07-05T17:26:26+00:00"
         },
         {
-            "name": "guzzlehttp/guzzle",
-            "version": "6.2.3",
+            "name": "bfansports/cloud-processing-engine-sdk",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "8d6c6cc55186db87b7dc5009827429ba4e9dc006"
+                "url": "https://github.com/bfansports/CloudProcessingEngine-SDK.git",
+                "reference": "1a2f2501c6e31c30c34d0da15134b0f322a25a3b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/8d6c6cc55186db87b7dc5009827429ba4e9dc006",
-                "reference": "8d6c6cc55186db87b7dc5009827429ba4e9dc006",
+                "url": "https://api.github.com/repos/bfansports/CloudProcessingEngine-SDK/zipball/1a2f2501c6e31c30c34d0da15134b0f322a25a3b",
+                "reference": "1a2f2501c6e31c30c34d0da15134b0f322a25a3b",
+                "shasum": ""
+            },
+            "require": {
+                "aws/aws-sdk-php": "3.*",
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "phpdocumentor/phpdocumentor": "2.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "SA": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "bFAN Sports",
+                    "email": "support@bfansports.com"
+                }
+            ],
+            "description": "PHP SDK for the Cloud Processing Engine activities. Use this SDK to create your custom activities for the CloudTranscode project",
+            "homepage": "https://github.com/bfansports/CloudProcessingEngine-SDK",
+            "keywords": [
+                "Cloud Transcode"
+            ],
+            "time": "2017-07-06 16:38:58"
+        },
+        {
+            "name": "guzzlehttp/guzzle",
+            "version": "6.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/guzzle/guzzle.git",
+                "reference": "f4db5a78a5ea468d4831de7f0bf9d9415e348699"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/f4db5a78a5ea468d4831de7f0bf9d9415e348699",
+                "reference": "f4db5a78a5ea468d4831de7f0bf9d9415e348699",
                 "shasum": ""
             },
             "require": {
@@ -107,8 +148,11 @@
             },
             "require-dev": {
                 "ext-curl": "*",
-                "phpunit/phpunit": "^4.0",
+                "phpunit/phpunit": "^4.0 || ^5.0",
                 "psr/log": "^1.0"
+            },
+            "suggest": {
+                "psr/log": "Required for using the Log middleware"
             },
             "type": "library",
             "extra": {
@@ -146,7 +190,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2017-02-28T22:50:30+00:00"
+            "time": "2017-06-22T18:50:49+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -434,54 +478,13 @@
                 "response"
             ],
             "time": "2016-08-06T14:39:51+00:00"
-        },
-        {
-            "name": "sportarchive/cloud-processing-engine-sdk",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/bfansports/CloudProcessingEngine-SDK.git",
-                "reference": "90af6f2aed3de09e6701e1a0f8bb8c71d0a7c1cc"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/bfansports/CloudProcessingEngine-SDK/zipball/90af6f2aed3de09e6701e1a0f8bb8c71d0a7c1cc",
-                "reference": "90af6f2aed3de09e6701e1a0f8bb8c71d0a7c1cc",
-                "shasum": ""
-            },
-            "require": {
-                "aws/aws-sdk-php": "3.*",
-                "php": ">=5.6"
-            },
-            "require-dev": {
-                "phpdocumentor/phpdocumentor": "2.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "SA": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "authors": [
-                {
-                    "name": "bFAN Sports",
-                    "email": "support@bfansports.com"
-                }
-            ],
-            "description": "PHP SDK for the Cloud Processing Engine activities. Use this SDK to create your custom activities for the CloudTranscode project",
-            "homepage": "https://github.com/sportarchive/CloudProcessingEngine-SDK",
-            "keywords": [
-                "Cloud Transcode"
-            ],
-            "time": "2017-06-19 17:46:05"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "sportarchive/cloud-processing-engine-sdk": 20
+        "bfansports/cloud-processing-engine-sdk": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

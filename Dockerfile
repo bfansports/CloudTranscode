@@ -1,5 +1,5 @@
 FROM sportarc/cloudtranscode-base:3.3
-MAINTAINER Sport Archive, Inc.
+MAINTAINER bFAN Sports
 
 COPY . /usr/src/cloudtranscode
 WORKDIR /usr/src/cloudtranscode

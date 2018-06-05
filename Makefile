@@ -1,17 +1,13 @@
 COMPOSER = ./composer.phar
 COMPOSER_CONF = ./composer.json
 
-.PHONY: all 
+.PHONY: all
 
-# Rules for building environment
-
-all: vendor/autoload.php 
-
-# Rules for generating files
+all: vendor/autoload.php
 
 $(COMPOSER):
 	curl -sS https://getcomposer.org/installer | php
 
 vendor/autoload.php: $(COMPOSER) $(COMPOSER_CONF)
 	$(COMPOSER) self-update
-	$(COMPOSER) install -o --prefer-dist --ignore-platform-reqs
+	$(COMPOSER) install --ignore-platform-reqs --no-interaction --optimize-autoloader --prefer-dist

@@ -29,7 +29,7 @@ class ImageTranscoder extends BasicTranscoder
 {
     /***********************
      * TRANSCODE INPUT IMAGE
-     * Below is the code used to transcode images based on $outputWanted. 
+     * Below is the code used to transcode images based on $outputWanted.
      **********************/
 
     // $metadata should contain the ffprobe video stream array.
@@ -37,9 +37,9 @@ class ImageTranscoder extends BasicTranscoder
     // Start Convert for output transcoding
     public function transcode_asset(
         $tmpPathInput,
-        $pathToInputFile, 
+        $pathToInputFile,
         $pathToOutputFiles,
-        $metadata = null, 
+        $metadata = null,
         $outputWanted)
     {
         if ($metadata) {
@@ -48,16 +48,16 @@ class ImageTranscoder extends BasicTranscoder
         }
 
         $this->cpeLogger->logOut(
-            "INFO", 
-            basename(__FILE__), 
+            "INFO",
+            basename(__FILE__),
             "Start Transcoding Asset '$pathToInputFile' ...",
             $this->activityLogKey
         );
 
         if ($metadata)
             $this->cpeLogger->logOut(
-                "INFO", 
-                basename(__FILE__), 
+                "INFO",
+                basename(__FILE__),
                 "Input Video metadata: " . print_r($metadata, true),
                 $this->activityLogKey
             );
@@ -70,7 +70,7 @@ class ImageTranscoder extends BasicTranscoder
             $this->_updateOutputExtension(
                 $pathToInputFile,
                 $outputWanted);
-            
+
             // Custom command
             if (isset($outputWanted->{'custom_cmd'}) &&
                 $outputWanted->{'custom_cmd'}) {
@@ -78,7 +78,7 @@ class ImageTranscoder extends BasicTranscoder
                     $tmpPathInput,
                     $pathToInputFile,
                     $pathToOutputFiles,
-                    $metadata, 
+                    $metadata,
                     $outputWanted
                 );
             }
@@ -87,7 +87,7 @@ class ImageTranscoder extends BasicTranscoder
                     $tmpPathInput,
                     $pathToInputFile,
                     $pathToOutputFiles,
-                    $metadata, 
+                    $metadata,
                     $outputWanted
                 );
             }
@@ -105,17 +105,17 @@ class ImageTranscoder extends BasicTranscoder
             // Sleep 1sec between turns and callback every 10 turns
             // Output progression logs (true)
             $this->executer->execute(
-                $convertCmd, 
-                1, 
+                $convertCmd,
+                1,
                 array(2 => array("pipe", "w")),
-                array($this->activityObj, "activityHeartbeat"), 
-                null, 
-                true, 
+                array($this->activityObj, "activityHeartbeat"),
+                null,
+                true,
                 10
             );
 
             // Test if we have an output file !
-            if (!file_exists($pathToOutputFiles) || 
+            if (!file_exists($pathToOutputFiles) ||
                 $this->isDirEmpty($pathToOutputFiles)) {
                 throw new CpeSdk\CpeException(
                     "Output file '$pathToOutputFiles' hasn't been created successfully or is empty !",
@@ -130,22 +130,22 @@ class ImageTranscoder extends BasicTranscoder
         }
         catch (\Exception $e) {
             $this->cpeLogger->logOut(
-                "ERROR", 
-                basename(__FILE__), 
+                "ERROR",
+                basename(__FILE__),
                 "Execution of command '".$convertCmd."' failed: " . print_r($metadata, true). ". ".$e->getMessage(),
                 $this->activityLogKey
             );
-            return false;
+            throw $e;
         }
 
         // No error. Transcode successful
         $this->cpeLogger->logOut(
-            "INFO", 
-            basename(__FILE__), 
+            "INFO",
+            basename(__FILE__),
             "Transcoding successfull !",
             $this->activityLogKey
         );
-        
+
         return [
             "output"     => $outputWanted,
             "outputInfo" => $outputInfo
@@ -157,7 +157,7 @@ class ImageTranscoder extends BasicTranscoder
         $tmpPathInput,
         $pathToInputFile,
         $pathToOutputFiles,
-        $metadata, 
+        $metadata,
         $outputWanted)
     {
         $convertArgs = "$pathToInputFile ";
@@ -166,7 +166,7 @@ class ImageTranscoder extends BasicTranscoder
             $quality = $outputWanted->{'quality'};
             $convertArgs .= "-quality $quality ";
         }
-        
+
         if (isset($outputWanted->{'resize'})) {
             $resize = $outputWanted->{'resize'};
             $convertArgs .= "-resize $resize ";
@@ -176,27 +176,27 @@ class ImageTranscoder extends BasicTranscoder
             $thumbnail = $outputWanted->{'thumbnail'};
             $convertArgs .= "-thumbnail $thumbnail ";
         }
-        
+
         if (isset($outputWanted->{'crop'})) {
             $crop = $outputWanted->{'crop'};
             $convertArgs .= "-crop $crop ";
         }
-        
+
         // Append output filename to path
         $pathToOutputFiles .=
             "/" . $outputWanted->{'output_file_info'}['basename'];
-        
+
         $convertCmd = "convert $convertArgs $pathToOutputFiles";
 
         return ($convertCmd);
     }
-    
+
     // Craft custom command
     private function craft_convert_custom_cmd(
         $tmpPathInput,
         $pathToInputFile,
         $pathToOutputFiles,
-        $metadata, 
+        $metadata,
         $outputWanted)
     {
         $convertCmd = $outputWanted->{'custom_cmd'};
@@ -211,7 +211,7 @@ class ImageTranscoder extends BasicTranscoder
         // Replace ${output_file} by output filename and path to local disk
         $convertCmd = preg_replace('/\$\{output_file\}/',
             $pathToOutputFiles, $convertCmd);
-        
+
         return ($convertCmd);
     }
 
@@ -222,7 +222,7 @@ class ImageTranscoder extends BasicTranscoder
     {
         $inputExtension =
             pathinfo($pathToInputFile)['extension'];
-        
+
         // REplace output extension if == * with the input extension
         $outputPathInfo =
             pathinfo($outputWanted->{'output_file_info'}['basename']);

@@ -67,7 +67,7 @@ class VideoTranscoder extends BasicTranscoder
         /*         "NO Input Video metadata! We can't transcode an asset without probing it first. Use ValidateAsset activity to probe it and pass a 'metadata' field containing the input metadata to this TranscodeAsset activity.", */
         /*         self::TRANSCODE_FAIL */
         /*     ); */
-        
+
         if ($metadata) {
             // Extract an sanitize metadata
             $metadata = $this->_extractFileInfo($metadata);
@@ -125,7 +125,7 @@ class VideoTranscoder extends BasicTranscoder
                 "FFMPEG CMD:\n$ffmpegCmd\n",
                 $this->logKey
             );
-            
+
             // Send heartbeat and initialize progress
             $this->activityObj->activityHeartbeat(
                 [
@@ -135,7 +135,7 @@ class VideoTranscoder extends BasicTranscoder
                     "progress" => 0
                 ]
             );
-            
+
             // Use executer to start FFMpeg command
             // Use 'capture_progression' function as callback
             // Pass video 'duration' as parameter
@@ -502,7 +502,7 @@ class VideoTranscoder extends BasicTranscoder
         $done = 0;
         $duration = $params['duration'];
         $output   = $params['output'];
-        
+
         // # get the current time
         preg_match_all("/time=(.*?) bitrate/", $outErr, $matches);
 
@@ -615,43 +615,5 @@ class VideoTranscoder extends BasicTranscoder
 
         throw new CpeSdk\CpeException("Unkown preset file '$preset' !",
                                       self::UNKNOWN_PRESET);
-    }
-
-    // Extract Metadata from ffprobe
-    private function _extractFileInfo($metadata) {
-
-        $videoStreams;
-        $audioStreams;
-
-        foreach ($metadata->streams as $key => $value) {
-            if ($value->codec_type === 'video') {
-                $videoStreams = $value;
-            }
-            else if ($value->codec_type === 'audio') {
-                $audioStreams = $value;
-            }
-        }
-
-        $analyse = [
-            'duration' => isset($metadata->format->duration) ? (float)$metadata->format->duration : 0,
-            'video' => empty($videoStreams) ? null : [
-                'codec' => $videoStreams->codec_name,
-                'color' => @$videoStreams->color_space,
-                'resolution' => $videoStreams->width . 'x' . $videoStreams->height,
-                'sar' => $videoStreams->sample_aspect_ratio,
-                'dar' => $videoStreams->display_aspect_ratio,
-                'framerate' => $videoStreams->r_frame_rate,
-                'bitrate' => isset($videoStreams->bit_rate) ? (int)$videoStreams->bit_rate : null
-            ],
-            'audio' => empty($audioStreams) ? null : [
-                'codec' => $audioStreams->codec_name,
-                'frequency' => $audioStreams->sample_rate,
-                'channels' => (int)$audioStreams->channels,
-                'depth' => $audioStreams->bits_per_sample,
-                'bitrate' => (int)$audioStreams->bit_rate
-            ]
-        ];
-
-        return $analyse;
     }
 }

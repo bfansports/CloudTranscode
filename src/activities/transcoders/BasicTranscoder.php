@@ -1,7 +1,7 @@
 <?php
 
 /*
- *   Base class for all transcoders. 
+ *   Base class for all transcoders.
  *   You must extend this class to create a new transcoder
  *
  *   Copyright (C) 2016  BFan Sports - Sport Archive Inc.
@@ -26,7 +26,7 @@ require_once __DIR__.'/../../utils/S3Utils.php';
 
 use SA\CpeSdk;
 
-class BasicTranscoder 
+class BasicTranscoder
 {
     public $activityObj; // Calling activity object
     public $task;        // Activity TASK
@@ -38,16 +38,16 @@ class BasicTranscoder
 
     const EXEC_VALIDATE_FAILED  = "EXEC_VALIDATE_FAILED";
     const TRANSCODE_FAIL        = "TRANSCODE_FAIL";
-    
+
     // Types
     const VIDEO = "VIDEO";
     const THUMB = "THUMB";
     const AUDIO = "AUDIO";
     const DOC   = "DOC";
     const IMAGE = "IMAGE";
-    
-    public function __construct($activityObj, $task) 
-    { 
+
+    public function __construct($activityObj, $task)
+    {
         $this->activityObj      = $activityObj;
         $this->logKey           = $activityObj->logKey;
         $this->task             = $task;
@@ -59,18 +59,18 @@ class BasicTranscoder
 
     public function isDirEmpty($dir)
     {
-        if (!is_readable($dir)) return null; 
+        if (!is_readable($dir)) return null;
         $handle = opendir($dir);
         while (false !== ($entry = readdir($handle))) {
-            if ($entry !== '.' && $entry !== '..') { 
+            if ($entry !== '.' && $entry !== '..') {
                 return false;
             }
         }
-        closedir($handle); 
+        closedir($handle);
         return true;
     }
 
-    
+
     /**************************************
      * GET ASSET METADATA INFO
      * The methods below are used to run ffprobe on assets
@@ -86,36 +86,74 @@ class BasicTranscoder
             // Execute FFMpeg to validate and get information about input video
             $out = $this->executer->execute(
                 $ffprobeCmd,
-                1, 
+                1,
                 array(
                     1 => array("pipe", "w"),
                     2 => array("pipe", "w")
                 ),
-                false, false, 
+                false, false,
                 false, 1
             );
         }
         catch (\Exception $e) {
             $this->cpeLogger->logOut(
-                "ERROR", 
-                basename(__FILE__), 
+                "ERROR",
+                basename(__FILE__),
                 "Execution of command '".$ffprobeCmd."' failed.",
                 $this->activityLogKey
             );
             return false;
         }
-        
+
         if (empty($out)) {
             throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$inputFilePath'!",
                 self::EXEC_VALIDATE_FAILED);
         }
-        
+
         // FFmpeg writes on STDERR ...
         if (!($assetInfo = json_decode($out['out']))) {
             throw new CpeSdk\CpeException("FFProbe returned invalid JSON!",
                 self::EXEC_VALIDATE_FAILED);
         }
-        
+
         return ($assetInfo);
+    }
+
+        // Extract Metadata from ffprobe
+    public function _extractFileInfo($metadata) {
+
+        $videoStreams;
+        $audioStreams;
+
+        foreach ($metadata->streams as $key => $value) {
+            if ($value->codec_type === 'video') {
+                $videoStreams = $value;
+            }
+            else if ($value->codec_type === 'audio') {
+                $audioStreams = $value;
+            }
+        }
+
+        $analyse = [
+            'duration' => isset($metadata->format->duration) ? (float)$metadata->format->duration : 0,
+            'video' => empty($videoStreams) ? null : [
+                'codec' => $videoStreams->codec_name,
+                'color' => @$videoStreams->color_space,
+                'resolution' => $videoStreams->width . 'x' . $videoStreams->height,
+                'sar' => $videoStreams->sample_aspect_ratio,
+                'dar' => $videoStreams->display_aspect_ratio,
+                'framerate' => $videoStreams->r_frame_rate,
+                'bitrate' => isset($videoStreams->bit_rate) ? (int)$videoStreams->bit_rate : null
+            ],
+            'audio' => empty($audioStreams) ? null : [
+                'codec' => $audioStreams->codec_name,
+                'frequency' => $audioStreams->sample_rate,
+                'channels' => (int)$audioStreams->channels,
+                'depth' => $audioStreams->bits_per_sample,
+                'bitrate' => (int)$audioStreams->bit_rate
+            ]
+        ];
+
+        return $analyse;
     }
 }

@@ -250,6 +250,5 @@ $activityPoller = new ValidateAssetActivity(
     $cpeLogger);
 
 // Initiate the polling loop and will call your `process` function upon trigger
-$activityPoller->doActivity();
-
-
+// The process will exit after 24 hours (1440 minutes)
+$activityPoller->doActivity(1440);

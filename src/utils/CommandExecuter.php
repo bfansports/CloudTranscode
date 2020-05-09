@@ -37,7 +37,7 @@ class CommandExecuter
     {
         if ($logKey)
             $this->logKey = $logKey;
-        
+
         $this->cpeLogger->logOut("INFO", basename(__FILE__), "Executing: $cmd", $this->logKey);
 
         // Start execution of $cmd
@@ -95,7 +95,7 @@ class CommandExecuter
                 echo ".";
                 flush();
             }
-            
+
             // Read prog output
             if (isset($pipes[1]) && $pipes[1]) {
                 $out = stream_get_contents($pipes[1], -1);
@@ -122,10 +122,12 @@ class CommandExecuter
                                      basename(__FILE__),
                                      "Can't execute: $cmd. Exit Code: ".$procStatus['exitcode'],
                                      $this->logKey);
-            if ($allOut)
+            if ($allOut) {
                 $this->cpeLogger->logOut("ERROR",
                                          basename(__FILE__), "COMMAND STDOUT: ".$allOut,
                                          $this->logKey);
+                $allOut = null;
+            }
             if ($allOutErr)
                 $this->cpeLogger->logOut("ERROR",
                                          basename(__FILE__), "COMMAND STDERR: ".$allOutErr,

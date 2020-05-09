@@ -1,8 +1,8 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sportarchive/CloudTranscode?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
-### Updates 2018/10/17
-Cleaning up the doc. Fixed an issue. Trying to make the documentation more accessible.
+### Updates 2020/05/09
+Update to FFMpeg 4.2
 
 # What is Cloud Transcode?
 Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
@@ -42,13 +42,13 @@ Those Activities listen to the Amazon SFN (Step functions) service for incoming 
 Tasks and Workflows (aka `State Machine`) are defined in the AWS SFN console, and are identified by their AWS ARNs (AWS resources identifier). You can then start `N` activity workers that will start listening for incoming jobs and execute them.
 
 You can scale your infrastructure in AWS based on your volume, capacity, cost, resources, etc.
-You can run those SFN Activities on Docker, which is recommended. A Dockerfile is provided for you. 
+You can run those SFN Activities on Docker, which is recommended. A Dockerfile is provided for you.
 But you can run on anything and anywhere.
 
 Your client applications can initiate new SFN workflows using the AWS SDK of your choice. The client apps will pass JSON input date to AWS SFN. <br>
 SFN will then pass this input to your activities, which will then return a JSON output. This output can be passed on to the next activities.
 
-Thanks to the `CloudProcessingEngine-SDK` you can build your own workflow and call any activities you want. You can implement your own activities as well. 
+Thanks to the `CloudProcessingEngine-SDK` you can build your own workflow and call any activities you want. You can implement your own activities as well.
 
 Cloud Transcode could use help on the following Activities if you are interested in participating:
 
@@ -87,7 +87,7 @@ One TranscodeAssetActivity worker processes all outputs wanted, in sequence, not
 
 Activities are standalone scripts writen in PHP (legacy reasons, but it's clean!) that can be started in command line.
 
-``` 
+```
 bash $> ./src/activities/ValidateAssetActivity.php -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
 bash $> ./src/activities/TranscodeAssetActivity.php -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
 ```
@@ -95,8 +95,8 @@ bash $> ./src/activities/TranscodeAssetActivity.php -A arn:aws:states:eu-west-1:
 Or using Docker
 
 ```
-$> sudo docker run sportarc/cloudtranscode ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
-$> sudo docker run sportarc/cloudtranscode TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
+$> sudo docker run sportarc/cloudtranscode:4.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
+$> sudo docker run sportarc/cloudtranscode:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
 ```
 
 Using these commands, you can start an activity worker that processes one type of activity. In these cases `ValidateAssetActivity` and `TranscodeAssetActivity`
@@ -128,7 +128,7 @@ A Dockerfile like this for example:
 
 
 ``` Dockerfile
-FROM sportarc/cloudtranscode:3.3
+FROM sportarc/cloudtranscode:4.2
 MAINTAINER bFAN Sports
 
 COPY clientInterfaces /usr/src/clientInterfaces
@@ -140,10 +140,10 @@ Then build your own image as follow: `sudo docker build -t sportarc/cloudtransco
 Then you can start your workers like this:
 
 ```
-$> sudo docker run sportarc/cloudtranscode-prod ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:4.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
+$> sudo docker run sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
 ```
 
 As you can see, you can create many SFN tasks. Each task will execute the same activity code, but they are connected to different client applications using different Interface classes.
@@ -227,12 +227,12 @@ Thanks for contributing !
 
 # FFmpeg
 
-CloudTranscode uses FFmpeg 3.3
+CloudTranscode uses FFmpeg 4.2
 
 The CloudTranscode Docker image is based on two other images:
 
-   - https://hub.docker.com/r/sportarc/ffmpeg/: Base image containing: Ubuntu 14, PHP CLI 5.6, FFmpeg
-   - https://hub.docker.com/r/sportarc/cloudtranscode-base/: Adds `ImageMagic` to the above image
+   - https://hub.docker.com/r/sportarc/ffmpeg/
+   - https://hub.docker.com/r/sportarc/cloudtranscode-base/
 
 
 # FFMpeg performance benchmark on Amazon EC2

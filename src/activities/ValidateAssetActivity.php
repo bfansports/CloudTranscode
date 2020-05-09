@@ -3,7 +3,7 @@
 <?php
 
 /*
- *   This class validate input assets and get mime type and metadata 
+ *   This class validate input assets and get mime type and metadata
  *   Using the ValidateAsset activity you can confirm your asset can be transcoded
  *
  *   Copyright (C) 2016  BFan Sports - Sport Archive Inc.
@@ -32,15 +32,17 @@ class ValidateAssetActivity extends BasicActivity
     private $finfo;
     private $s3;
     private $curl_data = '';
-    
+
+    const VALIDATE_ASSET_FAILED = "VALIDATE_ASSET_FAILED";
+
     public function __construct($client = null, $params, $debug, $cpeLogger)
     {
         # Check if preper env vars are setup
         if (!($region = getenv("AWS_DEFAULT_REGION")))
             throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
-        
+
         parent::__construct($client, $params, $debug, $cpeLogger);
-        
+
         $this->s3 = new \Aws\S3\S3Client([
             "version" => "latest",
             "region"  => $region
@@ -51,17 +53,17 @@ class ValidateAssetActivity extends BasicActivity
     private function writefn($ch, $chunk)
     {
         static $limit = 1024; // 500 bytes, it's only a test
-        
+
         $len = strlen($this->curl_data) + strlen($chunk);
         if ($len >= $limit ) {
             $this->curl_data .= substr($chunk, 0, $limit-strlen($this->curl_data));
             return -1;
         }
-        
+
         $this->curl_data .= $chunk;
         return strlen($chunk);
     }
-    
+
     // Perform the activity
     public function process($task)
     {
@@ -74,21 +76,44 @@ class ValidateAssetActivity extends BasicActivity
 
         // Call parent process:
         parent::process($task);
-        
+
         $this->activityHeartbeat();
         $tmpFile = tempnam(sys_get_temp_dir(), 'ct');
 
         if (isset($this->input->{'input_asset'}->{'http'})) {
+            $this->cpeLogger->logOut(
+                "DEBUG",
+                basename(__FILE__),
+                "Downloading first 1024 bytes from: " . $this->input->{'input_asset'}->{'http'},
+                $this->logKey
+            );
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $this->input->{'input_asset'}->{'http'});
             curl_setopt($ch, CURLOPT_RANGE, '0-1024');
             curl_setopt($ch, CURLOPT_WRITEFUNCTION, array($this, 'writefn'));
             curl_exec($ch);
             curl_close($ch);
+
+            if ($errno = curl_errno($ch)) {
+                $error_message = curl_strerror($errno);
+                throw new CpeSdk\CpeException(
+                    $error_message,
+                    self::VALIDATE_ASSET_FAILED
+                );
+            }
+
             $chunk = $this->curl_data;
         }
         else if (isset($this->input->{'input_asset'}->{'bucket'}) &&
                  isset($this->input->{'input_asset'}->{'file'})) {
+            $this->cpeLogger->logOut(
+                "DEBUG",
+                basename(__FILE__),
+                "Downloading first 1024 bytes from S3. Bucket: " . $this->input->{'input_asset'}->{'bucket'} . ". Key: " . $this->input->{'input_asset'}->{'file'},
+                $this->logKey
+            );
+
             // Fetch first 1 KiB of the file for Magic number validation
             $obj = $this->s3->getObject([
                 'Bucket' => $this->input->{'input_asset'}->{'bucket'},
@@ -97,7 +122,7 @@ class ValidateAssetActivity extends BasicActivity
             ]);
             $chunk = (string) $obj['Body'];
         }
-        
+
         $this->activityHeartbeat();
 
         // Determine file type
@@ -112,7 +137,7 @@ class ValidateAssetActivity extends BasicActivity
                 basename(__FILE__),
                 "File meta information gathered. Mime: $mime | Type: $type",
                 $this->logKey
-        );
+            );
 
         // Load the right transcoder base on input_type
         // Get asset detailed info
@@ -147,14 +172,14 @@ class ValidateAssetActivity extends BasicActivity
                 }
             }
         }
-        
+
         $assetInfo->mime = $mime;
         $assetInfo->type = $type;
 
         $result['input_asset']     = $this->input->{'input_asset'};
         $result['input_metadata']  = $assetInfo;
         $result['output_assets']   = $this->input->{'output_assets'};
-        
+
         return json_encode($result);
     }
 }
@@ -188,11 +213,11 @@ function check_activity_arguments()
     global $debug;
     global $clientClassPath;
     global $name;
-    
+
     // Handle input parameters
     if (!($options = getopt("N:A:l:C:hd")))
         usage();
-    
+
     if (isset($options['h']))
         usage();
 
@@ -216,7 +241,7 @@ function check_activity_arguments()
     if (isset($options['N']) && $options['N']) {
         $name = $options['N'];
     }
-    
+
     if (isset($options['l']))
         $logPath = $options['l'];
 }

@@ -102,7 +102,9 @@ class BasicTranscoder
                 "Execution of command '".$ffprobeCmd."' failed.",
                 $this->activityLogKey
             );
-            return false;
+
+            throw new CpeSdk\CpeException("Unable to execute FFProbe to get information about '$inputFilePath'!",
+                self::EXEC_VALIDATE_FAILED);
         }
 
         if (empty($out)) {

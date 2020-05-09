@@ -1,4 +1,4 @@
-FROM sportarc/cloudtranscode-base:3.3
+FROM sportarc/cloudtranscode-base:4.2
 MAINTAINER bFAN Sports
 
 COPY . /usr/src/cloudtranscode

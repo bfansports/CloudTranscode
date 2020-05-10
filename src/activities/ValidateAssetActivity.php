@@ -52,10 +52,10 @@ class ValidateAssetActivity extends BasicActivity
     // Used to limit the curl download in case of an HTTP encode
     private function writefn($ch, $chunk)
     {
-        static $limit = 1024; // 500 bytes, it's only a test
+        static $limit = 1024;
 
         $len = strlen($this->curl_data) + strlen($chunk);
-        if ($len >= $limit ) {
+        if ($len >= $limit) {
             $this->curl_data .= substr($chunk, 0, $limit-strlen($this->curl_data));
             return -1;
         }
@@ -93,15 +93,16 @@ class ValidateAssetActivity extends BasicActivity
             curl_setopt($ch, CURLOPT_RANGE, '0-1024');
             curl_setopt($ch, CURLOPT_WRITEFUNCTION, array($this, 'writefn'));
             curl_exec($ch);
-            curl_close($ch);
-
             if ($errno = curl_errno($ch)) {
-                $error_message = curl_strerror($errno);
-                throw new CpeSdk\CpeException(
-                    $error_message,
-                    self::VALIDATE_ASSET_FAILED
-                );
+                if ($errno != CURLE_WRITE_ERROR) {
+                    $error_message = curl_strerror($errno);
+                    throw new CpeSdk\CpeException(
+                        $error_message,
+                        self::VALIDATE_ASSET_FAILED
+                    );
+                }
             }
+            curl_close($ch);
 
             $chunk = $this->curl_data;
         }

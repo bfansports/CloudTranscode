@@ -88,6 +88,8 @@ class ValidateAssetActivity extends BasicActivity
                 $this->logKey
             );
 
+            $this->curl_data = '';
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $this->input->{'input_asset'}->{'http'});
             curl_setopt($ch, CURLOPT_RANGE, '0-1024');

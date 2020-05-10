@@ -477,16 +477,27 @@ class VideoTranscoder extends BasicTranscoder
             $inputSize        = $metadata['size'];
             $inputSizeSplit   = explode("x", $inputSize);
             $outputSizeSplit  = explode("x", $size);
+            $width            = $outputSizeSplit[0];
+            $height           = $outputSizeSplit[1];
 
-            if (intval($outputSizeSplit[0]) > intval($inputSizeSplit[0]) ||
-                intval($outputSizeSplit[1]) > intval($inputSizeSplit[1])) {
+            // We have a rotation. We flip width and height
+            if ($metadata['video']['tags'] &&
+                $metadata['video']['tags']['rotate'] &&
+                ($metadata['video']['tags']['rotate'] == 90 ||
+                 $metadata['video']['tags']['rotate'] == -90)) {
+                $width  = $outputSizeSplit[1];
+                $height = $outputSizeSplit[0];
+            }
+
+            if (intval($width) > intval($inputSizeSplit[0]) ||
+                intval($height) > intval($inputSizeSplit[1])) {
                 $this->cpeLogger->logOut(
                     "INFO",
                     basename(__FILE__),
                     "Requested transcode size is bigger than the original. `allow_upscale` option not provided",
                     $this->logKey
                 );
-                $size = $metadata['size'];
+                $size = $width . "x" . $height;
             }
         }
 

@@ -1,4 +1,4 @@
-FROM sportarc/cloudtranscode-base:4.2
+FROM 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-base:4.2
 MAINTAINER bFAN Sports
 
 COPY . /usr/src/cloudtranscode

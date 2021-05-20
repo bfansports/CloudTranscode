@@ -95,8 +95,8 @@ bash $> ./src/activities/TranscodeAssetActivity.php -A arn:aws:states:eu-west-1:
 Or using Docker
 
 ```
-$> sudo docker run sportarc/cloudtranscode:4.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
-$> sudo docker run sportarc/cloudtranscode:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
+$> sudo docker run 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode:4.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset
+$> sudo docker run 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAsset
 ```
 
 Using these commands, you can start an activity worker that processes one type of activity. In these cases `ValidateAssetActivity` and `TranscodeAssetActivity`
@@ -128,22 +128,22 @@ A Dockerfile like this for example:
 
 
 ``` Dockerfile
-FROM sportarc/cloudtranscode:4.2
+FROM 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode:4.2
 MAINTAINER bFAN Sports
 
 COPY clientInterfaces /usr/src/clientInterfaces
 ```
 
 Just create a new folder, put the Dockerfile above in it and clone the CloudTranscode repository in it too.
-Then build your own image as follow: `sudo docker build -t sportarc/cloudtranscode-prod .`
+Then build your own image as follow: `sudo docker build -t 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-prod .`
 
 Then you can start your workers like this:
 
-```
-$> sudo docker run sportarc/cloudtranscode-prod:4.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
-$> sudo docker run sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
+```shell
+$> sudo docker run 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-prod:4.2 ValidateAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:ValidateAsset -C /usr/src/clientInterfaces/ValidateAssetClientInterfaces.php
+$> sudo docker run 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeAllOutputAssets -C /usr/src/clientInterfaces/TranscodeAllOutputAssetsClientInterfaces.php
+$> sudo docker run 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:TranscodeImageAsset -C /usr/src/clientInterfaces/TranscodeImagesAssetsClientInterfaces.php
+$> sudo docker run 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-prod:4.2 TranscodeAssetActivity -A arn:aws:states:eu-west-1:XXXXXXXXXXXX:activity:OnDemandTranscodeAsset -C /usr/src/clientInterfaces/OnDemandTranscodeAssetClientInterfaces.php
 ```
 
 As you can see, you can create many SFN tasks. Each task will execute the same activity code, but they are connected to different client applications using different Interface classes.

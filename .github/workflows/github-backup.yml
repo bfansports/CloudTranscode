@@ -5,6 +5,7 @@ on:
       - develop
 jobs:
   s3Backup:
+    if: github.repository_owner == 'bfansports'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

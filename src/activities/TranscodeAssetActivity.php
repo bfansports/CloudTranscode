@@ -181,32 +181,36 @@ class TranscodeAssetActivity extends BasicActivity
                                           self::TMP_PATH_OPEN_FAIL);
         }
 
-        // Upload all resulting files sitting in $outputFilesPath to S3
-        while ($entry = readdir($handle)) {
-            if ($entry == "." || $entry == "..") {
-                continue;
+        try {
+            // Upload all resulting files sitting in $outputFilesPath to S3
+            while ($entry = readdir($handle)) {
+                if ($entry == "." || $entry == "..") {
+                    continue;
+                }
+
+                // Destination path on S3. Sanitizing
+                $s3Location = $output->{'output_file_info'}['dirname']."/$entry";
+                $s3Location = str_replace("//", "/", $s3Location);
+
+                // Send to S3. We reference the callback s3_put_processing_callback
+                // The callback ping back SWF so we stay alive
+                $s3Output = $this->s3Utils->put_file_into_s3(
+                    $s3Bucket,
+                    $s3Location,
+                    "$this->outputFilesPath/$entry",
+                    $options,
+                    array($this, "activityHeartbeat"),
+                    null
+                );
+                // We delete the TMP file once uploaded
+                unlink("$this->outputFilesPath/$entry");
+
+                $this->cpeLogger->logOut("INFO", basename(__FILE__),
+                                         $s3Output['msg'],
+                                         $this->logKey);
             }
-
-            // Destination path on S3. Sanitizing
-            $s3Location = $output->{'output_file_info'}['dirname']."/$entry";
-            $s3Location = str_replace("//", "/", $s3Location);
-
-            // Send to S3. We reference the callback s3_put_processing_callback
-            // The callback ping back SWF so we stay alive
-            $s3Output = $this->s3Utils->put_file_into_s3(
-                $s3Bucket,
-                $s3Location,
-                "$this->outputFilesPath/$entry",
-                $options,
-                array($this, "activityHeartbeat"),
-                null
-            );
-            // We delete the TMP file once uploaded
-            unlink("$this->outputFilesPath/$entry");
-
-            $this->cpeLogger->logOut("INFO", basename(__FILE__),
-                                     $s3Output['msg'],
-                                     $this->logKey);
+        } finally {
+            closedir($handle);
         }
     }
 

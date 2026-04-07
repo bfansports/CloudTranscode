@@ -47,7 +47,7 @@ check_input_parameters($options);
 try {
     # Check if preper env vars are setup
     if (!($region = getenv("AWS_DEFAULT_REGION")))
-        throw new CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
+        throw new \SA\CpeSdk\CpeException("Set 'AWS_DEFAULT_REGION' environment variable!");
         
     // Get S3 client
     $s3 = new \Aws\S3\S3Client([

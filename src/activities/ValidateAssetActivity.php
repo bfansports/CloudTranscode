@@ -91,20 +91,23 @@ class ValidateAssetActivity extends BasicActivity
             $this->curl_data = '';
 
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $this->input->{'input_asset'}->{'http'});
-            curl_setopt($ch, CURLOPT_RANGE, '0-1024');
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, array($this, 'writefn'));
-            curl_exec($ch);
-            if ($errno = curl_errno($ch)) {
-                if ($errno != CURLE_WRITE_ERROR) {
-                    $error_message = curl_strerror($errno);
-                    throw new CpeSdk\CpeException(
-                        $error_message,
-                        self::VALIDATE_ASSET_FAILED
-                    );
+            try {
+                curl_setopt($ch, CURLOPT_URL, $this->input->{'input_asset'}->{'http'});
+                curl_setopt($ch, CURLOPT_RANGE, '0-1024');
+                curl_setopt($ch, CURLOPT_WRITEFUNCTION, array($this, 'writefn'));
+                curl_exec($ch);
+                if ($errno = curl_errno($ch)) {
+                    if ($errno != CURLE_WRITE_ERROR) {
+                        $error_message = curl_strerror($errno);
+                        throw new CpeSdk\CpeException(
+                            $error_message,
+                            self::VALIDATE_ASSET_FAILED
+                        );
+                    }
                 }
+            } finally {
+                curl_close($ch);
             }
-            curl_close($ch);
 
             $chunk = $this->curl_data;
         }

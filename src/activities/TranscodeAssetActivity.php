@@ -298,12 +298,11 @@ function usage()
 // Check command line input parameters
 function check_activity_arguments()
 {
-    // Filling the globals with input
-    global $arn;
-    global $logPath;
-    global $debug;
-    global $clientClassPath;
-    global $name;
+    $arn = null;
+    $logPath = null;
+    $debug = false;
+    $clientClassPath = null;
+    $name = 'TranscodeAsset';
 
     // Handle input parameters
     if (!($options = getopt("N:A:l:C:hd")))
@@ -335,6 +334,8 @@ function check_activity_arguments()
 
     if (isset($options['l']))
         $logPath = $options['l'];
+
+    return compact('arn', 'logPath', 'debug', 'clientClassPath', 'name');
 }
 
 
@@ -343,14 +344,12 @@ function check_activity_arguments()
  * START THE SCRIPT ACTITIVY
  */
 
-// Globals
-$debug = false;
-$logPath = null;
-$arn;
-$name = 'TranscodeAsset';
-$clientClassPath = null;
-
-check_activity_arguments();
+$args = check_activity_arguments();
+$arn = $args['arn'];
+$logPath = $args['logPath'];
+$debug = $args['debug'];
+$clientClassPath = $args['clientClassPath'];
+$name = $args['name'];
 
 $cpeLogger = new SA\CpeSdk\CpeLogger($name, $logPath);
 $cpeLogger->logOut("INFO", basename(__FILE__),

@@ -1,14 +1,41 @@
-FROM 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode-base:4.2
-MAINTAINER bFAN Sports
+FROM public.ecr.aws/docker/library/php:8.2-cli AS builder
 
-COPY . /usr/src/cloudtranscode
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update \
+    && apt-get install -y --no-install-recommends \
+       libzip-dev \
+       git \
+    && docker-php-ext-install zip \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /usr/src/cloudtranscode
 
-RUN DEBIAN_FRONTEND=noninteractive TERM=screen \
-    apt-get update \
-    && apt-get install -y git \
-    && make \
-    && apt-get purge -y git \
-    && apt-get autoremove -y
+# Copy only dependency files first for better layer caching
+COPY composer.json composer.lock Makefile ./
+RUN make
 
+# Copy the rest of the source
+COPY . .
+RUN rm -f composer.phar
+
+# ---- runtime ----
+FROM public.ecr.aws/docker/library/php:8.2-cli
+
+RUN echo "date.timezone = UTC" >> /usr/local/etc/php/conf.d/timezone.ini \
+    && DEBIAN_FRONTEND=noninteractive \
+       apt-get update \
+    && apt-get install -y --no-install-recommends \
+       libzip-dev \
+       imagemagick \
+       ffmpeg \
+    && docker-php-ext-install zip \
+    && apt-get purge -y libzip-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -r -u 1001 -g root worker
+
+COPY --from=builder --chown=worker:root /usr/src/cloudtranscode /usr/src/cloudtranscode
+WORKDIR /usr/src/cloudtranscode
+
+USER worker
 ENTRYPOINT ["/usr/src/cloudtranscode/bootstrap.sh"]

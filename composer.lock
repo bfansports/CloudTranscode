@@ -163,12 +163,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/bfansports/CloudProcessingEngine-SDK.git",
-                "reference": "1a2f2501c6e31c30c34d0da15134b0f322a25a3b"
+                "reference": "9e3b5a7542b46ffd65b8c21b262cd4660acc6f87"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bfansports/CloudProcessingEngine-SDK/zipball/1a2f2501c6e31c30c34d0da15134b0f322a25a3b",
-                "reference": "1a2f2501c6e31c30c34d0da15134b0f322a25a3b",
+                "url": "https://api.github.com/repos/bfansports/CloudProcessingEngine-SDK/zipball/9e3b5a7542b46ffd65b8c21b262cd4660acc6f87",
+                "reference": "9e3b5a7542b46ffd65b8c21b262cd4660acc6f87",
                 "shasum": ""
             },
             "require": {
@@ -178,6 +178,7 @@
             "require-dev": {
                 "phpdocumentor/phpdocumentor": "2.*"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-0": {
@@ -196,7 +197,11 @@
             "keywords": [
                 "Cloud Transcode"
             ],
-            "time": "2017-07-06T16:38:58+00:00"
+            "support": {
+                "issues": "https://github.com/bfansports/CloudProcessingEngine-SDK/issues",
+                "source": "https://github.com/bfansports/CloudProcessingEngine-SDK/tree/3.0.1"
+            },
+            "time": "2026-04-24T16:47:32+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",

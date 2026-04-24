@@ -354,6 +354,7 @@ $name = $args['name'];
 $cpeLogger = new SA\CpeSdk\CpeLogger($name, $logPath);
 $cpeLogger->logOut("INFO", basename(__FILE__),
                    "\033[1mStarting activity\033[0m: $name");
+file_put_contents('/tmp/heartbeat', (string) time());
 
 // We instanciate the Activity 'ValidateAsset' and give it a name for Snf
 $activityPoller = new TranscodeAssetActivity(
@@ -366,5 +367,7 @@ $activityPoller = new TranscodeAssetActivity(
     $cpeLogger);
 
 // Initiate the polling loop and will call your `process` function upon trigger
-// The process will exit after 24 hours (1440 minutes)
-$activityPoller->doActivity(1440);
+$loops = $activityPoller->calculateLoops();
+$cpeLogger->logOut("INFO", basename(__FILE__),
+                   "\033[1mLoops calculated\033[0m: $loops");
+$activityPoller->doActivity($loops);

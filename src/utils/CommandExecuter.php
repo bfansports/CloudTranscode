@@ -33,7 +33,8 @@ class CommandExecuter
         $progressCallbackParams = null,
         $showProgress = false,
         $callbackTurns = 0,
-        $logKey = null)
+        $logKey = null,
+        $maxSeconds = 3600)
     {
         if ($logKey)
             $this->logKey = $logKey;
@@ -66,80 +67,88 @@ class CommandExecuter
         $allOut = "";
         $allOutErr = "";
 
-        // Check process status at every turn
-        do {
-            sleep($sleep);
+        $startTime = time();
+        try {
+            // Check process status at every turn
+            do {
+                if ($maxSeconds > 0 && (time() - $startTime) > $maxSeconds) {
+                    proc_terminate($process, 9);
+                    throw new CpeSdk\CpeException(
+                        "Command timed out after {$maxSeconds}s: $cmd",
+                        self::EXEC_FAILED
+                    );
+                }
+                sleep($sleep);
 
-            // If callback only after N turns
-            if ( !$callbackTurns || in_array($i, array(0, $callbackTurns)) )
-            {
+                // If callback only after N turns
+                if ( !$callbackTurns || in_array($i, array(0, $callbackTurns)) )
+                {
+                    if ($showProgress) {
+                        echo ".\n";
+                    }
+
+                    // Call user provided callback.
+                    // Callback should be an array as per doc here:
+                    // http://www.php.net/manual/en/language.types.callable.php
+                    // Type 3: Object method call
+                    if (isset($progressCallback) && $progressCallback) {
+                        call_user_func($progressCallback, $progressCallbackParams,
+                                       $allOut, $allOutErr);
+                    }
+
+                    $i = 0;
+                }
+
+                // Get latest status
+                $procStatus = proc_get_status($process);
                 if ($showProgress) {
-                    echo ".\n";
+                    echo ".";
+                    flush();
                 }
 
-                // Call user provided callback.
-                // Callback should be an array as per doc here:
-                // http://www.php.net/manual/en/language.types.callable.php
-                // Type 3: Object method call
-                if (isset($progressCallback) && $progressCallback) {
-                    call_user_func($progressCallback, $progressCallbackParams,
-                                   $allOut, $allOutErr);
+                // Read prog output
+                if (isset($pipes[1]) && $pipes[1]) {
+                    $out = stream_get_contents($pipes[1], -1);
+                    $allOut .= $out;
                 }
 
-                $i = 0;
+                // Read prog errors
+                if (isset($pipes[2]) && $pipes[2]) {
+                    $outErr = stream_get_contents($pipes[2], -1);
+                    $allOutErr .= $outErr;
+                }
+
+                $i++;
+            } while ($procStatus['running']);
+
+            if ($procStatus['exitcode'] > 0)
+            {
+                $this->cpeLogger->logOut("ERROR",
+                                         basename(__FILE__),
+                                         "Can't execute: $cmd. Exit Code: ".$procStatus['exitcode'],
+                                         $this->logKey);
+                if ($allOut) {
+                    $this->cpeLogger->logOut("ERROR",
+                                             basename(__FILE__), "COMMAND STDOUT: ".$allOut,
+                                             $this->logKey);
+                    $allOut = null;
+                }
+                if ($allOutErr)
+                    $this->cpeLogger->logOut("ERROR",
+                                             basename(__FILE__), "COMMAND STDERR: ".$allOutErr,
+                                             $this->logKey);
             }
 
-            // Get latest status
-            $procStatus = proc_get_status($process);
             if ($showProgress) {
-                echo ".";
-                flush();
+                echo "\n";
             }
-
-            // Read prog output
-            if (isset($pipes[1]) && $pipes[1]) {
-                $out = stream_get_contents($pipes[1], -1);
-                $allOut .= $out;
-            }
-
-            // Read prog errors
-            if (isset($pipes[2]) && $pipes[2]) {
-                $outErr = stream_get_contents($pipes[2], -1);
-                $allOutErr .= $outErr;
-            }
-
-            $i++;
-        } while ($procStatus['running']);
-
-        if (isset($pipes[1]))
-            fclose($pipes[1]);
-        if (isset($pipes[2]))
-            fclose($pipes[2]);
-
-        if ($procStatus['exitcode'] > 0)
-        {
-            $this->cpeLogger->logOut("ERROR",
-                                     basename(__FILE__),
-                                     "Can't execute: $cmd. Exit Code: ".$procStatus['exitcode'],
-                                     $this->logKey);
-            if ($allOut) {
-                $this->cpeLogger->logOut("ERROR",
-                                         basename(__FILE__), "COMMAND STDOUT: ".$allOut,
-                                         $this->logKey);
-                $allOut = null;
-            }
-            if ($allOutErr)
-                $this->cpeLogger->logOut("ERROR",
-                                         basename(__FILE__), "COMMAND STDERR: ".$allOutErr,
-                                         $this->logKey);
+        } finally {
+            if (isset($pipes[1]) && is_resource($pipes[1]))
+                fclose($pipes[1]);
+            if (isset($pipes[2]) && is_resource($pipes[2]))
+                fclose($pipes[2]);
+            proc_close($process);
         }
-
-        if ($showProgress) {
-            echo "\n";
-        }
-
-        // Process is over
-        proc_close($process);
 
         return array('out' => $allOut, 'outErr' => $allOutErr);
     }

@@ -54,14 +54,51 @@ class BasicActivity extends CpeSdk\CpeActivity
     public function __construct($client = null, $params, $debug, $cpeLogger)
     {
         parent::__construct($client, $params, $debug, $cpeLogger);
-        
+
         // S3 utils
         $this->s3Utils = new S3Utils($this->cpeLogger);
+
+        $this->registerSigtermHandler();
+    }
+
+    private function registerSigtermHandler(): void
+    {
+        if (!function_exists('pcntl_async_signals')) {
+            return;
+        }
+        pcntl_async_signals(true);
+        pcntl_signal(SIGTERM, function () {
+            if ($this->token) {
+                $this->activityFail('SIGTERM', 'Worker shutting down (SIGTERM received)');
+            }
+            exit(0);
+        });
+    }
+
+    public function calculateLoops(): int
+    {
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
+        $next3AM = (clone $now)->modify('tomorrow 03:00');
+        $diff = $next3AM->getTimestamp() - $now->getTimestamp();
+        return (int) round($diff / 60);
+    }
+
+    public function writeHeartbeat(): void
+    {
+        file_put_contents('/tmp/heartbeat', (string) time());
+    }
+
+    // Override to also refresh the heartbeat file on every SFN heartbeat
+    public function activityHeartbeat($data = null)
+    {
+        $this->writeHeartbeat();
+        return parent::activityHeartbeat($data);
     }
 
     // Perform the activity
     public function process($task)
     {
+        $this->writeHeartbeat();
         // Use workflowID to generate a unique TMP folder localy.
         $this->tmpInputPath = self::TMP_FOLDER 
                             . $this->logKey."/" 

@@ -18,6 +18,12 @@ RUN make
 COPY . .
 RUN rm -f composer.phar
 
+# Fetch presets submodule in case it wasn't initialized in the build context
+RUN if [ ! -f presets/480p-generic.json ]; then \
+        rm -rf presets && \
+        git clone https://github.com/sportarchive/CloudTranscode-FFMpeg-presets.git presets; \
+    fi
+
 # ---- runtime ----
 FROM public.ecr.aws/docker/library/php:8.2-cli
 

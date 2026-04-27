@@ -142,8 +142,8 @@ class BasicTranscoder
                 'codec' => $videoStreams->codec_name,
                 'color' => @$videoStreams->color_space,
                 'resolution' => $videoStreams->width . 'x' . $videoStreams->height,
-                'sar' => $videoStreams->sample_aspect_ratio,
-                'dar' => $videoStreams->display_aspect_ratio,
+                'sar' => $videoStreams->sample_aspect_ratio ?? null,
+                'dar' => $videoStreams->display_aspect_ratio ?? null,
                 'framerate' => $videoStreams->r_frame_rate,
                 'bitrate' => isset($videoStreams->bit_rate) ? (int)$videoStreams->bit_rate : null
             ],

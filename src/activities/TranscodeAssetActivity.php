@@ -33,6 +33,7 @@ class TranscodeAssetActivity extends BasicActivity
     const TMP_PATH_OPEN_FAIL    = "TMP_PATH_OPEN_FAIL";
 
     private $output;
+    private $outputs;
     private $outputFilesPath;
 
     public function __construct($client, $params, $debug, $cpeLogger)

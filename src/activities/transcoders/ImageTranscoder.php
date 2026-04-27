@@ -39,7 +39,7 @@ class ImageTranscoder extends BasicTranscoder
         $tmpPathInput,
         $pathToInputFile,
         $pathToOutputFiles,
-        $metadata = null,
+        $metadata,
         $outputWanted)
     {
         if ($metadata) {

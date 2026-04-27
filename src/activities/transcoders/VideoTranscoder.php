@@ -59,7 +59,7 @@ class VideoTranscoder extends BasicTranscoder
         $tmpInputPath,
         $inputFilePath,
         $outputFilesPath,
-        $metadata = null,
+        $metadata,
         $outputWanted)
     {
         /* if (!$metadata) */
@@ -316,7 +316,7 @@ class VideoTranscoder extends BasicTranscoder
                 $snapshot_sec = $outputWanted->{'snapshot_sec'};
             }
 
-            $time = gmdate("H:i:s", $snapshot_sec) . ".000";
+            $time = gmdate("H:i:s", (int)$snapshot_sec) . ".000";
             $outputFilesPath .= "/" . $outputFileInfo['basename'];
             $frameOptions = " -ss $time -vframes 1";
         }
@@ -481,7 +481,7 @@ class VideoTranscoder extends BasicTranscoder
             $height           = $outputSizeSplit[1];
 
             // We have a rotation. We flip width and height
-            if ($metadata['video']['tags'] &&
+            if (isset($metadata['video']['tags']) &&
                 $metadata['video']['tags']['rotate'] &&
                 ($metadata['video']['tags']['rotate'] == 90 ||
                  $metadata['video']['tags']['rotate'] == -90)) {
@@ -524,6 +524,9 @@ class VideoTranscoder extends BasicTranscoder
         }
 
         // Perform Time transformation to get seconds
+        if ($last === null) {
+            return 0;
+        }
         $ar   = array_reverse(explode(":", $last));
         $done = floatval($ar[0]);
         if (!empty($ar[1])) {

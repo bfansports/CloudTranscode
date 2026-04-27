@@ -163,12 +163,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/bfansports/CloudProcessingEngine-SDK.git",
-                "reference": "9e3b5a7542b46ffd65b8c21b262cd4660acc6f87"
+                "reference": "b2c4da388031528d480dd8636dec4008b494b8b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bfansports/CloudProcessingEngine-SDK/zipball/9e3b5a7542b46ffd65b8c21b262cd4660acc6f87",
-                "reference": "9e3b5a7542b46ffd65b8c21b262cd4660acc6f87",
+                "url": "https://api.github.com/repos/bfansports/CloudProcessingEngine-SDK/zipball/b2c4da388031528d480dd8636dec4008b494b8b3",
+                "reference": "b2c4da388031528d480dd8636dec4008b494b8b3",
                 "shasum": ""
             },
             "require": {
@@ -199,9 +199,9 @@
             ],
             "support": {
                 "issues": "https://github.com/bfansports/CloudProcessingEngine-SDK/issues",
-                "source": "https://github.com/bfansports/CloudProcessingEngine-SDK/tree/3.0.1"
+                "source": "https://github.com/bfansports/CloudProcessingEngine-SDK/tree/3.0.2"
             },
-            "time": "2026-04-24T16:47:32+00:00"
+            "time": "2026-04-27T13:16:22+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",

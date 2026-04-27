@@ -25,7 +25,7 @@ RUN echo "date.timezone = UTC" >> /usr/local/etc/php/conf.d/timezone.ini \
     && DEBIAN_FRONTEND=noninteractive \
        apt-get update \
     && apt-get install -y --no-install-recommends \
-       libzip4 \
+       libzip5 \
        imagemagick \
        ffmpeg \
     && rm -rf /var/lib/apt/lists/* \

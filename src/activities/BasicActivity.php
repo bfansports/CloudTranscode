@@ -51,7 +51,7 @@ class BasicActivity extends CpeSdk\CpeActivity
     // Make sure your partition is big enough!
     const TMP_FOLDER = "/tmp/CloudTranscode/";
     
-    public function __construct($client = null, $params, $debug, $cpeLogger)
+    public function __construct($client, $params, $debug, $cpeLogger)
     {
         parent::__construct($client, $params, $debug, $cpeLogger);
 

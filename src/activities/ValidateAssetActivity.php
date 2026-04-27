@@ -35,7 +35,7 @@ class ValidateAssetActivity extends BasicActivity
 
     const VALIDATE_ASSET_FAILED = "VALIDATE_ASSET_FAILED";
 
-    public function __construct($client = null, $params, $debug, $cpeLogger)
+    public function __construct($client, $params, $debug, $cpeLogger)
     {
         # Check if preper env vars are setup
         if (!($region = getenv("AWS_DEFAULT_REGION")))

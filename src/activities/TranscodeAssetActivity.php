@@ -35,7 +35,7 @@ class TranscodeAssetActivity extends BasicActivity
     private $output;
     private $outputFilesPath;
 
-    public function __construct($client = null, $params, $debug, $cpeLogger)
+    public function __construct($client, $params, $debug, $cpeLogger)
     {
         parent::__construct($client, $params, $debug, $cpeLogger);
     }

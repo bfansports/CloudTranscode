@@ -2,12 +2,15 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sportarchive/CloudTranscode/?branch=master)
 
 ### Updates 2020/05/09
+
 Update to FFMpeg 4.2
 
 # What is Cloud Transcode?
+
 Cloud Transcode (CT) is your own distributed transcoding stack. With it you can transcode media files in a distributed way, at scale.
 
 ## Goal
+
 The goal of this project is to create an open source, scalable and cheap distributed transcoding platform where users have complete control over performance and cost.
 
 We started with video transcoding as it is the most costly, but the goal is to transcode any type media files (audio, documents and images). We use FFMpeg for video transcoding. CT also image transcoding using ImageMagic.
@@ -15,6 +18,7 @@ We started with video transcoding as it is the most costly, but the goal is to t
 Today's commercial solutions for video transcoding are very expensive for large volumes. With this solution you can transcode large quantity of files at the pace you want, thus controling your cost.
 
 ## Benefits
+
 With Cloud Transcode, you control: scale, speed and cost. You can run everything locally if you want, no Cloud instance required. Or you can deploy on AWS EC2, Beanstalk or Docker containers.
 
 Your workers only need an Internet connection to use the required Amazon services: SFN (AWS Step Functions) and S3. It means that you can have a local, hybrid or full cloud setup. It's up to you.
@@ -23,14 +27,13 @@ Your workers only need an Internet connection to use the required Amazon service
 
 List of actions this stack allow you to do very quickly and at scale.
 
-   - **Custom FFMpeg command**: Run and distribute your own `ffmpeg` commands
-   - **Image to Image transcoding**: Run and sitribute your own ImageMagic `convert` commands
-   - **Validate/Probe Asset**: Run `ffprobe` to get the `mime type` of an asset
-   - **Transcode from HTTP**: Pull files from HTTP/S and transcode them on the fly at scale. Result files are put into AWS S3.
-   - **Video to Video transcoding**: JSON input: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
-   - **Video to Thumbnails transcoding**: JSON input: Snapshot at certain time in video or intervals snapshot every N seconds. Keep image ratio.
-   - **Watermark integration in video**: JSON input: Take image IN and position a watermark on top of the video. Custom position and transparency. Keep image ratio.
-
+- **Custom FFMpeg command**: Run and distribute your own `ffmpeg` commands
+- **Image to Image transcoding**: Run and sitribute your own ImageMagic `convert` commands
+- **Validate/Probe Asset**: Run `ffprobe` to get the `mime type` of an asset
+- **Transcode from HTTP**: Pull files from HTTP/S and transcode them on the fly at scale. Result files are put into AWS S3.
+- **Video to Video transcoding**: JSON input: One video IN, many videos OUT. Any formats and codecs supported by your ffmpeg.
+- **Video to Thumbnails transcoding**: JSON input: Snapshot at certain time in video or intervals snapshot every N seconds. Keep image ratio.
+- **Watermark integration in video**: JSON input: Take image IN and position a watermark on top of the video. Custom position and transparency. Keep image ratio.
 
 # How it works?
 
@@ -52,9 +55,9 @@ Thanks to the `CloudProcessingEngine-SDK` you can build your own workflow and ca
 
 Cloud Transcode could use help on the following Activities if you are interested in participating:
 
-   - Document transcoding: DOC to PDF for example
-   - Audio manipulation: Maybe this can be already done by FFMpeg. Never tested if FFmpeg supports it or if there is a better tool for Audio.
-   - Other ideas?
+- Document transcoding: DOC to PDF for example
+- Audio manipulation: Maybe this can be already done by FFMpeg. Never tested if FFmpeg supports it or if there is a better tool for Audio.
+- Other ideas?
 
 # Getting Started
 
@@ -74,13 +77,13 @@ You must create a State Machine workflow in the AWS Step Function console to mak
 In the folder `state_machines` of the project, you will find a basic transcoding workflow for SFN. It validates the input and then processes ALL the outputs you want in one activity.<br>
 In sequence, this workflow calls:
 
-   - 1 -> ValidateAssetActivity
-   - N -> TranscodeAssetActivity
+- 1 -> ValidateAssetActivity
+- N -> TranscodeAssetActivity
 
 One TranscodeAssetActivity worker processes all outputs wanted, in sequence, not in parallel.
 
-> *Note:* I couldn't make SFN transform on the fly the input data given to the activities.
-> The array of "output files wanted" could have been split and one activity could be started for each output in the array, thus allowing parallel  transcoding.
+> _Note:_ I couldn't make SFN transform on the fly the input data given to the activities.
+> The array of "output files wanted" could have been split and one activity could be started for each output in the array, thus allowing parallel transcoding.
 > To achieve parallel transcoding, you need to have an intermediate activity that splits the input and initiate new workflows, each with only one output wanted.
 
 ## Run Activities
@@ -109,16 +112,16 @@ In order to hook your client applications with Cloud Transcode, you must impleme
 
 Your Interface will contain all the callback methods that will be called when events occur in your CT workflow:
 
-   - onStart
-   - onHeartbeat
-   - onFail
-   - onSuccess
-   - onTranscodeDone
+- onStart
+- onHeartbeat
+- onFail
+- onSuccess
+- onTranscodeDone
 
 You must implement the `CpeClientInterface.php` interface located in the `CloudProcessingEngine-SDK` project:
 
-   - Composer: https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
-   - Github: https://github.com/sportarchive/CloudProcessingEngine-SDK
+- Composer: https://packagist.org/packages/sportarchive/cloud-processing-engine-sdk
+- Github: https://github.com/sportarchive/CloudProcessingEngine-SDK
 
 In order to pass this class to your Activity worker, you have to provide its location in command line using the [-C <client class path>] option.
 
@@ -126,8 +129,7 @@ That means that if you use Docker, you must create your own Docker image based o
 
 A Dockerfile like this for example:
 
-
-``` Dockerfile
+```Dockerfile
 FROM 501431420968.dkr.ecr.eu-west-1.amazonaws.com/sportarc/cloudtranscode:4.2
 MAINTAINER bFAN Sports
 
@@ -156,68 +158,67 @@ In the `input_sample` folder, we provide input samples that you can edit to matc
 
 The main idea is:
 
-   - One `input` section which describes what must be processed
-   - One `output` section which contains a list of wanted output. Each output is describe by a JSON and specifies the work to be done and where the resulting file should go.
+- One `input` section which describes what must be processed
+- One `output` section which contains a list of wanted output. Each output is describe by a JSON and specifies the work to be done and where the resulting file should go.
 
 A Simple example that takes a `.mp4` as input and generate two thumbnails and a proxy video using a FFmpeg template:
 
-``` json
+```json
 {
-    "input_asset": {
-        "type": "VIDEO",
-        "bucket": "cloudtranscode-eu-dev",
-        "file": "/input/video1.mp4"
+  "input_asset": {
+    "type": "VIDEO",
+    "bucket": "cloudtranscode-eu-dev",
+    "file": "/input/video1.mp4"
+  },
+  "output_assets": [
+    {
+      "type": "THUMB",
+      "mode": "snapshot",
+      "bucket": "cloudtranscode-eu-dev",
+      "path": "/output/",
+      "file": "thumbnail_sd.jpg",
+      "s3_rrs": true,
+      "s3_encrypt": true,
+      "size": "-1:159",
+      "snapshot_sec": 5
     },
-    "output_assets": [
-        {
-            "type": "THUMB",
-            "mode": "snapshot",
-            "bucket": "cloudtranscode-eu-dev",
-            "path": "/output/",
-            "file": "thumbnail_sd.jpg",
-            "s3_rrs": true,
-            "s3_encrypt": true,
-            "size": "-1:159",
-            "snapshot_sec": 5
-        },
-        {
-            "type": "THUMB",
-            "mode": "snapshot",
-            "bucket": "cloudtranscode-eu-dev",
-            "path": "/output/",
-            "file": "thumbnail_hd.jpg",
-            "s3_rrs": true,
-            "s3_encrypt": true,
-            "size": "-1:720",
-            "snapshot_sec": 5
-        },
-        {
-            "type": "VIDEO",
-            "bucket": "cloudtranscode-eu-dev",
-            "path": "/output/",
-            "file": "video1.mp4",
-            "s3_rrs": true,
-            "s3_encrypt": true,
-            "keep_ratio": false,
-            "no_enlarge": false,
-            "preset": "360p-4.3-generic",
-            "watermark": {
-                "bucket": "cloudtranscode-eu-dev",
-                "file": "/no-text-96px.png",
-                "size": "96:96",
-                "opacity": 0.2,
-                "x": -20,
-                "y": -20
-            }
-        }
-    ]
+    {
+      "type": "THUMB",
+      "mode": "snapshot",
+      "bucket": "cloudtranscode-eu-dev",
+      "path": "/output/",
+      "file": "thumbnail_hd.jpg",
+      "s3_rrs": true,
+      "s3_encrypt": true,
+      "size": "-1:720",
+      "snapshot_sec": 5
+    },
+    {
+      "type": "VIDEO",
+      "bucket": "cloudtranscode-eu-dev",
+      "path": "/output/",
+      "file": "video1.mp4",
+      "s3_rrs": true,
+      "s3_encrypt": true,
+      "keep_ratio": false,
+      "no_enlarge": false,
+      "preset": "360p-4.3-generic",
+      "watermark": {
+        "bucket": "cloudtranscode-eu-dev",
+        "file": "/no-text-96px.png",
+        "size": "96:96",
+        "opacity": 0.2,
+        "x": -20,
+        "y": -20
+      }
+    }
+  ]
 }
-
 ```
 
 You can also submit custom FFmpeg commands, or specify as many output as you want here.
 
-> *Note:* As mentioned above, those outputs are processed in sequence by the same worker, NOT in parallel.
+> _Note:_ As mentioned above, those outputs are processed in sequence by the same worker, NOT in parallel.
 
 # Contributing
 
@@ -231,13 +232,14 @@ CloudTranscode uses FFmpeg 4.2
 
 The CloudTranscode Docker image is based on two other images:
 
-   - https://hub.docker.com/r/sportarc/ffmpeg/
-   - https://hub.docker.com/r/sportarc/cloudtranscode-base/
-
+- https://hub.docker.com/r/sportarc/ffmpeg/
+- https://hub.docker.com/r/sportarc/cloudtranscode-base/
 
 # FFMpeg performance benchmark on Amazon EC2
 
-*This is already a little old and needs update with the latest AWS instances*
+_This is already a little old and needs update with the latest AWS instances_
 
 Download the spreadsheet to compare the different Amazon EC2 instances cost and performances running FFMpeg:
 https://github.com/sportarchive/CloudTranscode/blob/master/benchmark/benchmark-aws-ffmpeg.xlsx
+
+:)
